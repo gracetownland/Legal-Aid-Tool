@@ -1,0 +1,31 @@
+@keyframes gradientAnimation {
+    100% {
+      background-position: 0% 0%;
+    }
+    0% {
+      background-position: 100% 100%;
+    }
+  }
+  
+  .animatedGradient {
+    background-color: #99DFB2; /* Medicine green */
+    animation: none; /* Remove the gradient animation */
+  }
+  
+  @keyframes float {
+    0% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(10px); /* Move down by 10px */
+    }
+    100% {
+      transform: translateY(0);
+    }
+  }
+  
+  .heartbeat-image:hover {
+    transform: scale(1.2); /* Slightly enlarge the image on hover */
+    filter: drop-shadow(0 0 10px #ffffff); /* Glowing effect */
+  }
+  
