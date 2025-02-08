@@ -194,14 +194,10 @@ def handler(event, context):
         # Print sample queries to validate data
         sample_queries = [
             'SELECT * FROM "users";',
-            'SELECT * FROM "simulation_groups";',
-            'SELECT * FROM "patients";',
-            'SELECT * FROM "enrolments";',
-            'SELECT * FROM "patient_data";',
-            'SELECT * FROM "student_interactions";',
             'SELECT * FROM "sessions";',
             'SELECT * FROM "messages";',
-            'SELECT * FROM "user_engagement_log";'
+            'SELECT * FROM "cases";',
+            'SELECT * FROM "reports";',
         ]
 
         for query in sample_queries:
