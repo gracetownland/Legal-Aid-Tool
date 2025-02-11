@@ -14,7 +14,7 @@ import {
 } from "react-router-dom";
 import { useEffect, useState, createContext } from "react";
 // pages
-import Login from "./pages/Login";
+import Login from "./pages/login";
 import StudentHomepage from "./pages/student/StudentHomepage";
 import StudentChat from "./pages/student/StudentChat";
 import AdminHomepage from "./pages/admin/AdminHomepage";
@@ -116,7 +116,7 @@ function App() {
               />
             }
           />
-          <Route path="/home/*" element={getHomePage()} />
+          <Route path="/home/*" element={<StudentHomepage />} />
           <Route path="/group/*" element={<InstructorHomepage />} />
         </Routes>
       </Router>
