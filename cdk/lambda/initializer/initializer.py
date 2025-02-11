@@ -57,121 +57,49 @@ def handler(event, context):
                 "first_name" varchar,
                 "last_name" varchar,
                 "time_account_created" timestamp,
-                "roles" varchar[],
-                "last_sign_in" timestamp
-            );
-
-            CREATE TABLE IF NOT EXISTS "simulation_groups" (
-                "simulation_group_id" uuid PRIMARY KEY DEFAULT (uuid_generate_v4()),
-                "group_name" varchar,
-                "group_description" varchar,
-                "group_access_code" varchar,
-                "group_student_access" bool,
-                "system_prompt" text
-            );
-
-            CREATE TABLE IF NOT EXISTS "patients" (
-                "patient_id" uuid PRIMARY KEY DEFAULT (uuid_generate_v4()),
-                "simulation_group_id" uuid,
-                "patient_name" varchar,
-                "patient_age" integer,
-                "patient_gender" varchar,
-                "patient_number" integer,
-                "patient_prompt" text,
-                "llm_completion"  BOOLEAN DEFAULT TRUE
-            );
-
-            CREATE TABLE IF NOT EXISTS "enrolments" (
-                "enrolment_id" uuid PRIMARY KEY DEFAULT (uuid_generate_v4()),
-                "user_id" uuid,
-                "simulation_group_id" uuid,
-                "enrolment_type" varchar,
-                "group_completion_percentage" integer,
-                "time_enroled" timestamp
-            );
-
-            CREATE TABLE IF NOT EXISTS "patient_data" (
-                "file_id" uuid PRIMARY KEY DEFAULT (uuid_generate_v4()),
-                "patient_id" uuid,
-                "filetype" varchar,
-                "s3_bucket_reference" varchar,
-                "filepath" varchar,
-                "filename" varchar,
-                "time_uploaded" timestamp,
-                "metadata" text,
-                "file_number" integer
-            );
-
-            CREATE TABLE IF NOT EXISTS "student_interactions" (
-                "student_interaction_id" uuid PRIMARY KEY DEFAULT (uuid_generate_v4()),
-                "patient_id" uuid,
-                "enrolment_id" uuid,
-                "patient_score" integer,
-                "last_accessed" timestamp,
-                "patient_context_embedding" float[],
-                "is_completed" BOOLEAN DEFAULT FALSE
+                "role" varchar,
+                "last_sign_in" timestamp DEFAULT now()
             );
 
             CREATE TABLE IF NOT EXISTS "sessions" (
                 "session_id" uuid PRIMARY KEY DEFAULT (uuid_generate_v4()),
-                "student_interaction_id" uuid,
-                "session_name" varchar,
-                "session_context_embeddings" float[],
-                "last_accessed" timestamp,
-                "notes" text
+                "user_id" uuid,
+                "case_id" uuid,
+                "last_accessed" timestamp DEFAULT now()
             );
 
             CREATE TABLE IF NOT EXISTS "messages" (
                 "message_id" uuid PRIMARY KEY DEFAULT (uuid_generate_v4()),
-                "session_id" uuid,
-                "student_sent" bool,
-                "message_content" varchar,
-                "time_sent" timestamp
+                "user_id" uuid,
+                "message_content" text,
+                "time_sent" timestamp DEFAULT now()
             );
 
-            CREATE TABLE IF NOT EXISTS "user_engagement_log" (
-                "log_id" uuid PRIMARY KEY DEFAULT (uuid_generate_v4()),
-                "user_id" uuid,
-                "simulation_group_id" uuid,
-                "patient_id" uuid,
-                "enrolment_id" uuid,
-                "timestamp" timestamp,
-                "engagement_type" varchar,
-                "engagement_details" text
+            CREATE TABLE IF NOT EXISTS "cases" (
+                "case_id" uuid PRIMARY KEY DEFAULT (uuid_generate_v4()),
+                "case_title" varchar,
+                "case_type" varchar,
+                "law_type" varchar[],
+                "case_description" text,
+                "status" varchar DEFAULT 'In progress',
+                "last_updated" timestamp DEFAULT now(),
+                "system_prompt" text
+            );
+
+            CREATE TABLE IF NOT EXISTS "reports" (
+                "report_id" uuid PRIMARY KEY DEFAULT (uuid_generate_v4()),
+                "case_id" uuid,
+                "content" text,
+                "time_created" timestamp DEFAULT now()
             );
 
             -- Add foreign key constraints
-            ALTER TABLE "user_engagement_log" ADD FOREIGN KEY ("enrolment_id") REFERENCES "enrolments" ("enrolment_id") ON DELETE CASCADE ON UPDATE CASCADE;
-            ALTER TABLE "user_engagement_log" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
-            ALTER TABLE "user_engagement_log" ADD FOREIGN KEY ("simulation_group_id") REFERENCES "simulation_groups" ("simulation_group_id") ON DELETE CASCADE ON UPDATE CASCADE;
-            ALTER TABLE "user_engagement_log" ADD FOREIGN KEY ("patient_id") REFERENCES "patients" ("patient_id") ON DELETE CASCADE ON UPDATE CASCADE;
+            ALTER TABLE "sessions" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
+            ALTER TABLE "sessions" ADD FOREIGN KEY ("case_id") REFERENCES "cases" ("case_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
-            ALTER TABLE "patients" ADD FOREIGN KEY ("simulation_group_id") REFERENCES "simulation_groups" ("simulation_group_id") ON DELETE CASCADE ON UPDATE CASCADE;
+            ALTER TABLE "messages" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
-            ALTER TABLE "enrolments" ADD FOREIGN KEY ("simulation_group_id") REFERENCES "simulation_groups" ("simulation_group_id") ON DELETE CASCADE ON UPDATE CASCADE;
-            ALTER TABLE "enrolments" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
-
-            ALTER TABLE "patient_data" ADD FOREIGN KEY ("patient_id") REFERENCES "patients" ("patient_id") ON DELETE CASCADE ON UPDATE CASCADE;
-
-            ALTER TABLE "student_interactions" ADD FOREIGN KEY ("patient_id") REFERENCES "patients" ("patient_id") ON DELETE CASCADE ON UPDATE CASCADE;
-            ALTER TABLE "student_interactions" ADD FOREIGN KEY ("enrolment_id") REFERENCES "enrolments" ("enrolment_id") ON DELETE CASCADE ON UPDATE CASCADE;
-
-            ALTER TABLE "sessions" ADD FOREIGN KEY ("student_interaction_id") REFERENCES "student_interactions" ("student_interaction_id") ON DELETE CASCADE ON UPDATE CASCADE;
-
-            ALTER TABLE "messages" ADD FOREIGN KEY ("session_id") REFERENCES "sessions" ("session_id") ON DELETE CASCADE ON UPDATE CASCADE;
-
-            -- Add unique constraint to enrolments
-            DO $$
-            BEGIN
-                IF NOT EXISTS (
-                    SELECT 1
-                    FROM pg_constraint
-                    WHERE conname = 'unique_simulation_group_user'
-                    AND conrelid = '"enrolments"'::regclass
-                ) THEN
-                    ALTER TABLE "enrolments" ADD CONSTRAINT unique_simulation_group_user UNIQUE (simulation_group_id, user_id);
-                END IF;
-            END $$;
+            ALTER TABLE "reports" ADD FOREIGN KEY ("case_id") REFERENCES "cases" ("case_id") ON DELETE CASCADE ON UPDATE CASCADE;
         """
 
         #
@@ -266,14 +194,10 @@ def handler(event, context):
         # Print sample queries to validate data
         sample_queries = [
             'SELECT * FROM "users";',
-            'SELECT * FROM "simulation_groups";',
-            'SELECT * FROM "patients";',
-            'SELECT * FROM "enrolments";',
-            'SELECT * FROM "patient_data";',
-            'SELECT * FROM "student_interactions";',
             'SELECT * FROM "sessions";',
             'SELECT * FROM "messages";',
-            'SELECT * FROM "user_engagement_log";'
+            'SELECT * FROM "cases";',
+            'SELECT * FROM "reports";',
         ]
 
         for query in sample_queries:
