@@ -43,7 +43,7 @@ const { augmentColor } = palette;
 const createColor = (mainColor) => augmentColor({ color: { main: mainColor } });
 const theme = createTheme({
   palette: {
-    primary: createColor("#36bd78"),
+    primary: createColor("#373737"),
     bg: createColor("#F8F9FD"),
   },
 });
@@ -466,7 +466,7 @@ export const Login = () => {
 
 
             <div style={{ textAlign: 'center', marginTop: '20px' }}>
-              <img
+              {/* <img
                 src={heartbeatImage}
                 alt="Heartbeat"
                 className='heartbeat-image'
@@ -477,7 +477,7 @@ export const Login = () => {
                   margin: '0 auto', // Center the image horizontally
                   animation: 'float 3s ease-in-out infinite', // Add the float animation
                 }}
-              />
+              /> */}
               <Typography
                 variant="h4"
                 sx={{
@@ -491,9 +491,8 @@ export const Login = () => {
               >
                 Welcome to
                 <br />
-                Virtual Care Interactions
+                Clinical Interview Tool
                 <br />
-                Powered by AI
               </Typography>
 
             </div>
