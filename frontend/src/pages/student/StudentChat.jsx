@@ -5,8 +5,7 @@ import StudentMessage from "../../components/StudentMessage";
 import { fetchAuthSession } from "aws-amplify/auth";
 import { useNavigate } from "react-router-dom";
 import { fetchUserAttributes } from "aws-amplify/auth";
-import DraggableNotes from "./DraggableNotes";
-import FilesPopout from "./FilesPopout";
+import FilesPopout from "./NewCase";
 
 import { signOut } from "aws-amplify/auth";
 
@@ -977,15 +976,6 @@ const StudentChat = ({ group, patient, setPatient, setGroup }) => {
             AI Patient
           </div>
         </div>
-
-        {/* Draggable Notes */}
-        {isNotesOpen && (
-          <DraggableNotes
-            isOpen={isNotesOpen}
-            sessionId={session.session_id}
-            onClose={() => setIsNotesOpen(false)}
-          />
-        )}
 
         <FilesPopout
           open={isPatientInfoOpen}

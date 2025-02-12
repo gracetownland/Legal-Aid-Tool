@@ -19,7 +19,7 @@ export class VpcStack extends Stack {
       const AWSControlTowerStackSet = ""; // CHANGE TO YOUR CONTROL TOWER STACK SET
       const existingPublicSubnetID: string = ""; // CHANGE IF DEPLOYING WITH EXISTING PUBLIC SUBNET
 
-      const vciPrefix = "VIRTUAL-CARE-INTERACTION-production";
+      const citPrefix = "Clinical-interview-Tool-production";
 
       this.vpcCidrString = "172.31.94.0/20";
 
@@ -92,19 +92,19 @@ export class VpcStack extends Stack {
         });
 
         // Update route table for private subnets
-        new ec2.CfnRoute(this, `${vciPrefix}PrivateSubnetRoute1`, {
+        new ec2.CfnRoute(this, `${citPrefix}PrivateSubnetRoute1`, {
           routeTableId: this.vpc.privateSubnets[0].routeTable.routeTableId,
           destinationCidrBlock: "0.0.0.0/0",
           natGatewayId: natGateway.ref,
         });
 
-        new ec2.CfnRoute(this, `${vciPrefix}PrivateSubnetRoute2`, {
+        new ec2.CfnRoute(this, `${citPrefix}PrivateSubnetRoute2`, {
           routeTableId: this.vpc.privateSubnets[1].routeTable.routeTableId,
           destinationCidrBlock: "0.0.0.0/0",
           natGatewayId: natGateway.ref,
         });
 
-        new ec2.CfnRoute(this, `${vciPrefix}PrivateSubnetRoute3`, {
+        new ec2.CfnRoute(this, `${citPrefix}PrivateSubnetRoute3`, {
           routeTableId: this.vpc.privateSubnets[2].routeTable.routeTableId,
           destinationCidrBlock: "0.0.0.0/0",
           natGatewayId: natGateway.ref,
@@ -152,7 +152,7 @@ export class VpcStack extends Stack {
       const natGatewayProvider = ec2.NatProvider.gateway();
 
       // VPC for application
-      this.vpc = new ec2.Vpc(this, "vci-Vpc", {
+      this.vpc = new ec2.Vpc(this, "cit-Vpc", {
         ipAddresses: ec2.IpAddresses.cidr(this.vpcCidrString),
         natGatewayProvider: natGatewayProvider,
         natGateways: 1,
@@ -173,7 +173,7 @@ export class VpcStack extends Stack {
         ],
       });
 
-      this.vpc.addFlowLog("vci-vpcFlowLog");
+      this.vpc.addFlowLog("cit-vpcFlowLog");
 
       // Add secrets manager endpoint to VPC
       this.vpc.addInterfaceEndpoint(`${id}-Secrets Manager Endpoint`, {
