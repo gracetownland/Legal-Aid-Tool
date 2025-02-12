@@ -19,7 +19,8 @@ import StudentHomepage from "./pages/student/StudentHomepage";
 import StudentChat from "./pages/student/StudentChat";
 import AdminHomepage from "./pages/admin/AdminHomepage";
 import InstructorHomepage from "./pages/instructor/InstructorHomepage";
-import GroupView from "./pages/student/GroupView";
+import  CaseOverview from "./pages/student/CaseOverview";
+// import CaseOveriew from "./pages/student/CaseOverview";
 
 export const UserContext = createContext();
 
@@ -107,12 +108,12 @@ function App() {
             }
           />
           <Route
-            path="/student_group/*"
+            path="/case-overview"
             element={
-              <GroupView
-                group={group}
-                setPatient={setPatient}
-                setGroup={setGroup}
+              <CaseOverview
+              //  group={group}
+              //  setPatient={setPatient}
+              //  setGroup={setGroup}
               />
             }
           />

@@ -61,7 +61,7 @@ function titleCase(str) {
 export const StudentHomepage = ({ setGroup }) => {
   const navigate = useNavigate();
 
-  const [groups, setGroups] = useState([]);
+  const [cases, setCases] = useState([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const { isInstructorAsStudent, setIsInstructorAsStudent } = useContext(UserContext);
@@ -71,13 +71,8 @@ export const StudentHomepage = ({ setGroup }) => {
   //     handleClickOpen();
   //   }
   // }, [loading, groups]);
-
   
-
-  
-
-
-  const fetchGroups = async () => {
+  const fetchCases = async () => {
     try {
       const session = await fetchAuthSession();
       const { email } = await fetchUserAttributes();
@@ -123,7 +118,7 @@ export const StudentHomepage = ({ setGroup }) => {
     sessionStorage.removeItem("group");
     sessionStorage.removeItem("patient");
 
-    fetchGroups();
+    fetchCases();
   }, []);
 
   return (
