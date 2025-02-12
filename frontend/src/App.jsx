@@ -16,7 +16,7 @@ import { useEffect, useState, createContext } from "react";
 // pages
 import Login from "./pages/login";
 import StudentHomepage from "./pages/student/StudentHomepage";
-import StudentChat from "./pages/student/StudentChat";
+//import StudentChat from "./pages/student/StudentChat";
 import AdminHomepage from "./pages/admin/AdminHomepage";
 import InstructorHomepage from "./pages/instructor/InstructorHomepage";
 import  CaseOverview from "./pages/student/CaseOverview";
@@ -96,7 +96,7 @@ function App() {
             path="/"
             element={user ? <Navigate to="/home" /> : <Login />}
           />
-          <Route
+          {/* <Route
             path="/student_chat/*"
             element={
               <StudentChat
@@ -106,7 +106,7 @@ function App() {
                 setGroup={setGroup}
               />
             }
-          />
+          /> */}
           <Route
             path="/case-overview"
             element={
