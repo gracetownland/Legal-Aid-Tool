@@ -72,6 +72,7 @@ def handler(event, context):
                 "message_id" uuid PRIMARY KEY DEFAULT (uuid_generate_v4()),
                 "user_id" uuid,
                 "message_content" text,
+                "case_id" uuid,
                 "time_sent" timestamp DEFAULT now()
             );
 
