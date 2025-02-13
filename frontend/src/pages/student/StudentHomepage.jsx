@@ -31,17 +31,33 @@ import {
 } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { fetchUserAttributes } from "aws-amplify/auth";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { UserContext } from "../../App";
 
 // MUI theming
 const { palette } = createTheme();
-const { augmentColor } = palette;
-const createColor = (mainColor) => augmentColor({ color: { main: mainColor } });
+    
 const theme = createTheme({
   palette: {
-    primary: createColor("#373737"),
-    bg: createColor("#F8F9FD"),
+    mode: 'light',
+    primary: {
+      main: '#546bdf',
+      contrastText: '#050315',
+    },
+    secondary: {
+      main: '#c5d6f0',
+      contrastText: '#050315',
+    },
+    divider: '#1c187a',
+    text: {
+      primary: 'rgb(5, 3, 21)',
+      secondary: 'rgba(5, 3, 21, 0.6)',
+      disabled: 'rgba(5, 3, 21, 0.38)',
+      hint: 'rgb(28, 24, 122)',
+    },
+    background: {
+      default: '#fbfbfe',
+    },
   },
 });
 
@@ -60,66 +76,7 @@ function titleCase(str) {
 
 export const StudentHomepage = ({ setGroup }) => {
   const navigate = useNavigate();
-
-  const [cases, setCases] = useState([]);
-  const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const { isInstructorAsStudent, setIsInstructorAsStudent } = useContext(UserContext);
-
-  // useEffect(() => {
-  //   if (!loading && groups.length === 0) {
-  //     handleClickOpen();
-  //   }
-  // }, [loading, groups]);
-  
-  const fetchCases = async () => {
-    try {
-      const session = await fetchAuthSession();
-      const { email } = await fetchUserAttributes();
-
-      var token = session.tokens.idToken;
-      let response;
-      if (isInstructorAsStudent) {
-        response = await fetch(
-          `${import.meta.env.VITE_API_ENDPOINT}instructor/student_group?email=${encodeURIComponent(email)}`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: token,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-      } else {
-        response = await fetch(
-          `${import.meta.env.VITE_API_ENDPOINT}student/simulation_group?email=${encodeURIComponent(email)}`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: token,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-      }
-      if (response.ok) {
-        const data = await response.json();
-        setGroups(data);
-        setLoading(false);
-      } else {
-        console.error("Failed to fetch group:", response.statusText);
-      }
-    } catch (error) {
-      console.error("Error fetching group:", error);
-    }
-  };
-
-  useEffect(() => {
-    sessionStorage.removeItem("group");
-    sessionStorage.removeItem("patient");
-
-    fetchCases();
-  }, []);
 
   return (
     <ThemeProvider theme={theme}>
@@ -146,7 +103,7 @@ export const StudentHomepage = ({ setGroup }) => {
               variant="contained"
               sx={{ height: 50 }}
 
-              
+              onClick={() => { navigate('/new-case')}}
             >
             <Add sx={{mr: 0 }} /> {/* Plus icon with margin right */}
             </Button>
@@ -256,7 +213,7 @@ export const StudentHomepage = ({ setGroup }) => {
                       fontSize: "1.5rem",
                     }}
                   >
-                    No groups added yet, click "JOIN GROUP" to add a group
+                    No cases yet, start a new one 
                   </Typography>
                 ) : (
                   <Grid container spacing={2} sx={{ width: "100%" }}>

@@ -19,7 +19,8 @@ import StudentHomepage from "./pages/student/StudentHomepage";
 //import StudentChat from "./pages/student/StudentChat";
 import AdminHomepage from "./pages/admin/AdminHomepage";
 import InstructorHomepage from "./pages/instructor/InstructorHomepage";
-import  CaseOverview from "./pages/student/CaseOverview";
+import  CasePage from "./pages/student/CasePage";
+import NewCaseForm from "./pages/student/NewCase";
 // import CaseOveriew from "./pages/student/CaseOverview";
 
 export const UserContext = createContext();
@@ -110,7 +111,18 @@ function App() {
           <Route
             path="/case-overview"
             element={
-              <CaseOverview
+              <CasePage
+              //  group={group}
+              //  setPatient={setPatient}
+              //  setGroup={setGroup}
+              />
+            }
+          />
+
+          <Route
+            path="/new-case"
+            element={
+              <NewCaseForm
               //  group={group}
               //  setPatient={setPatient}
               //  setGroup={setGroup}
