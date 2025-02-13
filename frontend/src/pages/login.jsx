@@ -417,7 +417,7 @@ export const Login = () => {
           `Confirmation code was sent to ${codeDeliveryDetails.deliveryMedium}`
         );
         setMessage(
-          `Confirmation code was sent to ${codeDeliveryDetails.deliveryMedium}`
+          `Confirmation code sent to ${codeDeliveryDetails.deliveryMedium}`
         );
         setStep("confirmReset");
         break;
