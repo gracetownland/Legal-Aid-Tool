@@ -38,13 +38,27 @@ import PageContainer from "./Container";
 import { CognitoJwtVerifier } from "aws-jwt-verify";
 // MUI theming
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-const { palette } = createTheme();
-const { augmentColor } = palette;
-const createColor = (mainColor) => augmentColor({ color: { main: mainColor } });
 const theme = createTheme({
   palette: {
-    primary: createColor("#373737"),
-    bg: createColor("#F8F9FD"),
+    mode: 'light',
+    primary: {
+      main: '#546bdf',
+      contrastText: '#050315',
+    },
+    secondary: {
+      main: '#c5d6f0',
+      contrastText: '#050315',
+    },
+    divider: '#1c187a',
+    text: {
+      primary: 'rgb(5, 3, 21)',
+      secondary: 'rgba(5, 3, 21, 0.6)',
+      disabled: 'rgba(5, 3, 21, 0.38)',
+      hint: 'rgb(28, 24, 122)',
+    },
+    background: {
+      default: '#fbfbfe',
+    },
   },
 });
 
@@ -403,7 +417,7 @@ export const Login = () => {
           `Confirmation code was sent to ${codeDeliveryDetails.deliveryMedium}`
         );
         setMessage(
-          `Confirmation code was sent to ${codeDeliveryDetails.deliveryMedium}`
+          `Confirmation code sent to ${codeDeliveryDetails.deliveryMedium}`
         );
         setStep("confirmReset");
         break;

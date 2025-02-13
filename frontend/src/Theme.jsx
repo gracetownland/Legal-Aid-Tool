@@ -2,29 +2,24 @@ import { createTheme } from "@mui/material/styles";
 
 const theme = createTheme({
   palette: {
+    mode: 'light',
     primary: {
-      main: "#36bd78", // OLD: #5536DA 
-      // contrastText: "#ffffff",
+      main: '#546bdf',
+      contrastText: '#050315',
     },
     secondary: {
-      main: "#BDBDBD",
-      contrastText: "#ffffff",
+      main: '#c5d6f0',
+      contrastText: '#050315',
+    },
+    divider: '#1c187a',
+    text: {
+      primary: 'rgb(5, 3, 21)',
+      secondary: 'rgba(5, 3, 21, 0.6)',
+      disabled: 'rgba(5, 3, 21, 0.38)',
+      hint: 'rgb(28, 24, 122)',
     },
     background: {
-      main: "#F8F9FD",
-      default: "#00000",
-    },
-    red: {
-      main: "#cc0c0c",
-    },
-    default: {
-      main: "#fffff",
-    },
-  },
-  typography: {
-    fontFamily: "Roboto, sans-serif",
-    h1: {
-      fontSize: "2rem",
+      default: '#fbfbfe',
     },
   },
 });
