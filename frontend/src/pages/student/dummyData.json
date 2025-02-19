@@ -1,0 +1,33 @@
+[
+    {
+      "case_id": "123e4567-e89b-12d3-a456-426614174000",
+      "case_title": "Case #1356",
+      "case_type": "Legal Review",
+      "law_type": ["Criminal", "Civil"],
+      "case_description": "Description of the legal case involving criminal and civil law.",
+      "status": "Review Feedback",
+      "last_updated": "2025-02-18T12:00:00Z",
+      "system_prompt": "Provide legal insights for criminal and civil litigation."
+    },
+    {
+      "case_id": "123e4567-e89b-12d3-a456-426614174001",
+      "case_title": "Case #5473",
+      "case_type": "Internal Audit",
+      "law_type": ["Corporate"],
+      "case_description": "Audit case regarding financial discrepancies.",
+      "status": "Archived",
+      "last_updated": "2025-02-12T09:00:00Z",
+      "system_prompt": "Review audit reports and provide findings."
+    },
+    {
+      "case_id": "123e4567-e89b-12d3-a456-426614174002",
+      "case_title": "Case #1842",
+      "case_type": "Investigation",
+      "law_type": ["Criminal"],
+      "case_description": "Investigation into a high-profile criminal case.",
+      "status": "Review Feedback",
+      "last_updated": "2025-02-15T15:30:00Z",
+      "system_prompt": "Investigate and provide case status updates."
+    }
+  ]
+  

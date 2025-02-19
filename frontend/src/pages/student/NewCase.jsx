@@ -12,6 +12,7 @@ import {
   Grid,
   Divider,
 } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 
 const NewCaseForm = () => {
   // State for form data
@@ -24,6 +25,7 @@ const NewCaseForm = () => {
   });
 
   const [saveForLater, setSaveForLater] = useState(false);
+  const navigate = useNavigate(); // React Router navigate hook
 
   // Handle form field changes
   const handleChange = (e) => {
@@ -33,10 +35,16 @@ const NewCaseForm = () => {
       [name]: value,
     }));
   };
-  // Start the interview process (you can call your interview API here)
+
+  // Navigate to the Interview Assistant and pass the form data
   const handleStartInterview = () => {
     console.log("Interview started with form data:", formData);
-    // Add logic to transition to the next step in the interview
+    navigate("/interview", { state: { formData } });
+  };
+
+  // Navigate back to the homepage
+  const handleBack = () => {
+    navigate("/home");
   };
 
   return (
@@ -60,6 +68,11 @@ const NewCaseForm = () => {
           boxShadow: 3,
         }}
       >
+        {/* Back Button */}
+        <Button onClick={handleBack} sx={{ mb: 2, textAlign: "left" }}>
+          ← Back to Homepage
+        </Button>
+
         <Typography variant="h5" gutterBottom sx={{ textAlign: "left" }}>
           Start A New Case
         </Typography>
@@ -139,22 +152,21 @@ const NewCaseForm = () => {
             />
           </Box>
 
-          {/* Buttons */}
-          
-              <Button
-                variant="contained"
-                fullWidth
-                color="primary"
-                onClick={handleStartInterview}
-                sx={{ textAlign: "left" }}
-              >
-                Start Interview
-              </Button>
+          {/* Start Interview Button */}
+          <Button
+            variant="contained"
+            fullWidth
+            color="primary"
+            onClick={handleStartInterview}
+            sx={{ textAlign: "left",  color: "white" }}
+          >
+            Start Interview
+          </Button>
 
           {/* Optionally show the 'saved' state */}
           {saveForLater && (
             <Box sx={{ marginTop: 2 }}>
-              <Typography variant="body1" color="primary" sx={{ textAlign: "left" }}>
+              <Typography variant="body1" color="white" sx={{ textAlign: "left" }}>
                 Your progress has been saved for later.
               </Typography>
             </Box>

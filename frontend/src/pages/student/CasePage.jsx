@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Drawer, Box, Typography, List, ListItem, ListItemText, Grid, Divider } from "@mui/material";
-import { ThemeProvider } from "@emotion/react";
+import { useLocation } from "react-router-dom"; // Import useLocation to get the passed case data
 import StudentHeader from "../../components/StudentHeader";
 
 import CaseOverview from "./components/CaseOverview";
@@ -8,6 +8,9 @@ import PrelimSummary from "./components/PrelimSummary";
 import InterviewAssistant from "./components/InterviewAssistant";
 
 const CasePage = () => {
+  const location = useLocation();
+  const { caseData } = location.state || {}; // Get the case data passed via navigate
+
   const [selectedOption, setSelectedOption] = useState("Case Overview");
 
   const handleDrawerSelection = (option) => {
@@ -17,17 +20,18 @@ const CasePage = () => {
   const renderContent = () => {
     switch (selectedOption) {
       case "Case Overview":
-        return <CaseOverview />;
+        return <CaseOverview caseData={caseData} />;
       case "Preliminary Summary":
-        return <PrelimSummary />;
+        return <PrelimSummary caseData={caseData} />;
       case "Interview Assistant":
-        return <InterviewAssistant />;
+        return <InterviewAssistant caseData={caseData} />;
       default:
-        return <CaseOverview />;
+        return <CaseOverview caseData={caseData} />;
     }
   };
 
   return (
+    
     <Box display="flex">
       {/* Left Sidebar Drawer */}
       <Drawer

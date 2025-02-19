@@ -127,7 +127,7 @@ exports.handler = async (event) => {
       case "GET /student/get_name":
         if (
           event.queryStringParameters &&
-          event.queryStringParameters.user_email
+          event.queryStringParameters.user_id
         ) {
           const user_id = event.queryStringParameters.user_id;
           try {
@@ -156,14 +156,14 @@ exports.handler = async (event) => {
       case "GET /student/cases":
         if (
           event.queryStringParameters != null &&
-          event.queryStringParameters.email
+          event.queryStringParameters.user_id
         ) {
-          const user_email = event.queryStringParameters.email;
+          const user_id = event.queryStringParameters.user_id;
 
           try {
-            // Retrieve the user ID using the user_email
+            // Retrieve the user ID using the user_id
             const userResult = await sqlConnection`
-                SELECT user_id FROM "users" WHERE user_email = ${user_email};
+                SELECT user_id FROM "users" WHERE user_id = ${user_id};
               `;
 
             if (userResult.length === 0) {
@@ -191,15 +191,84 @@ exports.handler = async (event) => {
           response.body = "Invalid value";
         }
         break;
-      case "GET /student/case_page":
+        case "GET /student/case_page":
+          if (event.queryStringParameters && event.queryStringParameters.case_id) {
+            const case_id = event.queryStringParameters.case_id;
+            try {
+              const caseData = await sqlConnection`
+                SELECT * FROM "cases" WHERE case_id = ${case_id};
+              `;
         
-        break;
-      case "POST /student/new_case":
-        
-        break;
-      case "GET /student/get_messages":
-        
-        break;
+              if (caseData.length > 0) {
+                response.body = JSON.stringify(caseData[0]);
+              } else {
+                response.statusCode = 404;
+                response.body = JSON.stringify({ error: "Case not found" });
+              }
+            } catch (err) {
+              response.statusCode = 500;
+              console.log(err);
+              response.body = JSON.stringify({ error: "Internal server error" });
+            }
+          } else {
+            response.statusCode = 400;
+            response.body = JSON.stringify({ error: "Case ID is required" });
+          }
+          break;        
+          case "POST /student/new_case":
+            if (event.queryStringParameters) {
+              const {
+                case_title,
+                case_type,
+                law_type,
+                case_description,
+                system_prompt
+              } = event.queryStringParameters;
+          
+              try {
+                // Insert a new case
+                const newCase = await sqlConnection`
+                  INSERT INTO "cases" (case_title, case_type, law_type, case_description, system_prompt)
+                  VALUES (${case_title}, ${case_type}, ${law_type}, ${case_description}, ${system_prompt})
+                  RETURNING *;
+                `;
+          
+                response.body = JSON.stringify(newCase[0]);
+              } catch (err) {
+                response.statusCode = 500;
+                console.log(err);
+                response.body = JSON.stringify({ error: "Internal server error" });
+              }
+            } else {
+              response.statusCode = 400;
+              response.body = JSON.stringify({ error: "Case data is required" });
+            }
+            break;
+          
+            case "GET /student/get_messages":
+              if (event.queryStringParameters && event.queryStringParameters.user_id) {
+                const user_id = event.queryStringParameters.user_id;
+                try {
+                  const messages = await sqlConnection`
+                    SELECT m.message_id, m.message_content, m.time_sent, c.case_title
+                    FROM "messages" m
+                    JOIN "cases" c ON m.case_id = c.case_id
+                    WHERE m.user_id = ${user_id}
+                    ORDER BY m.time_sent;
+                  `;
+            
+                  response.body = JSON.stringify(messages);
+                } catch (err) {
+                  response.statusCode = 500;
+                  console.log(err);
+                  response.body = JSON.stringify({ error: "Internal server error" });
+                }
+              } else {
+                response.statusCode = 400;
+                response.body = JSON.stringify({ error: "User ID is required" });
+              }
+              break;
+            
         case "POST /student/create_message":
          
           break;
