@@ -76,7 +76,7 @@ const StudentHeader = () => {
   return (
     <header className="bg-[#F8F9FD] p-4 flex justify-between items-center max-h-20" style={{ paddingLeft: "15px", paddingRight: "40px" }}>
       <div className="text-black text-3xl font-roboto font-semibold p-4">
-        {showDashboard && name && `Welcome, ${name}`} {/* Display the text after the delay */}
+        {showDashboard && name && `Welcome, Prajna`} Welcome, Prajna
       </div>
       <div className="flex items-center space-x-4">
         {/* Render this button only if the instructor is viewing as a student */}

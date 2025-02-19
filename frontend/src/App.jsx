@@ -21,6 +21,8 @@ import AdminHomepage from "./pages/admin/AdminHomepage";
 import InstructorHomepage from "./pages/instructor/InstructorHomepage";
 import  CasePage from "./pages/student/CasePage";
 import NewCaseForm from "./pages/student/NewCase";
+import ViewAllCases from "./pages/student/AllCases";
+import InterviewAssistant from "./pages/student/components/InterviewAssistant";
 // import CaseOveriew from "./pages/student/CaseOverview";
 
 export const UserContext = createContext();
@@ -129,6 +131,8 @@ function App() {
               />
             }
           />
+          <Route path="/cases" element={<ViewAllCases />} />
+          <Route path="/interview" element={<InterviewAssistant />} />
           <Route path="/home/*" element={<StudentHomepage />} />
           <Route path="/group/*" element={<InstructorHomepage />} />
         </Routes>

@@ -365,6 +365,13 @@ export const Login = () => {
     }
   };
 
+  const handleMockLogin = () => {
+    e.preventDefault();
+
+    
+    navigate("/home");
+  }
+
   const resendConfirmationCode = async () => {
     try {
       setLoading(true);
@@ -505,7 +512,7 @@ export const Login = () => {
               >
                 Welcome to
                 <br />
-                Clinical Interview Tool
+                Legal Aid Tool
                 <br />
               </Typography>
 
@@ -549,7 +556,7 @@ export const Login = () => {
                   <Box
                     component="form"
                     noValidate
-                    onSubmit={handleSignIn}
+                    onSubmit={handleMockLogin}
                     sx={{ mt: 1 }}
                   >
                     <TextField
@@ -574,8 +581,8 @@ export const Login = () => {
                       type="password"
                       id="password"
                       autoComplete="current-password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                     // value={password}
+                     // onChange={(e) => setPassword(e.target.value)}
                       inputProps={{ maxLength: 50 }}
                     />
                     <Button
@@ -584,6 +591,7 @@ export const Login = () => {
                       variant="contained"
                       color="primary"
                       sx={{ mt: 3, mb: 2 }}
+                      onClick={() => handleMockLogin}
                     >
                       Sign In
                     </Button>
