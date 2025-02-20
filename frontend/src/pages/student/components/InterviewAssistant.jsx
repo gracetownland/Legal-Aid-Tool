@@ -7,16 +7,28 @@ const InterviewAssistant = () => {
   ]);
   const [userInput, setUserInput] = useState("");
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (userInput.trim()) {
       setMessages((prevMessages) => [
         ...prevMessages,
         { sender: "user", text: userInput },
-        { sender: "bot", text: "Got it! What's next?" }, // Bot response
       ]);
       setUserInput(""); // Reset input field
+  
+      // Await the AI response before updating the messages
+      const llmResponse = await getAIResponse(userInput);
+      console.log(llmResponse); // Check the response in the console
+  
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { sender: "bot", text: llmResponse }, // Bot response
+      ]);
     }
   };
+
+  async function getAIResponse(userInput) {
+    return userInput // stub      
+  }
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 2 }}>
