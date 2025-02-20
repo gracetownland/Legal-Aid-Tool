@@ -94,20 +94,28 @@ def get_student_query(raw_query: str) -> str:
     """
     return student_query
 
-def get_initial_student_query(patient_name: str) -> str:
+def get_initial_student_query(case_type: str, law_type: str, case_description: str) -> str:
     """
-    Generate an initial query for the student to interact with the system. 
-    The query asks the student to greet the system and then requests a question related to a specified patient.
+    Generate an initial query for the student to interact with the system.
+    The query asks the student to greet the system and then requests a question related to a specified case.
 
     Args:
-    patient_name (str): The name of the patient for which the initial question should be generated.
+    case_type (str): The type of case being discussed.
+    law_type (str): The type of law relevant to the case.
+    case_description (str): A brief description of the case.
 
     Returns:
     str: The formatted initial query string for the student.
     """
     student_query = f"""
     user
-    Greet me and then ask me a question related to the patient: {patient_name}. 
+    Greet me and ask if I'm ready to start talking about the case.
+
+    Be prepared to answer questions about the case, with the following context (you do not need to say anything about the context in your response yet, just ingest it):
+    Case type: {case_type}
+    Law type: {law_type}
+    Case description: {case_description}
+    This is the end of the current context. Prepare to be asked about the case.
     """
     return student_query
 
