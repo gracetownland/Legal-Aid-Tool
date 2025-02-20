@@ -16,6 +16,17 @@ const InterviewAssistant = () => {
         ...prevMessages,
         { sender: "user", text: userInput },
       ]);
+      setUserInput(""); // Reset input field
+  
+      // Await the AI response before updating the messages
+      const llmResponse = await getAIResponse(userInput);
+      console.log(llmResponse); // Check the response in the console
+  
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { sender: "bot", text: llmResponse }, // Bot response
+      ]);
+      ]);
 
       // Reset user input
       setUserInput("");
@@ -47,6 +58,10 @@ const InterviewAssistant = () => {
       }
     }
   };
+
+  async function getAIResponse(userInput) {
+    return userInput // stub      
+  }
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 2 }}>

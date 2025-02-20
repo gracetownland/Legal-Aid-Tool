@@ -10,8 +10,6 @@ from langchain_core.pydantic_v1 import BaseModel, Field
 
 class LLM_evaluation(BaseModel):
     response: str = Field(description="Assessment of the student's answer with a follow-up question.")
-    verdict: str = Field(description="'True' if the student has properly diagnosed the patient, 'False' otherwise.")
-
 
 def create_dynamodb_history_table(table_name: str) -> bool:
     """
@@ -96,33 +94,38 @@ def get_student_query(raw_query: str) -> str:
     """
     return student_query
 
-def get_initial_student_query(patient_name: str) -> str:
+def get_initial_student_query(case_type: str, law_type: str, case_description: str) -> str:
     """
-    Generate an initial query for the student to interact with the system. 
-    The query asks the student to greet the system and then requests a question related to a specified patient.
+    Generate an initial query for the student to interact with the system.
+    The query asks the student to greet the system and then requests a question related to a specified case.
 
     Args:
-    patient_name (str): The name of the patient for which the initial question should be generated.
+    case_type (str): The type of case being discussed.
+    law_type (str): The type of law relevant to the case.
+    case_description (str): A brief description of the case.
 
     Returns:
     str: The formatted initial query string for the student.
     """
     student_query = f"""
     user
-    Greet me and then ask me a question related to the patient: {patient_name}. 
+    Greet me and ask if I'm ready to start talking about the case.
+
+    Be prepared to answer questions about the case, with the following context (you do not need to say anything about the context in your response yet, just ingest it):
+    Case type: {case_type}
+    Law type: {law_type}
+    Case description: {case_description}
+    This is the end of the current context. Prepare to be asked about the case.
     """
     return student_query
 
 def get_response(
     query: str,
-    patient_name: str,
     llm: ChatBedrock,
     history_aware_retriever,
     table_name: str,
     session_id: str,
     system_prompt: str,
-    patient_age: str,
-    patient_prompt: str,
     llm_completion: bool
 ) -> dict:
     """
@@ -140,31 +143,38 @@ def get_response(
     dict: A dictionary containing the generated response and the source documents used in the retrieval.
     """
     
-    completion_string = """
-                Once I, the pharmacy student, have give you a diagnosis, politely leave the conversation and wish me goodbye.
-                Regardless if I have given you the proper diagnosis or not for the patient you are pretending to be, stop talking to me.
-                """
-    if llm_completion:
-        completion_string = """
-                Continue this process until you determine that me, the pharmacy student, has properly diagnosed the patient you are pretending to be.
-                Once the proper diagnosis is provided, include PROPER DIAGNOSIS ACHIEVED in your response and do not continue the conversation.
-                """
+    # completion_string = """
+    #             Once I, the law student, have give you a diagnosis, politely leave the conversation and wish me goodbye.
+    #             Regardless if I have given you the proper diagnosis or not for the patient you are pretending to be, stop talking to me.
+    #             """
+    # if llm_completion:
+    #     completion_string = """
+    #             Continue this process until you determine that me, the law student, has properly diagnosed the patient you are pretending to be.
+    #             Once the proper diagnosis is provided, include PROPER DIAGNOSIS ACHIEVED in your response and do not continue the conversation.
+    #             """
 
     # Create a system prompt for the question answering
     system_prompt = (
         f"""
         <|begin_of_text|>
-        <|start_header_id|>patient<|end_header_id|>
-        You are a patient, I am a pharmacy student. Your name is {patient_name} and you are going to pretend to be a patient talking to me, a pharmacy student.
-        You are not the pharmacy student. You are the patient. Look at the document(s) provided to you and act as a patient with those symptoms.
-        Please pay close attention to this: {system_prompt} 
-        Start the conversion by saying Hello! I'm {patient_name}, I am {patient_age} years old, and then further talk about the symptoms you have. 
-        Here are some additional details about your personality, symptoms, or overall condition: {patient_prompt}
-        {completion_string}
-        Use the following document(s) to provide
-        hints as a patient to me, the pharmacy student. Use three sentences maximum when describing your symptoms to provide clues to me, the pharmacy student.
-        End each clue with a question that pushes me to the correct diagnosis. I might ask you questions or provide my thoughts as statements.
-        Again, YOU ARE SUPPOSED TO ACT AS THE PATIENT. I AM THE PHARMACY STUDENT. 
+        <|start_header_id|>case<|end_header_id|>
+        '''You are a helpful assistant to me, a UBC law student, who answers
+         with kindness while being concise, so that it is easy to read your
+         responses quickly yet still get valuable information from them. No need
+         to be conversational, just skip to talking about the content. Refer to me,
+         the law student, in the second person. You will be provided with context to
+         a legal case  is interviewing a client about, and you exist to help provide 
+         legal context and analysis, relevant issues, possible strategies to defend the
+         client, etc. to the law student when they provide you with context on certain
+         client cases, and you should provide possible follow-up questions for me, the
+         law student, to ask the client to help progress the case more after your initial
+         (concise and easy to read) analysis. These are NOT for the client to ask a lawyer;
+         this is to help me, the law student, learn what kind of questions to ask my client,
+         so you should only provide follow-up questions for me, the law student, to ask the
+         client as if I were a lawyer. You may also mention certain legal information and 
+         implications that I, the law student, may have missed, and mention which part of 
+         Canadian law it is applicable too if possible or helpful. You are NOT allowed hallucinate, 
+         informational accuracy is important.'''
         <|eot_id|>
         <|start_header_id|>documents<|end_header_id|>
         {{context}}
@@ -233,42 +243,11 @@ def get_llm_output(response: str, llm_completion: bool) -> dict:
     response (str): The response generated by the LLM.
 
     Returns:
-    dict: A dictionary containing the processed output from the LLM and a boolean 
-    flag indicating whether proper diagnosis has been achieved.
+    dict: A dictionary containing the processed output from the LLM.
     """
-
-    completion_sentence = " Congratulations! You have provided the proper diagnosis for me, the patient I am pretending to be! Please try other mock patients to continue your diagnosis skills! :)"
-
-    if not llm_completion:
-        return dict(
-            llm_output=response,
-            llm_verdict=False
-        )
-    
-    elif "PROPER DIAGNOSIS ACHIEVED" not in response:
-        return dict(
-            llm_output=response,
-            llm_verdict=False
-        )
-    
-    elif "PROPER DIAGNOSIS ACHIEVED" in response:
-        sentences = split_into_sentences(response)
-        
-        for i in range(len(sentences)):
-            
-            if "PROPER DIAGNOSIS ACHIEVED" in sentences[i]:
-                llm_response=' '.join(sentences[0:i-1])
-                
-                if sentences[i-1][-1] == '?':
-                    return dict(
-                        llm_output=llm_response,
-                        llm_verdict=False
-                    )
-                else:
-                    return dict(
-                        llm_output=llm_response + completion_sentence,
-                        llm_verdict=True
-                    )
+    return dict(
+        llm_output=response
+    )
 
 def split_into_sentences(paragraph: str) -> list[str]:
     """

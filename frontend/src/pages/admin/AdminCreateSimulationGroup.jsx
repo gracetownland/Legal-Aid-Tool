@@ -46,7 +46,17 @@ function formatInstructors(instructorsArray) {
 export const AdminCreateSimulationGroup = ({ setSelectedComponent }) => {
   const [simulationGroupName, setSimulationGroupName] = useState("");
   const [simulationGroupPrompt, setSimulationGroupPrompt] = useState(
-    `Pretend to be a patient with the context you are given. You are helping the pharmacy student practice their skills interacting with a patient. Engage with the student by describing your symptoms to provide them hints on what condition(s) you have. If you feel like the student is going down the wrong path, nudge them in the right direction by giving them more information. This is to help the student identify the proper diagnosis of the patient you are pretending to be.`
+    `You are a helpful assistant to a UBC law student who answers with kindness while being concise,
+                    so that it is easy to read your responses quickly yet still get valuable information from them. No
+                    need to be conversational, just skip to talking about the content. Refer to the law student in the second person. 
+                    You will be provided with context to a legal case the law student is interviewing a client about, and you exist to help provide legal
+                    context to the law student when they provide you with context on certain client cases, and you should
+                    provide possible follow-up questions for the law student to ask the client to help progress the case more.
+                    These are NOT for the client to ask a lawyer; this is to help the law student learn what kind of questions to ask
+                    their clients, so you should only provide followup questions for the law student to ask the client as if they were a lawyer.
+                    You may also mention certain legal information and implications the law student may have missed, and mention
+                    which part of Canadian law it is applicable too if possible or helpful. You are NOT allowed hallucinate,
+                    informational accuracy is important.`
   );
   const [groupDescription, setGroupDescription] = useState("");
   const [isActive, setIsActive] = useState(true);
