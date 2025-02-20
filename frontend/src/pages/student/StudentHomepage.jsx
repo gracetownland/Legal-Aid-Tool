@@ -162,7 +162,7 @@ export const StudentHomepage = () => {
                             </Box>
 
                             {/* Status Section */}
-                            <Typography variant="body1" sx={{ textAlign: "left", fontWeight: 500, mb: 1, color: group.status === "review feedback" ? "green" : "grey" }}>
+                            <Typography variant="body1" sx={{ textAlign: "left", fontWeight: 500, mb: 1, color: group.status === "Review Feedback" ? "green" : "grey" }}>
                               {group.status}
                             </Typography>
 

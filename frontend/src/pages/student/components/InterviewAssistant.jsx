@@ -1,20 +1,50 @@
 import React, { useState } from "react";
-import { Box, Typography, TextField, Button, Paper, Grid, Divider } from "@mui/material";
+import { Box, Typography, TextField, Button, Paper } from "@mui/material";
+import axios from "axios";
 
 const InterviewAssistant = () => {
   const [messages, setMessages] = useState([
     { sender: "bot", text: "Hello! I'm your Interview Assistant. Let's get started." },
   ]);
   const [userInput, setUserInput] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (userInput.trim()) {
+      // Add user's message to the chat
       setMessages((prevMessages) => [
         ...prevMessages,
         { sender: "user", text: userInput },
-        { sender: "bot", text: "Got it! What's next?" }, // Bot response
       ]);
-      setUserInput(""); // Reset input field
+
+      // Reset user input
+      setUserInput("");
+
+      // Show loading state
+      setLoading(true);
+
+      try {
+        // Call API Gateway (which triggers Lambda)
+        const response = await axios.post("https://2n2g0poiyl.execute-api.ca-central-1.amazonaws.com/dev", {
+          user_prompt: userInput, // send user input as the prompt
+          number_of_docs: 3, // you can modify this value based on your needs
+        });
+
+        // Add the bot's response to the chat
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          { sender: "bot", text: response.data.answer }, // Assuming the response data contains 'answer'
+        ]);
+      } catch (error) {
+        console.error("Error while fetching answer:", error);
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          { sender: "bot", text: "Sorry, I encountered an error. Please try again later." },
+        ]);
+      } finally {
+        // Hide loading state
+        setLoading(false);
+      }
     }
   };
 
@@ -64,8 +94,8 @@ const InterviewAssistant = () => {
           onChange={(e) => setUserInput(e.target.value)}
           sx={{ marginRight: 2 }}
         />
-        <Button variant="contained" color="primary" onClick={handleSendMessage}>
-          Send
+        <Button variant="contained" color="primary" onClick={handleSendMessage} disabled={loading}>
+          {loading ? "Loading..." : "Send"}
         </Button>
       </Box>
     </Box>
