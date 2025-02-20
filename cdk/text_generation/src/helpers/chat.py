@@ -94,33 +94,38 @@ def get_student_query(raw_query: str) -> str:
     """
     return student_query
 
-def get_initial_student_query(patient_name: str) -> str:
+def get_initial_student_query(case_type: str, law_type: str, case_description: str) -> str:
     """
-    Generate an initial query for the student to interact with the system. 
-    The query asks the student to greet the system and then requests a question related to a specified patient.
+    Generate an initial query for the student to interact with the system.
+    The query asks the student to greet the system and then requests a question related to a specified case.
 
     Args:
-    patient_name (str): The name of the patient for which the initial question should be generated.
+    case_type (str): The type of case being discussed.
+    law_type (str): The type of law relevant to the case.
+    case_description (str): A brief description of the case.
 
     Returns:
     str: The formatted initial query string for the student.
     """
     student_query = f"""
     user
-    Greet me and then ask me a question related to the patient: {patient_name}. 
+    Greet me and ask if I'm ready to start talking about the case.
+
+    Be prepared to answer questions about the case, with the following context (you do not need to say anything about the context in your response yet, just ingest it):
+    Case type: {case_type}
+    Law type: {law_type}
+    Case description: {case_description}
+    This is the end of the current context. Prepare to be asked about the case.
     """
     return student_query
 
 def get_response(
     query: str,
-    patient_name: str,
     llm: ChatBedrock,
     history_aware_retriever,
     table_name: str,
     session_id: str,
     system_prompt: str,
-    patient_age: str,
-    patient_prompt: str,
     llm_completion: bool
 ) -> dict:
     """
@@ -152,7 +157,7 @@ def get_response(
     system_prompt = (
         f"""
         <|begin_of_text|>
-        <|start_header_id|>patient<|end_header_id|>
+        <|start_header_id|>case<|end_header_id|>
         '''You are a helpful assistant to me, a UBC law student, who answers
          with kindness while being concise, so that it is easy to read your
          responses quickly yet still get valuable information from them. No need
@@ -240,35 +245,9 @@ def get_llm_output(response: str, llm_completion: bool) -> dict:
     Returns:
     dict: A dictionary containing the processed output from the LLM.
     """
-
-    completion_sentence = " Congratulations! You have provided the proper diagnosis for me, the patient I am pretending to be! Please try other mock patients to continue your diagnosis skills! :)"
-
-    if not llm_completion:
-        return dict(
-            llm_output=response
-        )
-    
-    elif "PROPER DIAGNOSIS ACHIEVED" not in response:
-        return dict(
-            llm_output=response
-        )
-    
-    elif "PROPER DIAGNOSIS ACHIEVED" in response:
-        sentences = split_into_sentences(response)
-        
-        for i in range(len(sentences)):
-            
-            if "PROPER DIAGNOSIS ACHIEVED" in sentences[i]:
-                llm_response=' '.join(sentences[0:i-1])
-                
-                if sentences[i-1][-1] == '?':
-                    return dict(
-                        llm_output=llm_response
-                    )
-                else:
-                    return dict(
-                        llm_output=llm_response + completion_sentence
-                    )
+    return dict(
+        llm_output=response
+    )
 
 def split_into_sentences(paragraph: str) -> list[str]:
     """
