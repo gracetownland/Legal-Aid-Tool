@@ -482,6 +482,8 @@ export const Login = () => {
               alignItems: "center",
               justifyContent: "center",
               padding: "20px",
+              backgroundColor: '#94A1B5',
+
             }}
           >
 
@@ -502,7 +504,7 @@ export const Login = () => {
               <Typography
                 variant="h4"
                 sx={{
-                  color: 'black',
+                  color: 'white',
                   fontWeight: 'bold',
                   fontSize: 'clamp(1rem, 2.5vw, 2.5rem)', // More aggressive scaling: shrinks to 1rem on small screens
                   lineHeight: '1.2', // Slightly tighter line spacing for smaller windows
@@ -586,15 +588,22 @@ export const Login = () => {
                       inputProps={{ maxLength: 50 }}
                     />
                     <Button
-                      type="submit"
-                      fullWidth
-                      variant="contained"
-                      color="primary"
-                      sx={{ mt: 3, mb: 2 }}
-                      onClick={() => handleMockLogin}
-                    >
-                      Sign In
-                    </Button>
+                    type="submit"
+                    fullWidth
+                    variant="contained"
+                    color="primary"
+                    sx={{
+                      mt: 3,
+                      mb: 2,
+                      color: "white", // Default text color
+                      "&:hover": {
+                        color: "lightgray", // Change this to your preferred hover color
+                      },
+                    }}
+                    onClick={handleMockLogin} // Remove the arrow function, just pass the function reference
+                  >
+                    Sign In
+                  </Button>
                     <Grid container>
                       <Grid item xs={6}>
                         <Link
