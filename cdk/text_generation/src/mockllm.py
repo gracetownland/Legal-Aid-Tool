@@ -310,7 +310,6 @@ def handler(event, context):
 
     query_params = event.get("queryStringParameters", {})
 
-
     body = {} if event.get("body") is None else json.loads(event.get("body"))
     question = body.get("message_content", "")
 
@@ -342,7 +341,6 @@ def handler(event, context):
 
     try:
         logger.info("Creating history-aware retriever.")
-
         # history_aware_retriever = get_vectorstore_retriever(
         #     llm=llm,
         #     vectorstore_config_dict=vectorstore_config_dict,
@@ -363,7 +361,7 @@ def handler(event, context):
 
     try:
         logger.info("Generating response from the LLM.")
-        response = answer_prompt(question,5)
+        response = answer_prompt(question, 5)  # Case ID is passed as 5
     except Exception as e:
         logger.error(f"Error getting response: {e}")
         return {
@@ -387,7 +385,7 @@ def handler(event, context):
             "Access-Control-Allow-Methods": "*",
         },
         "body": json.dumps({
-            "llm_output": response.get("llm_output", "LLM failed to create response"),
+            "llm_output": response.get("answer", "LLM failed to create response"),  # Fix key name here
         })
     }
 
