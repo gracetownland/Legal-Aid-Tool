@@ -27,8 +27,48 @@ const InterviewAssistant = () => {
   };
 
   async function getAIResponse(userInput) {
-    return userInput // stub      
+    async function getFetchBody() {
+      try {
+        const response = await fetch('https://1xojcaj3t8.execute-api.ca-central-1.amazonaws.com/Test', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            queryStringParameters: {},  // Empty query string parameters (if not used)
+            body: JSON.stringify({
+              "message_content": "My landlord won't return my calls about the broken heater."
+            })
+          }),
+          mode: 'no-cors'  // Add this line to set the request mode to no-cors
+        })
+        .then(response => response.json())
+        .then(data => console.log('Success:', data))
+        .catch((error) => console.error('Error:', error));
+
+        // With no-cors, you can't access the response body directly
+        // if (!response.ok) {
+        //   throw new Error('Network response was not ok ' + response.statusText);
+        // }
+  
+        // You won't be able to read response.json() with no-cors, so this part won't work as expected
+        console.log('Success:', response); // You'll only be able to log the response as opaque
+  
+        // Since no-cors means you can't access the body, we can't directly extract the body.
+        // Returning null here.
+        return null;
+  
+      } catch (error) {
+        console.error('Error:', error);  // Log any error that occurs
+        return null;  // Return null in case of an error
+      }
+    }
+  
+    // Calling the function and logging the result
+    const body = await getFetchBody();
+    console.log("Extracted Body:", body);  // Log the extracted body after it's returned
   }
+  
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 2 }}>
