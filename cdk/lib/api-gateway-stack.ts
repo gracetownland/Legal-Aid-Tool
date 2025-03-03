@@ -727,6 +727,7 @@ export class ApiGatewayStack extends cdk.Stack {
     // const authorizer = new apigateway.CognitoUserPoolsAuthorizer(this, 'vciAuthorizer', {
     //   cognitoUserPools: [this.userPool],
     // });
+
     new cdk.CfnOutput(this, `${id}-UserPoolIdOutput`, {
       value: this.userPool.userPoolId,
       description: "The ID of the Cognito User Pool",

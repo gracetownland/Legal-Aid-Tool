@@ -1,4 +1,4 @@
-const { v4: uuidv4 } = require('uuid')
+// const { v4: uuidv4 } = require('uuid')
 const { initializeConnection } = require("./lib.js");
 let { SM_DB_CREDENTIALS, RDS_PROXY_ENDPOINT, USER_POOL } = process.env;
 const {
@@ -10,6 +10,7 @@ const {
 let sqlConnection = global.sqlConnection;
 
 exports.handler = async (event) => {
+  console.log(event);
   const cognito_id = event.requestContext.authorizer.userId;
   const client = new CognitoIdentityProviderClient();
   const userAttributesCommand = new AdminGetUserCommand({
@@ -88,7 +89,7 @@ exports.handler = async (event) => {
             // Check if the user already exists
             const existingUser = await sqlConnection`
                 SELECT * FROM "users"
-                WHERE user_id = ${user_id};
+                WHERE user_email = ${user_email};
             `;
 
             if (existingUser.length > 0) {
@@ -127,16 +128,17 @@ exports.handler = async (event) => {
       case "GET /student/get_name":
         if (
           event.queryStringParameters &&
-          event.queryStringParameters.user_id
+          event.queryStringParameters.user_email
         ) {
-          const user_id = event.queryStringParameters.user_id;
+          const user_email = event.queryStringParameters.user_email;
           try {
             // Retrieve roles for the user with the provided email
             const userData = await sqlConnection`
                   SELECT first_name
                   FROM "users"
-                  WHERE user_email = ${user_id};
+                  WHERE user_email = ${user_email};
                 `;
+            console.log(userData);
             if (userData.length > 0) {
               response.body = JSON.stringify({ name: userData[0].first_name });
             } else {
@@ -153,6 +155,37 @@ exports.handler = async (event) => {
           response.body = JSON.stringify({ error: "User email is required" });
         }
         break;
+
+        case "POST /student/new-case":
+        if (event.body) {
+          const {
+            case_title,
+            case_type,
+            law_type,
+            case_description,
+            system_prompt,
+          } = JSON.parse(event.body);
+
+          try {
+            // SQL query to insert the new case
+            const newCase = await sqlConnection`
+              INSERT INTO "cases" (case_title, case_type, law_type, case_description, system_prompt)
+              VALUES (${case_title}, ${case_type}, ${law_type}, ${case_description}, ${system_prompt})
+              RETURNING case_id;
+            `;
+
+            response.body = JSON.stringify({ case_id: newCase[0].case_id });
+          } catch (err) {
+            response.statusCode = 500;
+            console.log(err);
+            response.body = JSON.stringify({ error: "Internal server error" });
+          }
+        } else {
+          response.statusCode = 400;
+          response.body = JSON.stringify({ error: "Case data is required" });
+        }
+        break;
+
       case "GET /student/cases":
         if (
           event.queryStringParameters != null &&
@@ -178,7 +211,7 @@ exports.handler = async (event) => {
             const data = await sqlConnection`
                 SELECT *
                 FROM "cases"
-                WHERE "enrolments".user_id = ${user_id}
+                WHERE "sessions".user_id = ${user_id}
               `;
             response.body = JSON.stringify(data);
           } catch (err) {

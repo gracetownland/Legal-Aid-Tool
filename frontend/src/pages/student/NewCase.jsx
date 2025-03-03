@@ -11,6 +11,10 @@ import {
   FormLabel,
   Grid,
   Divider,
+  MenuItem,
+  Select,
+  InputLabel,
+  FormControl as MUIFormControl,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
@@ -19,12 +23,15 @@ const NewCaseForm = () => {
   const [formData, setFormData] = useState({
     broadAreaOfLaw: "",
     jurisdiction: "",
+    province: "",
     statute: "",
     statuteDetails: "",
     legalMatterSummary: "",
   });
 
   const [saveForLater, setSaveForLater] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState(null); // For handling errors during submission
   const navigate = useNavigate(); // React Router navigate hook
 
   // Handle form field changes
@@ -36,10 +43,46 @@ const NewCaseForm = () => {
     }));
   };
 
-  // Navigate to the Interview Assistant and pass the form data
-  const handleStartInterview = () => {
-    console.log("Interview started with form data:", formData);
-    navigate("/interview", { state: { formData } });
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
+
+    // Map form data to API structure
+    const caseData = {
+      case_title: formData.broadAreaOfLaw,
+      case_type: formData.jurisdiction, // Assuming 'jurisdiction' corresponds to 'case_type'
+      law_type: formData.jurisdiction, // Assuming 'jurisdiction' corresponds to 'law_type'
+      case_description: formData.legalMatterSummary,
+      system_prompt: formData.statuteDetails || "No system prompt provided", // Placeholder if not filled
+    };
+
+    try {
+      // Send a POST request to your API endpoint
+      const response = await fetch("https://nol9wedqt0.execute-api.ca-central-1.amazonaws.com/prod/student/new-case", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(caseData), // Sending transformed case data as JSON
+      });
+
+      // Check for success
+      if (!response.ok) {
+        throw new Error("Failed to submit the case. Please try again.");
+      }
+
+      const data = await response.json();
+
+      // If successful, navigate to the Interview page or show success
+      console.log("Case submitted successfully:", data);
+      navigate("/interview", { state: { formData } });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Navigate back to the homepage
@@ -77,7 +120,7 @@ const NewCaseForm = () => {
           Start A New Case
         </Typography>
 
-        <form noValidate autoComplete="off">
+        <form noValidate autoComplete="off" onSubmit={handleSubmit}>
           {/* Broad Area of Law */}
           <Box sx={{ marginBottom: 2 }}>
             <TextField
@@ -104,10 +147,33 @@ const NewCaseForm = () => {
                 onChange={handleChange}
               >
                 <FormControlLabel value="Federal Law" control={<Radio />} label="Federal Law" />
-                <FormControlLabel value="British Columbia" control={<Radio />} label="British Columbia" />
+                <FormControlLabel value="Provincial" control={<Radio />} label="Provincial" />
               </RadioGroup>
             </FormControl>
           </Box>
+
+          {/* Province Dropdown - Conditional Rendering */}
+          {formData.jurisdiction === "Provincial" && (
+            <Box sx={{ marginBottom: 2 }}>
+              <MUIFormControl fullWidth>
+                <InputLabel>Province</InputLabel>
+                <Select
+                  name="province"
+                  value={formData.province}
+                  onChange={handleChange}
+                  label="Province"
+                  required
+                >
+                  <MenuItem value="British Columbia">British Columbia</MenuItem>
+                  <MenuItem value="Ontario">Ontario</MenuItem>
+                  <MenuItem value="Quebec">Quebec</MenuItem>
+                  <MenuItem value="Alberta">Alberta</MenuItem>
+                  <MenuItem value="Nova Scotia">Nova Scotia</MenuItem>
+                  {/* Add more provinces as necessary */}
+                </Select>
+              </MUIFormControl>
+            </Box>
+          )}
 
           {/* Statute and Statutory Section */}
           <Box sx={{ marginBottom: 2 }}>
@@ -152,15 +218,16 @@ const NewCaseForm = () => {
             />
           </Box>
 
-          {/* Start Interview Button */}
+          {/* Submit Button */}
           <Button
             variant="contained"
             fullWidth
             color="primary"
-            onClick={handleStartInterview}
-            sx={{ textAlign: "left",  color: "white" }}
+            type="submit" // Changed to 'submit' to trigger form submission
+            sx={{ textAlign: "left", color: "white" }}
+            disabled={isSubmitting} // Disable when submitting
           >
-            Start Interview
+            {isSubmitting ? "Submitting..." : "Start Interview"}
           </Button>
 
           {/* Optionally show the 'saved' state */}
@@ -169,6 +236,13 @@ const NewCaseForm = () => {
               <Typography variant="body1" color="white" sx={{ textAlign: "left" }}>
                 Your progress has been saved for later.
               </Typography>
+            </Box>
+          )}
+
+          {/* Display Error Message */}
+          {error && (
+            <Box sx={{ marginTop: 2, color: "red", textAlign: "left" }}>
+              <Typography variant="body1">{error}</Typography>
             </Box>
           )}
         </form>
