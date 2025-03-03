@@ -29,44 +29,33 @@ const InterviewAssistant = () => {
   async function getAIResponse(userInput) {
     async function getFetchBody() {
       try {
-        const response = await fetch('https://1xojcaj3t8.execute-api.ca-central-1.amazonaws.com/Test', {
+        const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}student/text_generation`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            queryStringParameters: {},  // Empty query string parameters (if not used)
-            body: JSON.stringify({
-              "message_content": "My landlord won't return my calls about the broken heater."
-            })
-          }),
-          mode: 'no-cors'  // Add this line to set the request mode to no-cors
-        })
-        .then(response => response.json())
-        .then(data => console.log('Success:', data))
-        .catch((error) => console.error('Error:', error));
-
-        // With no-cors, you can't access the response body directly
-        // if (!response.ok) {
-        //   throw new Error('Network response was not ok ' + response.statusText);
-        // }
-  
-        // You won't be able to read response.json() with no-cors, so this part won't work as expected
-        console.log('Success:', response); // You'll only be able to log the response as opaque
-  
-        // Since no-cors means you can't access the body, we can't directly extract the body.
-        // Returning null here.
-        return null;
-  
+            message_content: userInput
+          }) // Removed extra JSON.stringify()
+        });
+    
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+    
+        const data = await response.json();
+        const res = data.llm_output
+        console.log('Success:', data);
+        return res;
       } catch (error) {
-        console.error('Error:', error);  // Log any error that occurs
-        return null;  // Return null in case of an error
+        console.error('Error:', error);
+        return null;
       }
     }
   
     // Calling the function and logging the result
     const body = await getFetchBody();
-    console.log("Extracted Body:", body);  // Log the extracted body after it's returned
+    return body
   }
   
 

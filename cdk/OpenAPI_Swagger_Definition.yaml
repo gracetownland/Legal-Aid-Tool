@@ -928,27 +928,9 @@ paths:
       operationId: student_create_ai_message_POST
       parameters:
         - in: query
-          name: session_id
+          name: case_id
           required: true
-          description: ID of the session where the message is sent
-          schema:
-            type: string
-        - in: query
-          name: email
-          required: true
-          description: Email of the student associated with the session
-          schema:
-            type: string
-        - in: query
-          name: simulation_group_id
-          required: true
-          description: ID of the group related to the session
-          schema:
-            type: string
-        - in: query
-          name: patient_id
-          required: true
-          description: ID of the patient related to the session
+          description: ID of the case the message is discussing
           schema:
             type: string
       requestBody:
