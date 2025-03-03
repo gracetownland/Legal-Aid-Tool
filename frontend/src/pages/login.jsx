@@ -117,6 +117,8 @@ export const Login = () => {
         username: username,
         password: password,
       });
+      
+      console.log("SignIn Response:", user); 
       console.log(
         "USER SUCCESSFULLY LOGGED IN:",
         user.isSignedIn,
@@ -233,6 +235,7 @@ export const Login = () => {
       });
       console.log("Error signing up:", error);
       setLoading(false);
+      console.log()
       setError(error.message);
     } finally {
       setLoading(false);
@@ -364,13 +367,6 @@ export const Login = () => {
       setConfirmationError(error.message);
     }
   };
-
-  const handleMockLogin = () => {
-    e.preventDefault();
-
-    
-    navigate("/home");
-  }
 
   const resendConfirmationCode = async () => {
     try {
@@ -558,7 +554,7 @@ export const Login = () => {
                   <Box
                     component="form"
                     noValidate
-                    onSubmit={handleMockLogin}
+                    onSubmit={handleSignIn}
                     sx={{ mt: 1 }}
                   >
                     <TextField
@@ -583,8 +579,8 @@ export const Login = () => {
                       type="password"
                       id="password"
                       autoComplete="current-password"
-                     // value={password}
-                     // onChange={(e) => setPassword(e.target.value)}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
                       inputProps={{ maxLength: 50 }}
                     />
                     <Button
@@ -600,7 +596,7 @@ export const Login = () => {
                         color: "lightgray", // Change this to your preferred hover color
                       },
                     }}
-                    onClick={handleMockLogin} // Remove the arrow function, just pass the function reference
+                    onClick={handleSignIn} // Remove the arrow function, just pass the function reference
                   >
                     Sign In
                   </Button>

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { Box, Typography, TextField, Button, Paper, Grid, Divider } from "@mui/material";
+import { Box, Typography, TextField, Button, Paper, Divider } from "@mui/material";
 
-const InterviewAssistant = () => {
+const InterviewAssistant = ({ caseData }) => {
   const [messages, setMessages] = useState([
     { sender: "bot", text: "Hello! I'm your Interview Assistant. Let's get started." },
   ]);
@@ -14,11 +14,11 @@ const InterviewAssistant = () => {
         { sender: "user", text: userInput },
       ]);
       setUserInput(""); // Reset input field
-  
+
       // Await the AI response before updating the messages
       const llmResponse = await getAIResponse(userInput);
       console.log(llmResponse); // Check the response in the console
-  
+
       setMessages((prevMessages) => [
         ...prevMessages,
         { sender: "bot", text: llmResponse }, // Bot response
@@ -27,6 +27,9 @@ const InterviewAssistant = () => {
   };
 
   async function getAIResponse(userInput) {
+<<<<<<< HEAD
+    return userInput; // stub for AI response
+=======
     async function getFetchBody() {
       try {
         const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}student/text_generation`, {
@@ -55,15 +58,22 @@ const InterviewAssistant = () => {
   
     // Calling the function and logging the result
     const body = await getFetchBody();
-    return body
+    console.log("Extracted Body:", body);  // Log the extracted body after it's returned
+>>>>>>> 4d74cb07b3e8100a837ea26f71f9a046ba674923
   }
   
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 2 }}>
-      <Typography variant="h6" gutterBottom sx={{ textAlign: "left", fontWeight: 600 }}>
-        Interview Assistant
+      {/* Case Title and Information */}
+      <Typography variant="h6" sx={{ fontWeight: 600, marginBottom: 2 }}>
+        {caseData?.case_title || "Case Title Not Available"}
       </Typography>
+      <Typography variant="body2" sx={{ marginBottom: 2 }}>
+        <strong>Case Overview:</strong> {caseData?.case_description || "Overview information not available."}
+      </Typography>
+
+      <Divider sx={{ marginBottom: 2 }} />
 
       {/* Chat Messages */}
       <Box sx={{ overflowY: "auto", marginBottom: 2 }}>
@@ -105,7 +115,7 @@ const InterviewAssistant = () => {
           onChange={(e) => setUserInput(e.target.value)}
           sx={{ marginRight: 2 }}
         />
-        <Button variant="contained" color="primary" onClick={handleSendMessage}>
+        <Button variant="contained"  sx={{ color: "#ffffff"}} onClick={handleSendMessage}>
           Send
         </Button>
       </Box>

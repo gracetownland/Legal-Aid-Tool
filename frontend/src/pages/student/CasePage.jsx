@@ -1,14 +1,13 @@
-import React, { useState, useEffect } from "react";
-import { Drawer, Box, Typography, List, ListItem, ListItemText, Grid, Divider } from "@mui/material";
-import { useLocation } from "react-router-dom"; // Import useLocation to get the passed case data
-import StudentHeader from "../../components/StudentHeader";
-
+import React, { useState } from "react";
+import { Drawer, Box, Typography, List, ListItem, ListItemText, Button } from "@mui/material";
+import { useLocation, useNavigate } from "react-router-dom"; // Import useNavigate to navigate back
 import CaseOverview from "./components/CaseOverview";
 import PrelimSummary from "./components/PrelimSummary";
 import InterviewAssistant from "./components/InterviewAssistant";
 
 const CasePage = () => {
   const location = useLocation();
+  const navigate = useNavigate(); // Initialize navigate hook
   const { caseData } = location.state || {}; // Get the case data passed via navigate
 
   const [selectedOption, setSelectedOption] = useState("Case Overview");
@@ -30,8 +29,11 @@ const CasePage = () => {
     }
   };
 
+  const handleBackToHome = () => {
+    navigate("/home"); // Navigate to the home page
+  };
+
   return (
-    
     <Box display="flex">
       {/* Left Sidebar Drawer */}
       <Drawer
@@ -67,6 +69,15 @@ const CasePage = () => {
           padding: 3,
         }}
       >
+        {/* Back to Home Button */}
+        <Button 
+          onClick={handleBackToHome} 
+          sx={{ marginBottom: 2, }}
+        >
+          Back to Home Page
+        </Button>
+
+        {/* Render Selected Option Content */}
         {renderContent()}
       </Box>
     </Box>

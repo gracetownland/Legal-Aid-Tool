@@ -1,4 +1,4 @@
-const { SecretsManagerClient, GetSecretValueCommand } = require("@aws-sdk/client-secrets-manager");
+import { SecretsManagerClient, GetSecretValueCommand } from "@aws-sdk/client-secrets-manager";
 const { CognitoJwtVerifier } = require("aws-jwt-verify");
 
 // Create a Secrets Manager client
