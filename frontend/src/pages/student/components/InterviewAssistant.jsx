@@ -29,7 +29,7 @@ const InterviewAssistant = ({ caseData }) => {
   async function getAIResponse(userInput) {
     async function getFetchBody() {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}student/text_generation`, {
+        const response = await fetch('${import.meta.env.VITE_API_ENDPOINT}student/text_generation', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -55,7 +55,7 @@ const InterviewAssistant = ({ caseData }) => {
   
     // Calling the function and logging the result
     const body = await getFetchBody();
-    console.log("Extracted Body:", body);  // Log the extracted body after it's returned
+    return body
   }
   
 
