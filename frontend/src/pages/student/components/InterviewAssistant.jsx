@@ -26,6 +26,12 @@ const InterviewAssistant = ({ caseData }) => {
     }
   };
 
+  const handleKeyPress = (event) => {
+    if (event.key === 'Enter') {
+      handleSendMessage()
+    }
+  }
+
   async function getAIResponse(userInput) {
     async function getFetchBody() {
       try {
@@ -110,6 +116,7 @@ const InterviewAssistant = ({ caseData }) => {
           value={userInput}
           onChange={(e) => setUserInput(e.target.value)}
           sx={{ marginRight: 2 }}
+          onKeyDown={handleKeyPress}
         />
         <Button variant="contained"  sx={{ color: "#ffffff"}} onClick={handleSendMessage}>
           Send
