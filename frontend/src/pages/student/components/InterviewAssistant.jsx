@@ -1,73 +1,46 @@
 import React, { useState } from "react";
-import { Box, Typography, TextField, Button, Paper } from "@mui/material";
-import axios from "axios";
+import { Box, Typography, TextField, Button, Paper, Divider } from "@mui/material";
 
-const InterviewAssistant = () => {
+const InterviewAssistant = ({ caseData }) => {
   const [messages, setMessages] = useState([
     { sender: "bot", text: "Hello! I'm your Interview Assistant. Let's get started." },
   ]);
   const [userInput, setUserInput] = useState("");
-  const [loading, setLoading] = useState(false);
 
   const handleSendMessage = async () => {
     if (userInput.trim()) {
-      // Add user's message to the chat
       setMessages((prevMessages) => [
         ...prevMessages,
         { sender: "user", text: userInput },
       ]);
       setUserInput(""); // Reset input field
-  
+
       // Await the AI response before updating the messages
       const llmResponse = await getAIResponse(userInput);
       console.log(llmResponse); // Check the response in the console
-  
+
       setMessages((prevMessages) => [
         ...prevMessages,
         { sender: "bot", text: llmResponse }, // Bot response
       ]);
-      ]);
-
-      // Reset user input
-      setUserInput("");
-
-      // Show loading state
-      setLoading(true);
-
-      try {
-        // Call API Gateway (which triggers Lambda)
-        const response = await axios.post("https://2n2g0poiyl.execute-api.ca-central-1.amazonaws.com/dev", {
-          user_prompt: userInput, // send user input as the prompt
-          number_of_docs: 3, // you can modify this value based on your needs
-        });
-
-        // Add the bot's response to the chat
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          { sender: "bot", text: response.data.answer }, // Assuming the response data contains 'answer'
-        ]);
-      } catch (error) {
-        console.error("Error while fetching answer:", error);
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          { sender: "bot", text: "Sorry, I encountered an error. Please try again later." },
-        ]);
-      } finally {
-        // Hide loading state
-        setLoading(false);
-      }
     }
   };
 
   async function getAIResponse(userInput) {
-    return userInput // stub      
+    return userInput; // stub for AI response
   }
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 2 }}>
-      <Typography variant="h6" gutterBottom sx={{ textAlign: "left", fontWeight: 600 }}>
-        Interview Assistant
+      {/* Case Title and Information */}
+      <Typography variant="h6" sx={{ fontWeight: 600, marginBottom: 2 }}>
+        {caseData?.case_title || "Case Title Not Available"}
       </Typography>
+      <Typography variant="body2" sx={{ marginBottom: 2 }}>
+        <strong>Case Overview:</strong> {caseData?.case_description || "Overview information not available."}
+      </Typography>
+
+      <Divider sx={{ marginBottom: 2 }} />
 
       {/* Chat Messages */}
       <Box sx={{ overflowY: "auto", marginBottom: 2 }}>
@@ -109,8 +82,8 @@ const InterviewAssistant = () => {
           onChange={(e) => setUserInput(e.target.value)}
           sx={{ marginRight: 2 }}
         />
-        <Button variant="contained" color="primary" onClick={handleSendMessage} disabled={loading}>
-          {loading ? "Loading..." : "Send"}
+        <Button variant="contained"  sx={{ color: "#ffffff"}} onClick={handleSendMessage}>
+          Send
         </Button>
       </Box>
     </Box>
