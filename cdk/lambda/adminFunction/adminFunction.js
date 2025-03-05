@@ -43,7 +43,7 @@ exports.handler = async (event) => {
           const instructors = await sqlConnectionTableCreator`
                 SELECT user_email, first_name, last_name
                 FROM "users"
-                WHERE roles @> ARRAY['instructor']::varchar[]
+                WHERE role = 'instructor'
                 ORDER BY last_name ASC;
               `;
 

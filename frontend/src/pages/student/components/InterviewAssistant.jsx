@@ -35,7 +35,7 @@ const InterviewAssistant = ({ caseData }) => {
   async function getAIResponse(userInput) {
     async function getFetchBody() {
       try {
-        const response = await fetch('${import.meta.env.VITE_API_ENDPOINT}student/text_generation', {
+        const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}student/text_generation`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
