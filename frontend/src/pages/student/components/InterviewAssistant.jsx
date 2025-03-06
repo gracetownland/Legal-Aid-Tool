@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Box, Typography, TextField, Button, Paper, Divider, useTheme } from "@mui/material";
 
 const InterviewAssistant = ({ caseData }) => {
@@ -92,7 +94,8 @@ const InterviewAssistant = ({ caseData }) => {
               display: "flex",
               flexDirection: message.sender === "bot" ? "row" : "row-reverse",
               marginBottom: 2,
-              fontFamily: "'Roboto', sans-serif"
+              fontFamily: "'Roboto', sans-serif",
+              boxShadow: 'none'
             }}
           >
             <Paper
@@ -106,10 +109,24 @@ const InterviewAssistant = ({ caseData }) => {
                 marginRight: message.sender === "bot" ? "auto" : 0,
                 color: "var(--text)",
                 fontFamily: "'Roboto', sans-serif",
+                boxShadow: 'none'
               }}
             >
               <Typography variant="body1" sx={{ textAlign: "left" }}>
-                <pre style={{ whiteSpace: "pre-wrap", wordWrap: "break-word", fontFamily: "var(--font-family)"}}>{message.text}</pre>
+              <ReactMarkdown
+              children={message.text}
+              remarkPlugins={[remarkGfm]} // Enables Markdown features like lists and tables
+              components={{
+                p: ({ node, ...props }) => <p style={{ marginBottom: '0' }} {...props} />,
+                li: ({ node, ...props }) => <li style={{ marginBottom: '0.5rem' }} {...props} />,
+                ol: ({ node, ...props }) => (
+                  <ol style={{ paddingLeft: '1.5rem', listStyleType: 'decimal', marginBottom: '0' }} {...props} />
+                ),
+                ul: ({ node, ...props }) => (
+                  <ul style={{ paddingLeft: '1.5rem', listStyleType: 'disc', marginBottom: '0' }} {...props} />
+                ),
+              }}
+            />
               </Typography>
             </Paper>
           </Box>
@@ -118,21 +135,31 @@ const InterviewAssistant = ({ caseData }) => {
 
       <Box sx={{ display: "flex", alignItems: "center" }}>
         <TextField
-          label="Your Answer"
+          label="Type here..."
           variant="outlined"
           fullWidth
           value={userInput}
           onChange={(e) => setUserInput(e.target.value)}
-          sx={{ marginRight: 2 }}
+          sx={{ 
+            marginRight: 2,
+            '& .MuiOutlinedInput-notchedOutline': {
+              borderColor: '#808080', // Default border color (gray)
+            },
+            '&:hover .MuiOutlinedInput-notchedOutline': {
+              borderColor: '#808080', // Hover border color (gray)
+            },
+          }}
           onKeyDown={handleKeyPress}
           InputLabelProps={{
-            style: { backgroundColor: "transparent",
-              color: "var(--text)" },
+            style: { 
+              backgroundColor: "transparent", 
+              color: "#808080" // Label color (gray)
+            },
           }}
           InputProps={{
             style: {
               backgroundColor: "transparent",
-              color: "var(--text)",
+              color: "var(--text)", // Text color
             },
           }}
         />

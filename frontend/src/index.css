@@ -7,13 +7,14 @@
 
 :root {
   --text: #050315;
+  --text-button: #f0f0f0;
   --background: #fbfbfe;
   --background2: #ededed;
   --primary: #546bdf;
   --secondary: #c5d6f0;
   --accent: #1c187a;
-  --bot-text: #bcd5ff;
-  --sender-text: #ffffff;
+  --bot-text: #cee1ff;
+  --sender-text: #f0f0f0;
 
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -33,10 +34,11 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --text: #e0e0e0;
+    --text-button: #0e0e0e;
     --background: #2c2c2c;
     --background2: #171717;
     --primary: #abc6ff;
-    --secondary: #4e8fff;
+    --secondary: #759ee6;
     --accent: #3949ff;
     --bot-text: #284b69;
     --sender-text: #424141;
