@@ -3,12 +3,15 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Box, Typography, TextField, Button, Paper, Divider, useTheme } from "@mui/material";
 
+import TypingIndicator from "./TypingIndicator";
+
 const InterviewAssistant = ({ caseData }) => {
   const theme = useTheme();
   const [messages, setMessages] = useState([
     { sender: "bot", text: "Hi, I'm your Legal Interview Assistant. Let's get started!" },
   ]);
   const [userInput, setUserInput] = useState("");
+  const [isAItyping, setIsAItyping] = useState(false);
 
   const handleSendMessage = async () => {
     if (userInput.trim()) {
@@ -19,6 +22,7 @@ const InterviewAssistant = ({ caseData }) => {
       setUserInput(""); // Reset input field
 
       // Await the AI response before updating the messages
+      setIsAItyping(true);
       const llmResponse = await getAIResponse(userInput);
       console.log(llmResponse); // Check the response in the console
 
@@ -55,10 +59,12 @@ const InterviewAssistant = ({ caseData }) => {
         const data = await response.json();
         const res = data.llm_output
         console.log('Success:', data);
+        setIsAItyping(false);
         return res;
       } catch (error) {
         console.error('Error:', error);
-        return null;
+        setIsAItyping(false);
+        return "Error getting response.";
       }
     }
   
@@ -100,8 +106,8 @@ const InterviewAssistant = ({ caseData }) => {
           >
             <Paper
               sx={{
-                maxWidth: "100%",
-                padding: 2,
+                maxWidth: "55%",                
+                padding: "0 1em", // Reduced padding to remove extra space
                 backgroundColor: message.sender === "bot" ? "var(--bot-text)" : "var(--sender-text)",
                 borderRadius: 2,
                 boxShadow: 1,
@@ -113,25 +119,16 @@ const InterviewAssistant = ({ caseData }) => {
               }}
             >
               <Typography variant="body1" sx={{ textAlign: "left" }}>
-              <ReactMarkdown
-              children={message.text}
-              remarkPlugins={[remarkGfm]} // Enables Markdown features like lists and tables
-              components={{
-                p: ({ node, ...props }) => <p style={{ marginBottom: '0' }} {...props} />,
-                li: ({ node, ...props }) => <li style={{ marginBottom: '0.5rem' }} {...props} />,
-                ol: ({ node, ...props }) => (
-                  <ol style={{ paddingLeft: '1.5rem', listStyleType: 'decimal', marginBottom: '0' }} {...props} />
-                ),
-                ul: ({ node, ...props }) => (
-                  <ul style={{ paddingLeft: '1.5rem', listStyleType: 'disc', marginBottom: '0' }} {...props} />
-                ),
-              }}
-            />
+              <div className="markdown">
+                <ReactMarkdown>{message.text}</ReactMarkdown>
+              </div>
               </Typography>
             </Paper>
           </Box>
         ))}
       </Box>
+      {isAItyping && <TypingIndicator />}
+      
 
       <Box sx={{ display: "flex", alignItems: "center" }}>
         <TextField

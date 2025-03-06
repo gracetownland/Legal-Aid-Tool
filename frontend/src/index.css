@@ -116,3 +116,45 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+.typing-indicator {
+  display: flex;
+  justify-content: space-between;
+  width: 50px;
+  align-items: center;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  margin: 0 3px;
+  border-radius: 50%;
+  background-color: var(--text);
+  opacity: 0;
+  animation: dot-blink 1.4s infinite both;
+}
+
+.dot:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes dot-blink {
+  0%, 100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.markdown > * {
+  all: revert;
+}
