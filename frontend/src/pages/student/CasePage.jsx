@@ -37,17 +37,20 @@ const CasePage = () => {
     <Box display="flex">
       {/* Left Sidebar Drawer */}
       <Drawer
-        sx={{
+      sx={{
+        width: 240,
+        flexShrink: 0,
+        "& .MuiDrawer-paper": {
           width: 240,
-          flexShrink: 0,
-          "& .MuiDrawer-paper": {
-            width: 240,
-            boxSizing: "border-box",
-          },
-        }}
-        variant="permanent"
-        anchor="left"
-      >
+          boxSizing: "border-box",
+          backgroundColor: "var(--background2)", // Uses CSS variable
+          color: "var(--text)", // Uses CSS variable
+          border: "none"
+        },
+      }}
+      variant="permanent"
+    >
+
         <List>
           <ListItem button onClick={() => handleDrawerSelection("Case Overview")}>
             <ListItemText primary="Case Overview" />

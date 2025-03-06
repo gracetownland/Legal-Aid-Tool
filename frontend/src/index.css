@@ -8,23 +8,58 @@
 :root {
   --text: #050315;
   --background: #fbfbfe;
+  --background2: #ededed;
   --primary: #546bdf;
   --secondary: #c5d6f0;
   --accent: #1c187a;
+  --bot-text: #bcd5ff;
+  --sender-text: #ffffff;
 
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  color: #213547;
+  background-color: #ffffff;
+  
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #e0e0e0;
+    --background: #2c2c2c;
+    --background2: #171717;
+    --primary: #abc6ff;
+    --secondary: #4e8fff;
+    --accent: #3949ff;
+    --bot-text: #284b69;
+    --sender-text: #424141;
+
+    color: var(--text);
+    background-color: var(--background);
+  }
+
+  a {
+    color: #77dd77;
+  }
+  a:hover {
+    color: #66bb66;
+  }
+  button {
+    background-color: #333;
+    color: white;
+  }
+  button:hover {
+    border-color: #77dd77;
+  }
+}
+
 
 a {
   font-weight: 500;
