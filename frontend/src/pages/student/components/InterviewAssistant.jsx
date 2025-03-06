@@ -138,6 +138,7 @@ const InterviewAssistant = ({ caseData }) => {
           label="Type here..."
           variant="outlined"
           fullWidth
+          multiline
           value={userInput}
           onChange={(e) => setUserInput(e.target.value)}
           sx={{ 
