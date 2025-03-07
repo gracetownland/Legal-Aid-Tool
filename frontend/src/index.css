@@ -158,3 +158,16 @@ button:focus-visible {
 .markdown > * {
   all: revert;
 }
+
+.note-text-area {
+  border: 1px solid transparent;
+  border-radius: 1%;
+  outline: none;
+  transition: border 0.2s ease-in-out;
+}
+
+
+
+.note-text-area::placeholder {
+  color:#b89d24a8;
+}

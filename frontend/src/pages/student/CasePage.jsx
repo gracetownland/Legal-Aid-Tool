@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom"; // Import useNaviga
 import CaseOverview from "./components/CaseOverview";
 import PrelimSummary from "./components/PrelimSummary";
 import InterviewAssistant from "./components/InterviewAssistant";
+import DraggableNotes from "../../components/DraggableNotes";
 
 const CasePage = () => {
   const location = useLocation();
@@ -15,6 +16,10 @@ const CasePage = () => {
   const handleDrawerSelection = (option) => {
     setSelectedOption(option);
   };
+
+  const toggleNotes = () => {
+    
+  }
 
   const renderContent = () => {
     switch (selectedOption) {
@@ -35,6 +40,10 @@ const CasePage = () => {
 
   return (
     <Box display="flex">
+      <Box sx={{ position: "absolute", top: 0, left: 0, zIndex: 9999 }}>
+        <DraggableNotes />
+      </Box>
+
       {/* Left Sidebar Drawer */}
       <Drawer
       sx={{
@@ -50,6 +59,7 @@ const CasePage = () => {
       }}
       variant="permanent"
     >
+    
 
         <List>
           <ListItem button onClick={() => handleDrawerSelection("Case Overview")}>
@@ -72,6 +82,7 @@ const CasePage = () => {
           padding: 3,
         }}
       >
+        
         {/* Back to Home Button */}
         <Button 
           onClick={handleBackToHome} 
@@ -83,6 +94,7 @@ const CasePage = () => {
         {/* Render Selected Option Content */}
         {renderContent()}
       </Box>
+      
     </Box>
   );
 };

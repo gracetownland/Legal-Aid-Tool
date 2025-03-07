@@ -632,7 +632,9 @@ def answer_prompt(user_prompt, case_id):
             """
 
         # Retrieve memory for the specific case ID
-    memory = get_memory(case_id)
+    memory = get_memory(case_id);
+
+    console.log(prompt);
 
     # Create the conversation chain with LLM and memory
     conversation_chain = ConversationChain(
