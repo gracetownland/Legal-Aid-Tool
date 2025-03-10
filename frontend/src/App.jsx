@@ -96,7 +96,7 @@ function App() {
           <Route path="/new-case" element={<NewCaseForm />} />
           <Route path="/cases" element={<ViewAllCases />} />
           <Route path="/interview" element={<InterviewAssistant />} />
-          <Route path="/home/*" element={getHomePage()} />
+          <Route path="/home/*" element={<StudentHomepage />} />
         </Routes>
       </Router>
     </UserContext.Provider>

@@ -332,7 +332,7 @@ export const Login = () => {
             firstName
           )}&last_name=${encodeURIComponent(
             lastName
-          )}&preferred_name=${encodeURIComponent(firstName)}`,
+          )}`,
           {
             method: "POST",
             headers: {
@@ -346,7 +346,7 @@ export const Login = () => {
 
         setLoading(false);
         setNewSignUp(false);
-        window.location.reload();
+      //  window.location.reload();
       } else {
         setLoading(false);
         setError("Automatic login failed. Please try signing in manually.");

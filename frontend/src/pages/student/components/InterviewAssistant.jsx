@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { Box, Typography, TextField, Button, Paper, Divider } from "@mui/material";
+import SideMenu from "./sidemenu";
 
 const InterviewAssistant = ({ caseData }) => {
+  console.log(caseData);
   const [messages, setMessages] = useState([
     { sender: "bot", text: "Hello! I'm your Interview Assistant. Let's get started." },
   ]);
@@ -35,7 +37,7 @@ const InterviewAssistant = ({ caseData }) => {
   async function getAIResponse(userInput) {
     async function getFetchBody() {
       try {
-        const response = await fetch('${import.meta.env.VITE_API_ENDPOINT}student/text_generation', {
+        const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}student/text_generation`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -66,14 +68,16 @@ const InterviewAssistant = ({ caseData }) => {
   
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 2 }}>
+    <Box sx={{ display: "flex" }}>
+      <SideMenu />
+      <Box sx={{ display:"flex", flexDirection: "column", justifyContent: "space-between", padding: 2,width: "100%"}} >
       {/* Case Title and Information */}
-      <Typography variant="h6" sx={{ fontWeight: 600, marginBottom: 2 }}>
+      {/* <Typography variant="h6" sx={{ fontWeight: 600, marginBottom: 2 }}>
         {caseData?.case_title || "Case Title Not Available"}
       </Typography>
       <Typography variant="body2" sx={{ marginBottom: 2 }}>
         <strong>Case Overview:</strong> {caseData?.case_description || "Overview information not available."}
-      </Typography>
+      </Typography> */}
 
       <Divider sx={{ marginBottom: 2 }} />
 
@@ -121,6 +125,7 @@ const InterviewAssistant = ({ caseData }) => {
         <Button variant="contained"  sx={{ color: "#ffffff"}} onClick={handleSendMessage}>
           Send
         </Button>
+      </Box>
       </Box>
     </Box>
   );

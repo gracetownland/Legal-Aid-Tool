@@ -29,7 +29,6 @@ const NewCaseForm = () => {
     legalMatterSummary: "",
   });
 
-  const [saveForLater, setSaveForLater] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null); // For handling errors during submission
   const navigate = useNavigate(); // React Router navigate hook
@@ -43,46 +42,18 @@ const NewCaseForm = () => {
     }));
   };
 
-  // Handle form submission
+  // Handle form submission (without the POST request for now)
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
 
-    // Map form data to API structure
-    const caseData = {
-      case_title: formData.broadAreaOfLaw,
-      case_type: formData.jurisdiction, // Assuming 'jurisdiction' corresponds to 'case_type'
-      law_type: formData.jurisdiction, // Assuming 'jurisdiction' corresponds to 'law_type'
-      case_description: formData.legalMatterSummary,
-      system_prompt: formData.statuteDetails || "No system prompt provided", // Placeholder if not filled
-    };
+    console.log(formData);
 
-    try {
-      // Send a POST request to your API endpoint
-      const response = await fetch("https://nol9wedqt0.execute-api.ca-central-1.amazonaws.com/prod/student/new-case", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(caseData), // Sending transformed case data as JSON
-      });
+    // Navigate to Interview page and pass form data
+    navigate("/case/interview-assistant", {state: { caseData: formData }} );
 
-      // Check for success
-      if (!response.ok) {
-        throw new Error("Failed to submit the case. Please try again.");
-      }
-
-      const data = await response.json();
-
-      // If successful, navigate to the Interview page or show success
-      console.log("Case submitted successfully:", data);
-      navigate("/interview", { state: { formData } });
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setIsSubmitting(false);
-    }
+    setIsSubmitting(false);
   };
 
   // Navigate back to the homepage
@@ -229,15 +200,6 @@ const NewCaseForm = () => {
           >
             {isSubmitting ? "Submitting..." : "Start Interview"}
           </Button>
-
-          {/* Optionally show the 'saved' state */}
-          {saveForLater && (
-            <Box sx={{ marginTop: 2 }}>
-              <Typography variant="body1" color="white" sx={{ textAlign: "left" }}>
-                Your progress has been saved for later.
-              </Typography>
-            </Box>
-          )}
 
           {/* Display Error Message */}
           {error && (

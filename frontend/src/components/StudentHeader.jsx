@@ -12,8 +12,7 @@ import { UserContext } from "../App";
 
 const StudentHeader = () => {
   const [name, setName] = useState("");
-  const [showDashboard, setShowDashboard] = useState(false); // State to control the display of the dashboard text
-  const { isInstructorAsStudent, setIsInstructorAsStudent } = useContext(UserContext);
+  const [showDashboard, setShowDashboard] = useState(false); 
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -72,10 +71,6 @@ const StudentHeader = () => {
       });
   };
 
-  // Button to switch back to instructor mode
-  const handleSwitchToInstructor = () => {
-    setIsInstructorAsStudent(false);
-  };
 
   return (
     <header className="bg-[#F8F9FD] p-4 flex justify-between items-center max-h-20" style={{ paddingLeft: "15px", paddingRight: "40px" }}>
@@ -83,16 +78,6 @@ const StudentHeader = () => {
         {showDashboard && name && `${name}'s Dashboard`} {/* Display the text after the delay */}
       </div>
       <div className="flex items-center space-x-4">
-        {/* Render this button only if the instructor is viewing as a student */}
-        {isInstructorAsStudent && (
-          <button
-            className="bg-[#36bd78] text-black px-4 py-2 rounded hover:bg-[#2e9b64]"
-            onClick={handleSwitchToInstructor}
-          >
-            Instructor view
-          </button>
-
-        )}
         <button
           className="bg-gray-800 text-white hover:bg-gray-700 px-4 py-2 rounded"
           onClick={handleSignOut}

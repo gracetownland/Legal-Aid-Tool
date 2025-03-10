@@ -39,8 +39,9 @@ exports.handler = async (event) => {
 
     // Retrieve roles from the database
     const dbUser = await sqlConnection`
-      SELECT roles FROM "users" WHERE user_email = ${email};
+      SELECT role FROM "users" WHERE user_email = ${email};
     `;
+
 
     const dbRoles = dbUser[0]?.roles || [];
 
