@@ -57,7 +57,7 @@ def handler(event, context):
                 "first_name" varchar,
                 "last_name" varchar,
                 "time_account_created" timestamp,
-                "role" varchar,
+                "roles" varchar[],
                 "last_sign_in" timestamp DEFAULT now()
             );
 

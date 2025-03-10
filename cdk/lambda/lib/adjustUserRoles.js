@@ -33,11 +33,11 @@ exports.handler = async (event) => {
 
     // Retrieve roles from the database
     const dbUser = await sqlConnection`
-      SELECT * FROM "users"
+      SELECT roles FROM "users"
       WHERE user_email = ${email};
     `;
     
-    const dbRoles = dbUser.length > 0 ? [dbUser[0].role] : [];
+    const dbRoles = dbUser[0]?.roles || [];
 
     // Handle role synchronization between Cognito and DB
     if (cognitoRoles.includes('admin')) {
@@ -45,7 +45,7 @@ exports.handler = async (event) => {
       if (!dbRoles.includes('admin')) {
         await sqlConnection`
           UPDATE "users"
-          SET role =  'admin'
+          SET roles = array_append(roles, 'admin')
           WHERE user_email = ${email};
         `;
         console.log('DB roles updated to include admin');
@@ -53,11 +53,11 @@ exports.handler = async (event) => {
     } else if (cognitoRoles.some(role => ['instructor', 'student'].includes(role))) {
       const cognitoNonAdminRole = cognitoRoles.find(role => ['instructor', 'student'].includes(role));
       
-      if (dbRoles == 'admin') {
+      if (dbRoles.includes('admin')) {
         // If DB has admin but Cognito is not admin, update DB role to match Cognito
         await sqlConnection`
           UPDATE "users"
-          SET role = ${cognitoNonAdminRole}
+          SET roles = ${[cognitoNonAdminRole]}
           WHERE user_email = ${email};
         `;
       } else if (dbRoles.length && dbRoles[0] !== cognitoNonAdminRole) {

@@ -5,6 +5,7 @@ import * as lambdaEventSources from "aws-cdk-lib/aws-lambda-event-sources";
 import * as iam from "aws-cdk-lib/aws-iam";
 import { Construct } from "constructs";
 import { Duration } from "aws-cdk-lib";
+import * as wafv2 from "aws-cdk-lib/aws-wafv2";
 import {
   Architecture,
   Code,
@@ -24,6 +25,10 @@ import * as s3 from "aws-cdk-lib/aws-s3";
 import * as bedrock from "aws-cdk-lib/aws-bedrock";
 import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 import * as ssm from "aws-cdk-lib/aws-ssm";
+import * as logs from "aws-cdk-lib/aws-logs";
+import * as cloudwatch from "aws-cdk-lib/aws-cloudwatch";
+import * as events from "aws-cdk-lib/aws-events";
+import * as targets from "aws-cdk-lib/aws-events-targets";
 
 export class ApiGatewayStack extends cdk.Stack {
   private readonly api: apigateway.SpecRestApi;
@@ -727,7 +732,6 @@ export class ApiGatewayStack extends cdk.Stack {
     // const authorizer = new apigateway.CognitoUserPoolsAuthorizer(this, 'vciAuthorizer', {
     //   cognitoUserPools: [this.userPool],
     // });
-
     new cdk.CfnOutput(this, `${id}-UserPoolIdOutput`, {
       value: this.userPool.userPoolId,
       description: "The ID of the Cognito User Pool",
@@ -1043,8 +1047,8 @@ export class ApiGatewayStack extends cdk.Stack {
       `${id}-DataIngestLambdaDockerFunction`,
       {
         code: lambda.DockerImageCode.fromImageAsset("./data_ingestion"),
-        memorySize: 512,
-        timeout: cdk.Duration.seconds(300),
+        memorySize: 2048,
+        timeout: cdk.Duration.seconds(900),
         vpc: vpcStack.vpc, // Pass the VPC
         functionName: `${id}-DataIngestLambdaDockerFunction`,
         environment: {
@@ -1130,6 +1134,25 @@ export class ApiGatewayStack extends cdk.Stack {
         resources: [embeddingModelParameter.parameterArn],
       })
     );
+
+    // Get Log Group for dataIngestLambdaDockerFunc
+    let logGroup: logs.ILogGroup;
+    try {
+      logGroup = logs.LogGroup.fromLogGroupName(
+        this,
+        `${id}-ExistingDataIngestLambdaLogGroup`,
+        `/aws/lambda/${dataIngestLambdaDockerFunc.functionName}`
+      );
+    } catch {
+      logGroup = new logs.LogGroup(this, `${id}-DataIngestLambdaLogGroup`, {
+        logGroupName: `/aws/lambda/${dataIngestLambdaDockerFunc.functionName}`,
+        retention: logs.RetentionDays.ONE_WEEK, // Set retention policy
+        removalPolicy: cdk.RemovalPolicy.DESTROY, // Adjust as needed
+      });
+    }
+
+
+
 
     /**
      *
@@ -1480,5 +1503,62 @@ export class ApiGatewayStack extends cdk.Stack {
         ],
       })
     );
+
+    // Waf Firewall
+    const waf = new wafv2.CfnWebACL(this, `${id}-waf`, {
+      description: "VCI waf",
+      scope: "REGIONAL",
+      defaultAction: { allow: {} },
+      visibilityConfig: {
+        sampledRequestsEnabled: true,
+        cloudWatchMetricsEnabled: true,
+        metricName: "virtualcareint-firewall",
+      },
+      rules: [
+        {
+          name: "AWS-AWSManagedRulesCommonRuleSet",
+          priority: 1,
+          statement: {
+            managedRuleGroupStatement: {
+              vendorName: "AWS",
+              name: "AWSManagedRulesCommonRuleSet",
+            },
+          },
+          overrideAction: { none: {} },
+          visibilityConfig: {
+            sampledRequestsEnabled: true,
+            cloudWatchMetricsEnabled: true,
+            metricName: "AWS-AWSManagedRulesCommonRuleSet",
+          },
+        },
+        {
+          name: "LimitRequests1000",
+          priority: 2,
+          action: {
+            block: {},
+          },
+          statement: {
+            rateBasedStatement: {
+              limit: 1000,
+              aggregateKeyType: "IP",
+            },
+          },
+          visibilityConfig: {
+            sampledRequestsEnabled: true,
+            cloudWatchMetricsEnabled: true,
+            metricName: "LimitRequests1000",
+          },
+        },
+      ],
+    });
+    const wafAssociation = new wafv2.CfnWebACLAssociation(
+      this,
+      `${id}-waf-association`,
+      {
+        resourceArn: `arn:aws:apigateway:${this.region}::/restapis/${this.api.restApiId}/stages/${this.api.deploymentStage.stageName}`,
+        webAclArn: waf.attrArn,
+      }
+    );
+
   }
 }

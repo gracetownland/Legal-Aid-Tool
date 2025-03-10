@@ -108,12 +108,14 @@ exports.handler = async (event) => {
               response.body = JSON.stringify(updatedUser[0]);
             } else {
               // Insert a new user with 'student' role
+              console.log("Trying to create A new User");
               const newUser = await sqlConnection`
-                    INSERT INTO "users" ( user_email, username, first_name, last_name, time_account_created, role, last_sign_in)
-                    VALUES ( ${user_email}, ${username}, ${first_name}, ${last_name}, CURRENT_TIMESTAMP, 'student', CURRENT_TIMESTAMP)
+                    INSERT INTO "users" (user_email, username, first_name, last_name, time_account_created, roles, last_sign_in)
+                    VALUES (${user_email}, ${username}, ${first_name}, ${last_name}, CURRENT_TIMESTAMP, ARRAY['student'], CURRENT_TIMESTAMP)
                     RETURNING *;
                 `;
               response.body = JSON.stringify(newUser[0]);
+              console.log(newUser);
             }
           } catch (err) {
             response.statusCode = 500;

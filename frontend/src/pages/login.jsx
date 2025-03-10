@@ -113,9 +113,11 @@ export const Login = () => {
     event.preventDefault();
     try {
       setLoading(true);
+      console.log("Signing in with username and password;", username, password);
       const user = await signIn({
         username: username,
         password: password,
+        authFlow: "USER_PASSWORD_AUTH",
       });
       
       console.log("SignIn Response:", user); 
