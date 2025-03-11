@@ -17,6 +17,7 @@ import {
   FormControl as MUIFormControl,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import { fetchAuthSession } from "aws-amplify/auth";
 
 const NewCaseForm = () => {
   // State for form data
@@ -54,16 +55,38 @@ const NewCaseForm = () => {
       case_description: formData.legalMatterSummary,
       system_prompt: formData.legalMatterSummary, // Setting description as system prompt
     };
+
+    console.log("Form Data:", formData);
+  console.log("Sending Case Data:", JSON.stringify(caseData, null, 2));
+
   
     try {
+      // Fetch authentication session
+      const { tokens } = await fetchAuthSession();
+      if (!tokens || !tokens.idToken) {
+        throw new Error("Authentication failed. No valid token.");
+      }
+
+      console.log(tokens);
+  
+      const token = tokens.idToken; // Correct token extraction
+      const user_id = tokens.idToken.payload.sub
+
+      console.log(user_id);
+      console.log(caseData);
+  
+      // Make the API request
       const response = await fetch(
-        `${
-          import.meta.env.VITE_API_ENDPOINT
-           }student/new_case`,
+        `${import.meta.env.VITE_API_ENDPOINT}student/new_case?` +
+  `user_id=${encodeURIComponent(user_id)}` +
+  `&case_title=${encodeURIComponent(caseData.case_title)}` +
+  `&case_type=${encodeURIComponent(caseData.case_type)}` +
+  `&case_description=${encodeURIComponent(caseData.case_description)}` +
+  `&system_prompt=${encodeURIComponent(caseData.case_description)}`,
         {
           method: "POST",
           headers: {
-            Authorization: token,
+            Authorization: token, // Ensure correct format
             "Content-Type": "application/json",
           },
           body: JSON.stringify(caseData),

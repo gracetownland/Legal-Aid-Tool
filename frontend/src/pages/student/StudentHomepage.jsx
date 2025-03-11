@@ -5,7 +5,7 @@ import { ToastContainer } from "react-toastify";
 import { Add, ArrowForward } from '@mui/icons-material';
 import "react-toastify/dist/ReactToastify.css";
 import { cardio } from 'ldrs'
-import { fetchAuthSession } from 'aws-amplify/auth'; 
+import { fetchAuthSession, fetchUserAttributes } from 'aws-amplify/auth'; 
 cardio.register()
 
 import {
@@ -53,32 +53,37 @@ export const StudentHomepage = () => {
   const [error, setError] = useState(null); // For handling any errors during fetch
 
   useEffect(() => {
-    const fetchCases = async () => {
-      try {
-        const session = await fetchAuthSession();
-        const user_id = session.tokens?.idToken?.payload?.sub; // Extract user ID from the token
+      const fetchCases = () => {
+        fetchAuthSession()
+          .then((session) => {
+            return fetchUserAttributes().then((userAttributes) => {
+              const token = session.tokens.idToken;
+              const user_id = session.tokens.idToken.payload.sub;
+              return fetch(
+                `${
+                  import.meta.env.VITE_API_ENDPOINT
+                }student/get_cases?user_id=${user_id}`,
+                {
+                  method: "GET",
+                  headers: {
+                    Authorization: token,
+                    "Content-Type": "application/json",
+                  },
+                }
+              );
+            });
+          })
+          .then((response) => response.json())
+          .then((data) => {
+            setCases(data);
+          })
+          .catch((error) => {
+            console.error("Error fetching name:", error);
+          });
+      };
   
-        if (!user_id) {
-          throw new Error("User ID not found");
-        }
-  
-        const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}/student/cases?user_id=${user_id}`);
-        
-        if (!response.ok) {
-          throw new Error("Failed to load cases");
-        }
-  
-        const data = await response.json();
-        setCases(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-  
-    fetchCases();
-  }, []);
+      fetchCases();
+    }, []);
   
 
   const handleViewCase = (caseData) => {

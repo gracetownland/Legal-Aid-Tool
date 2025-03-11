@@ -98,7 +98,7 @@ function App() {
           <Route path="/new-case" element={<NewCaseForm />} />
           <Route path="/cases" element={<ViewAllCases />} />
           <Route path="/interview" element={<InterviewAssistant />} />
-          <Route path="/home/*" element={<StudentHomepage />} />
+          <Route path="/home/*" element={getHomePage()} />
           
         <Route path="/case/overview" element={<CaseOverview />} />
         <Route path="/case/preliminary-summary" element={<PrelimSummary />} />

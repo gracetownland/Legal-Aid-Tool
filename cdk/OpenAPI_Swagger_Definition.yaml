@@ -493,7 +493,7 @@ paths:
       parameters:
         - in: query
           name: case_title
-          required: 
+          required: true
           description: title of the case
           schema:
             type: string
@@ -513,6 +513,12 @@ paths:
           name: system_prompt
           required: true
           description: prompt to send the LLM
+          schema:
+            type: string
+        - in: query
+          name: user_id
+          required: true
+          description: id of the student
           schema:
             type: string
       responses:
@@ -961,7 +967,7 @@ paths:
         passthroughBehavior: "when_no_match"
         httpMethod: "POST"
         type: "aws_proxy"
-        
+
   /student/get_notes:
     options:
       summary: CORS support

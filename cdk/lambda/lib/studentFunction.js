@@ -158,29 +158,41 @@ exports.handler = async (event) => {
         }
         break;
 
-        case "POST /student/new-case":
-        if (event.body) {
-          const {
-            case_title,
-            case_type,
-            law_type,
-            case_description,
-            system_prompt,
-          } = JSON.parse(event.body);
+      case "POST /student/new_case":
+          console.log(event);
+          console.log("Received event:", JSON.stringify(event, null, 2));
 
-          const user_id = event.requestContext?.authorizer?.claims?.sub || event.requestContext?.authorizer?.user_id;
+          if (event.queryStringParameters) {
+            const {
+              case_title,
+              case_type,
+              case_description,
+              system_prompt,
+              user_id
+            } = event.queryStringParameters;
 
-          if (!user_id) {
-            response.statusCode = 401; // Unauthorized if user_id is missing
-            response.body = JSON.stringify({ error: "Unauthorized: Missing user ID" });
-            break;
-        }
+          
+          // Extract query parameters safely
+          const userId = event.queryStringParameters?.user_id;
+          const caseTitle = event.queryStringParameters?.case_title;
+          const caseType = event.queryStringParameters?.case_type;
+          const caseDescription = event.queryStringParameters?.case_description;
+          const systemPrompt = event.queryStringParameters?.system_prompt;
+
+          // Log extracted values
+          console.log("Parsed Parameters:");
+          console.log("user_id:", userId);
+          console.log("case_title:", caseTitle);
+          console.log("case_type:", caseType);
+          console.log("case_description:", caseDescription);
+          console.log("system_prompt:", systemPrompt);
+          
 
           try {
             // SQL query to insert the new case
             const newCase = await sqlConnection`
               INSERT INTO "cases" (user_id, case_title, case_type, law_type, case_description, system_prompt)
-              VALUES (${user_id}, ${case_title}, ${case_type}, ${law_type}, ${case_description}, ${system_prompt})
+              VALUES (${user_id}, ${case_title}, ${case_title}, ${case_type}, ${case_description}, ${system_prompt})
               RETURNING case_id;
             `;
 
@@ -194,9 +206,9 @@ exports.handler = async (event) => {
           response.statusCode = 400;
           response.body = JSON.stringify({ error: "Case data is required" });
         }
-        break;
+      break;
 
-      case "GET /student/cases":
+      case "GET /student/get_cases":
         if (
           event.queryStringParameters &&
           event.queryStringParameters.user_id
@@ -206,7 +218,8 @@ exports.handler = async (event) => {
           try {
             // Retrieve the user ID using the user_id
             const data = await sqlConnection`
-                SELECT case_id FROM "cases" WHERE user_id = ${user_id};
+              SELECT case_id, case_title, case_type, law_type, case_description 
+              FROM "cases" WHERE user_id = ${user_id};
               `;
             response.body = JSON.stringify(data);
           } catch (err) {
@@ -242,37 +255,7 @@ exports.handler = async (event) => {
             response.statusCode = 400;
             response.body = JSON.stringify({ error: "Case ID is required" });
           }
-          break;        
-          case "POST /student/new_case":
-            if (event.queryStringParameters) {
-              const {
-                case_title,
-                case_type,
-                law_type,
-                case_description,
-                system_prompt
-              } = event.queryStringParameters;
-
-              const user_id = event.requestContext.authorizer.user_id;
-              try {
-                // Insert a new case
-                const newCase = await sqlConnection`
-                  INSERT INTO "cases" (user_id, case_title, case_type, law_type, case_description, system_prompt)
-                  VALUES (${user_id}, ${case_title}, ${case_type}, ${law_type}, ${case_description}, ${system_prompt})
-                  RETURNING *;
-                `;
-          
-                response.body = JSON.stringify(newCase[0]);
-              } catch (err) {
-                response.statusCode = 500;
-                console.log(err);
-                response.body = JSON.stringify({ error: "Internal server error" });
-              }
-            } else {
-              response.statusCode = 400;
-              response.body = JSON.stringify({ error: "Case data is required" });
-            }
-            break;
+          break;  
           
             case "GET /student/get_messages":
               if (event.queryStringParameters && event.queryStringParameters.user_id) {
