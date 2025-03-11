@@ -168,11 +168,19 @@ exports.handler = async (event) => {
             system_prompt,
           } = JSON.parse(event.body);
 
+          const user_id = event.requestContext?.authorizer?.claims?.sub || event.requestContext?.authorizer?.user_id;
+
+          if (!user_id) {
+            response.statusCode = 401; // Unauthorized if user_id is missing
+            response.body = JSON.stringify({ error: "Unauthorized: Missing user ID" });
+            break;
+        }
+
           try {
             // SQL query to insert the new case
             const newCase = await sqlConnection`
-              INSERT INTO "cases" (case_title, case_type, law_type, case_description, system_prompt)
-              VALUES (${case_title}, ${case_type}, ${law_type}, ${case_description}, ${system_prompt})
+              INSERT INTO "cases" (user_id, case_title, case_type, law_type, case_description, system_prompt)
+              VALUES (${user_id}, ${case_title}, ${case_type}, ${law_type}, ${case_description}, ${system_prompt})
               RETURNING case_id;
             `;
 
@@ -190,30 +198,15 @@ exports.handler = async (event) => {
 
       case "GET /student/cases":
         if (
-          event.queryStringParameters != null &&
+          event.queryStringParameters &&
           event.queryStringParameters.user_id
         ) {
           const user_id = event.queryStringParameters.user_id;
 
           try {
             // Retrieve the user ID using the user_id
-            const userResult = await sqlConnection`
-                SELECT user_id FROM "users" WHERE user_id = ${user_id};
-              `;
-
-            if (userResult.length === 0) {
-              response.statusCode = 404;
-              response.body = JSON.stringify({ error: "User not found" });
-              break;
-            }
-
-            const user_id = userResult[0].user_id;
-
-            // Query to get simulation groups for the user
             const data = await sqlConnection`
-                SELECT *
-                FROM "cases"
-                WHERE "sessions".user_id = ${user_id}
+                SELECT case_id FROM "cases" WHERE user_id = ${user_id};
               `;
             response.body = JSON.stringify(data);
           } catch (err) {
@@ -259,12 +252,13 @@ exports.handler = async (event) => {
                 case_description,
                 system_prompt
               } = event.queryStringParameters;
-          
+
+              const user_id = event.requestContext.authorizer.user_id;
               try {
                 // Insert a new case
                 const newCase = await sqlConnection`
-                  INSERT INTO "cases" (case_title, case_type, law_type, case_description, system_prompt)
-                  VALUES (${case_title}, ${case_type}, ${law_type}, ${case_description}, ${system_prompt})
+                  INSERT INTO "cases" (user_id, case_title, case_type, law_type, case_description, system_prompt)
+                  VALUES (${user_id}, ${case_title}, ${case_type}, ${law_type}, ${case_description}, ${system_prompt})
                   RETURNING *;
                 `;
           

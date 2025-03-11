@@ -5,6 +5,7 @@ import { ToastContainer } from "react-toastify";
 import { Add, ArrowForward } from '@mui/icons-material';
 import "react-toastify/dist/ReactToastify.css";
 import { cardio } from 'ldrs'
+import { fetchAuthSession } from 'aws-amplify/auth'; 
 cardio.register()
 
 import {
@@ -54,10 +55,19 @@ export const StudentHomepage = () => {
   useEffect(() => {
     const fetchCases = async () => {
       try {
-        const response = await fetch("/api/student/cases"); // Update with the correct endpoint
+        const session = await fetchAuthSession();
+        const user_id = session.tokens?.idToken?.payload?.sub; // Extract user ID from the token
+  
+        if (!user_id) {
+          throw new Error("User ID not found");
+        }
+  
+        const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}/student/cases?user_id=${user_id}`);
+        
         if (!response.ok) {
           throw new Error("Failed to load cases");
         }
+  
         const data = await response.json();
         setCases(data);
       } catch (err) {
@@ -66,9 +76,10 @@ export const StudentHomepage = () => {
         setLoading(false);
       }
     };
-
+  
     fetchCases();
   }, []);
+  
 
   const handleViewCase = (caseData) => {
     navigate("/case-overview", { state: { caseData } });

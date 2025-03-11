@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom"; // Import useNaviga
 import CaseOverview from "./components/CaseOverview";
 import PrelimSummary from "./components/PrelimSummary";
 import InterviewAssistant from "./components/InterviewAssistant";
+import SideMenu from "./components/sidemenu";
 
 const CasePage = () => {
   const location = useLocation();
@@ -35,31 +36,7 @@ const CasePage = () => {
 
   return (
     <Box display="flex">
-      {/* Left Sidebar Drawer */}
-      <Drawer
-        sx={{
-          width: 240,
-          flexShrink: 0,
-          "& .MuiDrawer-paper": {
-            width: 240,
-            boxSizing: "border-box",
-          },
-        }}
-        variant="permanent"
-        anchor="left"
-      >
-        <List>
-          <ListItem button onClick={() => handleDrawerSelection("Case Overview")}>
-            <ListItemText primary="Case Overview" />
-          </ListItem>
-          <ListItem button onClick={() => handleDrawerSelection("Preliminary Summary")}>
-            <ListItemText primary="Preliminary Summary" />
-          </ListItem>
-          <ListItem button onClick={() => handleDrawerSelection("Interview Assistant")}>
-            <ListItemText primary="Interview Assistant" />
-          </ListItem>
-        </List>
-      </Drawer>
+      <SideMenu />
 
       {/* Main Content Area */}
       <Box

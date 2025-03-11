@@ -431,13 +431,13 @@ paths:
     get:
       tags:
         - Student
-      summary: Get the list of available regions
+      summary: Get the list of student name
       operationId: student_get_name_GET
       parameters:
         - in: query
-          name: user_email
+          name: user_id
           required: false
-          description: email of the user
+          description: id of the user
           schema:
             type: string
       responses:
@@ -459,193 +459,8 @@ paths:
         passthroughBehavior: "when_no_match"
         httpMethod: "POST"
         type: "aws_proxy"
-  /student/simulation_group:
-    options:
-      summary: CORS support
-      description: |
-        Enable CORS by returning correct headers
-      responses:
-        200:
-          $ref: "#/components/responses/Success"
-      x-amazon-apigateway-integration:
-        type: mock
-        requestTemplates:
-          application/json: |
-            {
-              "statusCode" : 200
-            }
-        responses:
-          default:
-            statusCode: "200"
-            responseParameters:
-              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key'"
-              method.response.header.Access-Control-Allow-Methods: "'*'"
-              method.response.header.Access-Control-Allow-Origin: "'*'"
-            responseTemplates:
-              application/json: |
-                {}
-    get:
-      tags:
-        - Student
-      summary: Get groups enrolled by a student
-      operationId: student_simulation_group_GET
-      parameters:
-        - in: query
-          name: email
-          required: true
-          description: Email of the student
-          schema:
-            type: string
-      responses:
-        "200":
-          description: List of simulation groups
-        "400":
-          description: Invalid value
-        "401":
-          description: Unauthorized
-        "429":
-          description: Too Many Requests
-        "500":
-          description: Internal Server Error
-      security:
-        - studentAuthorizer: []
-      x-amazon-apigateway-integration:
-        uri:
-          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${studentFunction.Arn}/invocations"
-        passthroughBehavior: "when_no_match"
-        httpMethod: "POST"
-        type: "aws_proxy"
-  /student/simulation_group_page:
-    options:
-      summary: CORS support
-      description: |
-        Enable CORS by returning correct headers
-      responses:
-        200:
-          $ref: "#/components/responses/Success"
-      x-amazon-apigateway-integration:
-        type: mock
-        requestTemplates:
-          application/json: |
-            {
-              "statusCode" : 200
-            }
-        responses:
-          default:
-            statusCode: "200"
-            responseParameters:
-              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key'"
-              method.response.header.Access-Control-Allow-Methods: "'*'"
-              method.response.header.Access-Control-Allow-Origin: "'*'"
-            responseTemplates:
-              application/json: |
-                {}
-    get:
-      tags:
-        - Student
-      summary: Get simulation group page details for a student
-      operationId: student_simulation_group_page_GET
-      parameters:
-        - in: query
-          name: email
-          required: true
-          description: Email of the student
-          schema:
-            type: string
-        - in: query
-          name: simulation_group_id
-          required: true
-          description: ID of the group
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Group page details
-        "400":
-          description: Invalid value
-        "401":
-          description: Unauthorized
-        "429":
-          description: Too Many Requests
-        "500":
-          description: Internal Server Error
-      security:
-        - studentAuthorizer: []
-      x-amazon-apigateway-integration:
-        uri:
-          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${studentFunction.Arn}/invocations"
-        passthroughBehavior: "when_no_match"
-        httpMethod: "POST"
-        type: "aws_proxy"
-  /student/patient:
-    options:
-      summary: CORS support
-      description: |
-        Enable CORS by returning correct headers
-      responses:
-        200:
-          $ref: "#/components/responses/Success"
-      x-amazon-apigateway-integration:
-        type: mock
-        requestTemplates:
-          application/json: |
-            {
-              "statusCode" : 200
-            }
-        responses:
-          default:
-            statusCode: "200"
-            responseParameters:
-              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key'"
-              method.response.header.Access-Control-Allow-Methods: "'*'"
-              method.response.header.Access-Control-Allow-Origin: "'*'"
-            responseTemplates:
-              application/json: |
-                {}
-    get:
-      tags:
-        - Student
-      summary: Get sessions for a patient accessed by a student
-      operationId: student_patient_GET
-      parameters:
-        - in: query
-          name: email
-          required: true
-          description: Email of the student
-          schema:
-            type: string
-        - in: query
-          name: simulation_group_id
-          required: true
-          description: ID of the group
-          schema:
-            type: string
-        - in: query
-          name: patient_id
-          required: true
-          description: ID of the patient
-          schema:
-            type: string
-      responses:
-        "200":
-          description: Sessions for the patient
-        "400":
-          description: Invalid value
-        "401":
-          description: Unauthorized
-        "429":
-          description: Too Many Requests
-        "500":
-          description: Internal Server Error
-      security:
-        - studentAuthorizer: []
-      x-amazon-apigateway-integration:
-        uri:
-          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${studentFunction.Arn}/invocations"
-        passthroughBehavior: "when_no_match"
-        httpMethod: "POST"
-        type: "aws_proxy"
-  /student/create_session:
+  
+  /student/new_case:
     options:
       summary: CORS support
       description: |
@@ -673,31 +488,31 @@ paths:
     post:
       tags:
         - Student
-      summary: Create a session for a student patient
-      operationId: student_create_session_POST
+      summary: Create a case for a student
+      operationId: student_create_case_POST
       parameters:
         - in: query
-          name: patient_id
-          required: true
-          description: ID of the patient
+          name: case_title
+          required: 
+          description: title of the case
           schema:
             type: string
         - in: query
-          name: email
+          name: case_type
           required: true
-          description: Email of the student
+          description: type of the case
           schema:
             type: string
         - in: query
-          name: simulation_group_id
+          name: case_description
           required: true
-          description: ID of the group
+          description: description of the case
           schema:
             type: string
         - in: query
-          name: session_name
+          name: system_prompt
           required: true
-          description: name of the session
+          description: prompt to send the LLM
           schema:
             type: string
       responses:
@@ -719,6 +534,8 @@ paths:
         passthroughBehavior: "when_no_match"
         httpMethod: "POST"
         type: "aws_proxy"
+
+
   /student/delete_session:
     options:
       summary: CORS support
@@ -1056,7 +873,8 @@ paths:
         passthroughBehavior: "when_no_match"
         httpMethod: "POST"
         type: "aws_proxy"
-  /student/get_messages:
+
+  /student/get_cases:
     options:
       summary: CORS support
       description: Enable CORS by returning correct headers
@@ -1083,18 +901,18 @@ paths:
     get:
       tags:
         - Student
-      summary: Get all messages in a session
-      operationId: get_messages_GET
+      summary: Get all cases of a student
+      operationId: get_cases_GET
       parameters:
         - in: query
-          name: session_id
+          name: user_id
           required: true
           schema:
             type: string
-          description: The ID of the session
+          description: The ID of the user
       responses:
         "200":
-          description: List of messages in the session
+          description: List of cases of the student
           content:
             application/json:
               schema:
@@ -1143,6 +961,7 @@ paths:
         passthroughBehavior: "when_no_match"
         httpMethod: "POST"
         type: "aws_proxy"
+        
   /student/get_notes:
     options:
       summary: CORS support

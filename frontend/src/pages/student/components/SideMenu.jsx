@@ -1,6 +1,10 @@
 import React from 'react';
-import { Drawer, List, ListItem, ListItemText } from '@mui/material';
+import { Drawer, List, ListItem, ListItemText, Box } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import CaseOverview from './CaseOverview';
+import InterviewAssistant from './InterviewAssistant';
+import PrelimSummary from './PrelimSummary';
 
 const SideMenu = () => {
   const navigate = useNavigate();
@@ -11,6 +15,7 @@ const SideMenu = () => {
   };
 
   return (
+    <Box>
     <Drawer
       sx={{
         width: 240,
@@ -35,6 +40,14 @@ const SideMenu = () => {
         </ListItem>
       </List>
     </Drawer>
+
+      <Routes>
+        <Route path="/case/overview" element={<CaseOverview />} />
+        <Route path="/case/preliminary-summary" element={<PrelimSummary />} />
+        <Route path="/case/interview-assistant" element={<InterviewAssistant />} />
+      </Routes>
+
+    </Box>
   );
 };
 

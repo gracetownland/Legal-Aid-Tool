@@ -42,19 +42,53 @@ const NewCaseForm = () => {
     }));
   };
 
-  // Handle form submission (without the POST request for now)
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
-
-    console.log(formData);
-
-    // Navigate to Interview page and pass form data
-    navigate("/case/interview-assistant", {state: { caseData: formData }} );
-
-    setIsSubmitting(false);
+  
+    // Prepare data for backend
+    const caseData = {
+      case_title: formData.broadAreaOfLaw,
+      case_type: formData.jurisdiction,
+      case_description: formData.legalMatterSummary,
+      system_prompt: formData.legalMatterSummary, // Setting description as system prompt
+    };
+  
+    try {
+      const response = await fetch(
+        `${
+          import.meta.env.VITE_API_ENDPOINT
+           }student/new_case`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: token,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(caseData),
+        }
+      );
+  
+      const data = await response.json();
+  
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to submit case");
+      }
+  
+      console.log("Case submitted successfully:", data);
+  
+      // Navigate to the Interview Assistant page and pass form data
+      navigate("/case/interview-assistant", { state: { caseData: data } });
+  
+    } catch (err) {
+      console.error("Error submitting case:", err);
+      setError(err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+  
 
   // Navigate back to the homepage
   const handleBack = () => {

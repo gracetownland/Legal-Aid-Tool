@@ -85,6 +85,7 @@ def handler(event, context):
                 "status" varchar DEFAULT 'In progress',
                 "last_updated" timestamp DEFAULT now(),
                 "system_prompt" text
+                "user_id" uuid
             );
 
             CREATE TABLE IF NOT EXISTS "reports" (
@@ -99,6 +100,7 @@ def handler(event, context):
             ALTER TABLE "sessions" ADD FOREIGN KEY ("case_id") REFERENCES "cases" ("case_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
             ALTER TABLE "messages" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
+            ALTER TABLE "cases" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
             ALTER TABLE "reports" ADD FOREIGN KEY ("case_id") REFERENCES "cases" ("case_id") ON DELETE CASCADE ON UPDATE CASCADE;
         """

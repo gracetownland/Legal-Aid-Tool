@@ -17,9 +17,11 @@ import StudentHomepage from "./pages/student/StudentHomepage";
 import CasePage from "./pages/student/CasePage";
 import NewCaseForm from "./pages/student/NewCase";
 import ViewAllCases from "./pages/student/AllCases";
-import InterviewAssistant from "./pages/student/components/InterviewAssistant";
 import InstructorHomepage from "./pages/instructor/InstructorHomepage";
 import AdminHomepage from "./pages/admin/AdminHomepage";
+import CaseOverview from "./pages/student/components/CaseOverview";
+import InterviewAssistant from "./pages/student/components/InterviewAssistant";
+import PrelimSummary from "./pages/student/components/PrelimSummary";
 
 export const UserContext = createContext();
 
@@ -97,6 +99,10 @@ function App() {
           <Route path="/cases" element={<ViewAllCases />} />
           <Route path="/interview" element={<InterviewAssistant />} />
           <Route path="/home/*" element={<StudentHomepage />} />
+          
+        <Route path="/case/overview" element={<CaseOverview />} />
+        <Route path="/case/preliminary-summary" element={<PrelimSummary />} />
+        <Route path="/case/interview-assistant" element={<InterviewAssistant />} />
         </Routes>
       </Router>
     </UserContext.Provider>
