@@ -259,11 +259,7 @@ const StudentChat = ({ group, patient, setPatient, setGroup }) => {
         const response = await fetch(
           `${
             import.meta.env.VITE_API_ENDPOINT
-          }student/create_ai_message?session_id=${encodeURIComponent(
-            sessionId
-          )}&email=${encodeURIComponent(email)}&simulation_group_id=${encodeURIComponent(
-            group.simulation_group_id
-          )}&patient_id=${encodeURIComponent(patient.patient_id)}`,
+          }student/create_ai_message?session_id=${encodeURIComponent(sessionId)}`,
           {
             method: "POST",
             headers: {

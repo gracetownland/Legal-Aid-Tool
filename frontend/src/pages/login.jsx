@@ -492,24 +492,11 @@ console.log(import.meta.env.VITE_COGNITO_USER_POOL_ID);
               justifyContent: "center",
               padding: "20px",
               backgroundColor: '#94A1B5',
-
             }}
           >
 
 
             <div style={{ textAlign: 'center', marginTop: '20px' }}>
-              {/* <img
-                src={heartbeatImage}
-                alt="Heartbeat"
-                className='heartbeat-image'
-                style={{
-                  maxWidth: '25%', // Ensure the image fits within the container
-                  display: 'block', // Make the image a block element
-                  height: 'auto', // Maintain aspect ratio
-                  margin: '0 auto', // Center the image horizontally
-                  animation: 'float 3s ease-in-out infinite', // Add the float animation
-                }}
-              /> */}
               <Typography
                 variant="h4"
                 sx={{
@@ -550,6 +537,7 @@ console.log(import.meta.env.VITE_COGNITO_USER_POOL_ID);
                   justifyContent: "center",
                   alignItems: "center",
                   height: "100%",
+                  backgroundColor: 'var(--background)'
                 }}
               >
                 <Box
@@ -561,7 +549,7 @@ console.log(import.meta.env.VITE_COGNITO_USER_POOL_ID);
                     alignItems: "center",
                   }}
                 >
-                  <Typography component="h1" variant="h5">
+                  <Typography component="h1" variant="h5" sx={{color: 'var(--text)'}}>
                     Sign in
                   </Typography>
                   <Box
@@ -571,18 +559,33 @@ console.log(import.meta.env.VITE_COGNITO_USER_POOL_ID);
                     sx={{ mt: 1 }}
                   >
                     <TextField
-                      margin="normal"
-                      required
-                      fullWidth
-                      id="email"
-                      label="Email Address"
-                      name="email"
-                      autoComplete="email"
-                      autoFocus
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      inputProps={{ maxLength: 40 }}
-                    />
+                    margin="normal"
+                    required
+                    fullWidth
+                    id="email"
+                    label="Email Address"
+                    name="email"
+                    autoComplete="email"
+                    autoFocus
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    inputProps={{ maxLength: 40 }}
+                    InputProps={{
+                      style: { color: 'var(--text)' }, // Text color inside input
+                    }}
+                    InputLabelProps={{
+                      style: { color: 'var(--text)' }, // Label color
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: 'var(--text)', // Default border color
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: 'var(--text)', // Hover border color
+                      },
+                    }}
+                  />
+
                     <TextField
                       margin="normal"
                       required
@@ -595,6 +598,20 @@ console.log(import.meta.env.VITE_COGNITO_USER_POOL_ID);
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       inputProps={{ maxLength: 50 }}
+                      InputProps={{
+                        style: { color: 'var(--text)' }, // Text color inside input
+                      }}
+                      InputLabelProps={{
+                        style: { color: 'var(--text)' }, // Label color
+                      }}
+                      sx={{
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'var(--text)', // Default border color
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'var(--text)', // Hover border color
+                        },
+                      }}
                     />
                     <Button
                     type="submit"
@@ -604,10 +621,12 @@ console.log(import.meta.env.VITE_COGNITO_USER_POOL_ID);
                     sx={{
                       mt: 3,
                       mb: 2,
-                      color: "white", // Default text color
+                      color: "var(--text-button)", // Default text color
                       "&:hover": {
-                        color: "lightgray", // Change this to your preferred hover color
+                        backgroundColor: "var(--secondary)",
+                        color: "#0f0f0f", // Change this to your preferred hover color
                       },
+                      backgroundColor: 'var(--primary)'
                     }}
                     onClick={handleSignIn} // Remove the arrow function, just pass the function reference
                   >
@@ -619,6 +638,7 @@ console.log(import.meta.env.VITE_COGNITO_USER_POOL_ID);
                           href="#"
                           variant="body2"
                           onClick={() => setForgotPassword(true)}
+                          sx={{color: "var(--primary)"}}
                         >
                           Forgot password?
                         </Link>
@@ -628,6 +648,7 @@ console.log(import.meta.env.VITE_COGNITO_USER_POOL_ID);
                           href="#"
                           variant="body2"
                           onClick={() => setNewSignUp(true)}
+                          sx={{color: "var(--primary)"}}
                         >
                           {"Create your account"}
                         </Link>

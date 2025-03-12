@@ -3,7 +3,8 @@ import { Drawer, Box, Typography, List, ListItem, ListItemText, Button } from "@
 import { useLocation, useNavigate } from "react-router-dom"; // Import useNavigate to navigate back
 import CaseOverview from "./components/CaseOverview";
 import PrelimSummary from "./components/PrelimSummary";
-import InterviewAssistant from "./components/InterviewAssistant";
+import InterviewAssistant from "./components/InterviewAs;
+import DraggableNotes from "../../components/DraggableNotes";
 import SideMenu from "./components/sidemenu";
 
 const CasePage = () => {
@@ -12,6 +13,19 @@ const CasePage = () => {
   const { caseData } = location.state || {}; // Get the case data passed via navigate
 
   const [selectedOption, setSelectedOption] = useState("Case Overview");
+  const [isNotesOpen, setIsNotesOpen] = useState(false);
+
+  const toggleNotes = () => {
+    setIsNotesOpen(!isNotesOpen);
+    if (isNotesOpen) {
+      document.getElementById("notesButton").style.backgroundColor = "#00000000";
+      document.getElementById("notes").style.visibility = "hidden";
+    } else {
+      
+      document.getElementById("notes").style.visibility="visible";
+      document.getElementById("notesButton").style.backgroundColor = "var(--background3)";
+    }
+  };
 
   const handleDrawerSelection = (option) => {
     setSelectedOption(option);
@@ -36,7 +50,51 @@ const CasePage = () => {
 
   return (
     <Box display="flex">
+
+      <Box id="notes" sx={{ position: "absolute", top: 0, left: 0, zIndex: 9999, visibility: "hidden" }}>
+        <DraggableNotes/>
+      </Box>
+
+      {/* Left Sidebar Drawer */}
+      <Drawer
+      sx={{
+        width: 240,
+        flexShrink: 0,
+        "& .MuiDrawer-paper": {
+          width: 240,
+          boxSizing: "border-box",
+          backgroundColor: "var(--background2)", // Uses CSS variable
+          color: "var(--text)", // Uses CSS variable
+          border: "none",
+          display: "flex", // Ensure flex container for alignment
+          flexDirection: "column",
+        },
+      }}
+      variant="permanent"
+    >
+      <List sx={{ flexGrow: 1 }}>
+        <ListItem button onClick={() => handleDrawerSelection("Case Overview")}>
+          <ListItemText primary="Case Overview" />
+        </ListItem>
+        <ListItem button onClick={() => handleDrawerSelection("Preliminary Summary")}>
+          <ListItemText primary="Preliminary Summary" />
+        </ListItem>
+        <ListItem button onClick={() => handleDrawerSelection("Interview Assistant")}>
+          <ListItemText primary="Interview Assistant" />
+        </ListItem>
+      </List>
+
+      <Button 
+      id="notesButton"
+      onClick={toggleNotes} 
+      sx={{ margin: 2, outline: "none", "&:focus": { outline: "none" } }}
+    >
+      Open Notes
+    </Button>
+
+    </Drawer>
       <SideMenu />
+
 
       {/* Main Content Area */}
       <Box
@@ -46,6 +104,7 @@ const CasePage = () => {
           padding: 3,
         }}
       >
+        
         {/* Back to Home Button */}
         <Button 
           onClick={handleBackToHome} 
@@ -57,6 +116,7 @@ const CasePage = () => {
         {/* Render Selected Option Content */}
         {renderContent()}
       </Box>
+      
     </Box>
   );
 };

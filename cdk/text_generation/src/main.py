@@ -611,6 +611,7 @@ def answer_prompt(user_prompt, case_id):
              Canadian law it is applicable too if possible or helpful. You are NOT allowed hallucinate, 
              informational accuracy is important. If you are asked something for which you do not know, either
              say "I don't know" or ask for further information if applicable and not an invasion of privacy.
+             Do not indent your text.
              
              Case Examples : {case_examples}
              '''
@@ -631,7 +632,9 @@ def answer_prompt(user_prompt, case_id):
             """
 
         # Retrieve memory for the specific case ID
-    memory = get_memory(case_id)
+    memory = get_memory(case_id);
+
+    console.log(prompt);
 
     # Create the conversation chain with LLM and memory
     conversation_chain = ConversationChain(

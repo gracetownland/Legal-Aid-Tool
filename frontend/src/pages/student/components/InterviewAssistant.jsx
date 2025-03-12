@@ -1,4 +1,12 @@
 import React, { useState } from "react";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Box, Typography, TextField, Button, Paper, Divider, useTheme } from "@mui/material";
+
+import TypingIndicator from "./TypingIndicator";
+
+const InterviewAssistant = ({ caseData }) => {
+  const theme = useTheme();
 import { Box, Typography, TextField, Button, Paper, Divider } from "@mui/material";
 import SideMenu from "./sidemenu";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -15,9 +23,12 @@ const InterviewAssistant = () => {
 
   console.log(caseData);
   const [messages, setMessages] = useState([
-    { sender: "bot", text: "Hello! I'm your Interview Assistant. Let's get started." },
+    { sender: "bot", text: "Hi, I'm your Legal Interview Assistant. Let's get started!" },
   ]);
-  const [userInput, setUserInput] = useState(`I am working on a case about ${caseData.case_title}. Here's a brief overview: ${caseData.case_description} and it is ${caseData.case_type}`);
+  
+  const [userInput, setUserInput] = useState("");
+  const [isAItyping, setIsAItyping] = useState(false);
+
 
   const handleSendMessage = async () => {
     if (userInput.trim()) {
@@ -28,6 +39,7 @@ const InterviewAssistant = () => {
       setUserInput(""); // Reset input field
 
       // Await the AI response before updating the messages
+      setIsAItyping(true);
       const llmResponse = await getAIResponse(userInput);
       console.log(llmResponse); // Check the response in the console
 
@@ -58,7 +70,7 @@ const InterviewAssistant = () => {
           },
           body: JSON.stringify({
             message_content: userInput
-          }) // Removed extra JSON.stringify()
+          })
         });
     
         if (!response.ok) {
@@ -68,20 +80,30 @@ const InterviewAssistant = () => {
         const data = await response.json();
         const res = data.llm_output
         console.log('Success:', data);
+        setIsAItyping(false);
         return res;
       } catch (error) {
         console.error('Error:', error);
-        return null;
+        setIsAItyping(false);
+        return "Error getting response.";
       }
     }
   
-    // Calling the function and logging the result
     const body = await getFetchBody();
     return body
   }
   
-
   return (
+    <Box
+    sx={{
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "space-between",
+      padding: 2,
+      backgroundColor: "transparent",
+      color: "var(--text)" 
+    }}
+    >
     <Box sx={{ display: "flex" }}>
       <SideMenu />
       
@@ -100,9 +122,8 @@ const InterviewAssistant = () => {
         <strong>Case Overview:</strong> {caseData?.case_description || "Overview information not available."}
       </Typography>
 
-      <Divider sx={{ marginBottom: 2 }} />
+      <Divider sx={{ marginBottom: 2, borderColor: "var(--text)"}} />
 
-      {/* Chat Messages */}
       <Box sx={{ overflowY: "auto", marginBottom: 2 }}>
         {messages.map((message, index) => (
           <Box
@@ -111,39 +132,68 @@ const InterviewAssistant = () => {
               display: "flex",
               flexDirection: message.sender === "bot" ? "row" : "row-reverse",
               marginBottom: 2,
+              fontFamily: "'Roboto', sans-serif",
+              boxShadow: 'none'
             }}
           >
             <Paper
               sx={{
-                maxWidth: "100%",
-                padding: 2,
-                backgroundColor: message.sender === "bot" ? "#e7f7ff" : "#f1f1f1",
+                maxWidth: "55%",                
+                padding: "0 1em", // Reduced padding to remove extra space
+                backgroundColor: message.sender === "bot" ? "var(--bot-text)" : "var(--sender-text)",
                 borderRadius: 2,
                 boxShadow: 1,
                 marginLeft: message.sender === "bot" ? 0 : "auto",
                 marginRight: message.sender === "bot" ? "auto" : 0,
+                color: "var(--text)",
+                fontFamily: "'Roboto', sans-serif",
+                boxShadow: 'none'
               }}
             >
               <Typography variant="body1" sx={{ textAlign: "left" }}>
-                {message.text}
+              <div className="markdown">
+                <ReactMarkdown>{message.text}</ReactMarkdown>
+              </div>
               </Typography>
             </Paper>
           </Box>
         ))}
       </Box>
+      {isAItyping && <TypingIndicator />}
+      
 
-      {/* User Input Field */}
       <Box sx={{ display: "flex", alignItems: "center" }}>
         <TextField
-          label="Your Answer"
+          label="Type here..."
           variant="outlined"
           fullWidth
+          multiline
           value={userInput}
           onChange={(e) => setUserInput(e.target.value)}
-          sx={{ marginRight: 2 }}
+          sx={{ 
+            marginRight: 2,
+            '& .MuiOutlinedInput-notchedOutline': {
+              borderColor: '#808080', // Default border color (gray)
+            },
+            '&:hover .MuiOutlinedInput-notchedOutline': {
+              borderColor: '#808080', // Hover border color (gray)
+            },
+          }}
           onKeyDown={handleKeyPress}
+          InputLabelProps={{
+            style: { 
+              backgroundColor: "transparent", 
+              color: "#808080" // Label color (gray)
+            },
+          }}
+          InputProps={{
+            style: {
+              backgroundColor: "transparent",
+              color: "var(--text)", // Text color
+            },
+          }}
         />
-        <Button variant="contained"  sx={{ color: "#ffffff"}} onClick={handleSendMessage}>
+        <Button variant="contained" sx={{ color: "#ffffff" }} onClick={handleSendMessage}>
           Send
         </Button>
       </Box>
