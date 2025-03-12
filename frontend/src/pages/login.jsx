@@ -17,6 +17,7 @@ import {
   resetPassword,
   confirmResetPassword,
   fetchAuthSession,
+  fetchUserAttributes
 } from "aws-amplify/auth";
 // MUI
 import {
@@ -111,11 +112,23 @@ export const Login = () => {
   // existing user sign in
   const handleSignIn = async (event) => {
     event.preventDefault();
+    console.log(import.meta.env.VITE_COGNITO_USER_POOL_CLIENT_ID);
+console.log(import.meta.env.VITE_COGNITO_USER_POOL_ID);
+
     try {
       setLoading(true);
+      console.log("Signing in with username and password;", username, password);
+
+      try {
+        const userInfo = await fetchUserAttributes();
+        console.log("👤 Cognito User Info:", userInfo);
+      } catch (error) {
+        console.error("❌ Could not fetch user data:", error);
+      }
+
       const user = await signIn({
         username: username,
-        password: password,
+        password: password
       });
       
       console.log("SignIn Response:", user); 
@@ -332,7 +345,7 @@ export const Login = () => {
             firstName
           )}&last_name=${encodeURIComponent(
             lastName
-          )}&preferred_name=${encodeURIComponent(firstName)}`,
+          )}`,
           {
             method: "POST",
             headers: {
@@ -346,7 +359,7 @@ export const Login = () => {
 
         setLoading(false);
         setNewSignUp(false);
-        window.location.reload();
+      //  window.location.reload();
       } else {
         setLoading(false);
         setError("Automatic login failed. Please try signing in manually.");

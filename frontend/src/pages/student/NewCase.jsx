@@ -17,6 +17,7 @@ import {
   FormControl as MUIFormControl,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import { fetchAuthSession, fetchUserAttributes } from "aws-amplify/auth";
 
 const NewCaseForm = () => {
   // State for form data
@@ -29,7 +30,6 @@ const NewCaseForm = () => {
     legalMatterSummary: "",
   });
 
-  const [saveForLater, setSaveForLater] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null); // For handling errors during submission
   const navigate = useNavigate(); // React Router navigate hook
@@ -43,47 +43,78 @@ const NewCaseForm = () => {
     }));
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
-
-    // Map form data to API structure
+  
+    // Prepare data for backend
     const caseData = {
       case_title: formData.broadAreaOfLaw,
-      case_type: formData.jurisdiction, // Assuming 'jurisdiction' corresponds to 'case_type'
-      law_type: formData.jurisdiction, // Assuming 'jurisdiction' corresponds to 'law_type'
+      case_type: formData.jurisdiction,
       case_description: formData.legalMatterSummary,
-      system_prompt: formData.statuteDetails || "No system prompt provided", // Placeholder if not filled
+      system_prompt: formData.legalMatterSummary, // Setting description as system prompt
     };
 
-    try {
-      // Send a POST request to your API endpoint
-      const response = await fetch("https://nol9wedqt0.execute-api.ca-central-1.amazonaws.com/prod/student/new-case", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(caseData), // Sending transformed case data as JSON
-      });
+    console.log("Form Data:", formData);
+  console.log("Sending Case Data:", JSON.stringify(caseData, null, 2));
 
-      // Check for success
-      if (!response.ok) {
-        throw new Error("Failed to submit the case. Please try again.");
+  
+    try {
+      // Fetch authentication session
+      const { tokens } = await fetchAuthSession();
+      if (!tokens || !tokens.idToken) {
+        throw new Error("Authentication failed. No valid token.");
       }
 
-      const data = await response.json();
+      const userAttributes = await fetchUserAttributes();
+      const email = userAttributes.email;
 
-      // If successful, navigate to the Interview page or show success
+      console.log(tokens);
+  
+      const token = tokens.idToken; // Correct token extraction
+      const cognito_id = tokens.idToken.payload.sub
+
+      console.log(cognito_id);
+      console.log(caseData);
+  
+      // Make the API request
+      const response = await fetch(
+        `${import.meta.env.VITE_API_ENDPOINT}student/new_case?` +
+  `cognito_id=${encodeURIComponent(cognito_id)}` +
+  `&case_title=${encodeURIComponent(caseData.case_title)}` +
+  `&case_type=${encodeURIComponent(caseData.case_type)}` +
+  `&case_description=${encodeURIComponent(caseData.case_description)}` +
+  `&system_prompt=${encodeURIComponent(caseData.case_description)}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: token, // Ensure correct format
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(caseData),
+        }
+      );
+  
+      const data = await response.json();
+  
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to submit case");
+      }
+  
       console.log("Case submitted successfully:", data);
-      navigate("/interview", { state: { formData } });
+  
+      // Navigate to the Interview Assistant page and pass form data
+      navigate("/case/interview-assistant",  {state: { caseData: caseData }});
+  
     } catch (err) {
+      console.error("Error submitting case:", err);
       setError(err.message);
     } finally {
       setIsSubmitting(false);
     }
   };
+  
 
   // Navigate back to the homepage
   const handleBack = () => {
@@ -229,15 +260,6 @@ const NewCaseForm = () => {
           >
             {isSubmitting ? "Submitting..." : "Start Interview"}
           </Button>
-
-          {/* Optionally show the 'saved' state */}
-          {saveForLater && (
-            <Box sx={{ marginTop: 2 }}>
-              <Typography variant="body1" color="white" sx={{ textAlign: "left" }}>
-                Your progress has been saved for later.
-              </Typography>
-            </Box>
-          )}
 
           {/* Display Error Message */}
           {error && (

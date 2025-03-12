@@ -52,12 +52,13 @@ def handler(event, context):
 
             CREATE TABLE IF NOT EXISTS "users" (
                 "user_id" uuid PRIMARY KEY DEFAULT (uuid_generate_v4()),
+                "cognito_id" varchar,
                 "user_email" varchar UNIQUE,
                 "username" varchar,
                 "first_name" varchar,
                 "last_name" varchar,
                 "time_account_created" timestamp,
-                "role" varchar,
+                "roles" varchar[],
                 "last_sign_in" timestamp DEFAULT now()
             );
 
@@ -80,6 +81,7 @@ def handler(event, context):
                 "case_id" uuid PRIMARY KEY DEFAULT (uuid_generate_v4()),
                 "case_title" varchar,
                 "case_type" varchar,
+                "user_id" uuid,
                 "law_type" varchar[],
                 "case_description" text,
                 "status" varchar DEFAULT 'In progress',
@@ -99,6 +101,7 @@ def handler(event, context):
             ALTER TABLE "sessions" ADD FOREIGN KEY ("case_id") REFERENCES "cases" ("case_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
             ALTER TABLE "messages" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
+            ALTER TABLE "cases" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
             ALTER TABLE "reports" ADD FOREIGN KEY ("case_id") REFERENCES "cases" ("case_id") ON DELETE CASCADE ON UPDATE CASCADE;
         """
