@@ -4,6 +4,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { fetchAuthSession } from "aws-amplify/auth";
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import { Box, Button, Typography, Switch, FormControlLabel} from "@mui/material";
+import TextEditor from "./TextEditor";
 
 function DraggableNotes({ onClose, sessionId }) {
   const [noteContent, setNoteContent] = useState("");
@@ -186,30 +187,18 @@ function DraggableNotes({ onClose, sessionId }) {
       </Box>
 
       {/* Textarea */}
-      <Box sx={{ height: "calc(100% - 80px)", padding: "10px" }}>
-        <textarea
-          style={{
-            width: "100%",
-            height: "100%",
-            padding: "10px",
-            backgroundColor: "#f7f07d",
-            color: "#333",
-            fontSize: "14px",
-            resize: "none",
-            whiteSpace: "pre-wrap",
-            overflowWrap: "break-word",
-          }}
-          className="note-text-area"
-          placeholder="Write your notes here..."
-          value={noteContent}
-          onChange={handleNoteChange}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.stopPropagation();
-            }
-          }}
-        />
-      </Box>
+      <Box
+      sx={{
+        flexGrow: 1,
+        display: "flex",
+        flexDirection: "column",
+        overflow: "auto",
+        width: "100%",
+        height: "calc(100% - 100px)", // Adjust for header height
+      }}
+    >
+      <TextEditor value={noteContent} onChange={setNoteContent} />
+    </Box>
 
       {/* Save Button */}
       <Box sx={{ padding: "5px 10px", textAlign: "right", marginTop: "5px", marginBottom: "10px" }}>
@@ -257,7 +246,7 @@ function DraggableNotes({ onClose, sessionId }) {
         },
 
          }}
-      />;
+      />
 
 
       {/* Resizer Handle */}
