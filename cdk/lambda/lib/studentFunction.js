@@ -85,11 +85,14 @@ exports.handler = async (event) => {
             last_sign_in
           } = event.queryStringParameters;
 
+          const cognitoUserId = event.requestContext.authorizer.userId;
+          console.log(event);
+
           try {
             // Check if the user already exists
             const existingUser = await sqlConnection`
                 SELECT * FROM "users"
-                WHERE user_email = ${user_email};
+                WHERE cognito_id = ${cognitoUserId};
             `;
 
             if (existingUser.length > 0) {
@@ -102,7 +105,7 @@ exports.handler = async (event) => {
                         last_name = ${last_name},
                         last_sign_in = CURRENT_TIMESTAMP,
                         time_account_created = CURRENT_TIMESTAMP
-                    WHERE user_id = ${user_id}
+                    WHERE cognito_id = ${user_id}
                     RETURNING *;
                 `;
               response.body = JSON.stringify(updatedUser[0]);
@@ -110,8 +113,8 @@ exports.handler = async (event) => {
               // Insert a new user with 'student' role
               console.log("Trying to create A new User");
               const newUser = await sqlConnection`
-                    INSERT INTO "users" (user_email, username, first_name, last_name, time_account_created, roles, last_sign_in)
-                    VALUES (${user_email}, ${username}, ${first_name}, ${last_name}, CURRENT_TIMESTAMP, ARRAY['student'], CURRENT_TIMESTAMP)
+                    INSERT INTO "users" (cognito_id, user_email, username, first_name, last_name, time_account_created, roles, last_sign_in)
+                    VALUES (${cognitoUserId}, ${user_email}, ${username}, ${first_name}, ${last_name}, CURRENT_TIMESTAMP, ARRAY['student'], CURRENT_TIMESTAMP)
                     RETURNING *;
                 `;
               response.body = JSON.stringify(newUser[0]);
@@ -168,7 +171,7 @@ exports.handler = async (event) => {
               case_type,
               case_description,
               system_prompt,
-              user_id
+              cognito_id
             } = event.queryStringParameters;
 
           
@@ -187,12 +190,15 @@ exports.handler = async (event) => {
           console.log("case_description:", caseDescription);
           console.log("system_prompt:", systemPrompt);
           
+          const user_id = await sqlConnection`
+            SELECT user_id FROM "users" WHERE cognito_id = ${cognito_id};
+          `;
 
           try {
             // SQL query to insert the new case
             const newCase = await sqlConnection`
               INSERT INTO "cases" (user_id, case_title, case_type, law_type, case_description, system_prompt)
-              VALUES (${user_id}, ${case_title}, ${case_title}, ${case_type}, ${case_description}, ${system_prompt})
+              VALUES (${user_id}, ${case_title}, ${case_title}, ARRAY[${case_type}], ${case_description}, ${system_prompt})
               RETURNING case_id;
             `;
 
@@ -284,6 +290,31 @@ exports.handler = async (event) => {
         case "POST /student/create_message":
          
           break;
+        case "GET /student/case_page":
+            if (event.queryStringParameters && event.queryStringParameters.case_id) {
+              const case_id = event.queryStringParameters.case_id;
+              try {
+                const caseData = await sqlConnection`
+                  SELECT * FROM "cases" WHERE case_id = ${case_id};
+                `;
+            
+                if (caseData.length > 0) {
+                  response.body = JSON.stringify(caseData[0]); // Return the case data
+                } else {
+                  response.statusCode = 404;
+                  response.body = JSON.stringify({ error: "Case not found" });
+                }
+              } catch (err) {
+                response.statusCode = 500;
+                console.log(err);
+                response.body = JSON.stringify({ error: "Internal server error" });
+              }
+            } else {
+              response.statusCode = 400;
+              response.body = JSON.stringify({ error: "Case ID is required" });
+            }
+          break;
+
         case "POST /student/create_ai_message":
          
         break;

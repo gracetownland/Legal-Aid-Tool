@@ -24,7 +24,7 @@ const CasePage = () => {
       case "Preliminary Summary":
         return <PrelimSummary caseData={caseData} />;
       case "Interview Assistant":
-        return <InterviewAssistant caseData={caseData} />;
+        navigate("/case/interview-assistant", {state: {caseData: caseData}}); 
       default:
         return <CaseOverview caseData={caseData} />;
     }

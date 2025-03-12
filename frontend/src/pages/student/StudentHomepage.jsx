@@ -4,9 +4,9 @@ import Container from "../Container";
 import { ToastContainer } from "react-toastify";
 import { Add, ArrowForward } from '@mui/icons-material';
 import "react-toastify/dist/ReactToastify.css";
-import { cardio } from 'ldrs'
+import { ring } from 'ldrs'
 import { fetchAuthSession, fetchUserAttributes } from 'aws-amplify/auth'; 
-cardio.register()
+ring.register()
 
 import {
   Card,
@@ -58,11 +58,11 @@ export const StudentHomepage = () => {
           .then((session) => {
             return fetchUserAttributes().then((userAttributes) => {
               const token = session.tokens.idToken;
-              const user_id = session.tokens.idToken.payload.sub;
+              const cognito_id = session.tokens.idToken.payload.sub;
               return fetch(
                 `${
                   import.meta.env.VITE_API_ENDPOINT
-                }student/get_cases?user_id=${user_id}`,
+                }student/get_cases?user_id=${cognito_id}`,
                 {
                   method: "GET",
                   headers: {
@@ -76,6 +76,8 @@ export const StudentHomepage = () => {
           .then((response) => response.json())
           .then((data) => {
             setCases(data);
+            setLoading(false);
+            console.log(data);
           })
           .catch((error) => {
             console.error("Error fetching name:", error);
@@ -120,7 +122,7 @@ export const StudentHomepage = () => {
           <Typography variant="h6" sx={{ color: theme.palette.text.primary }}>Quick Links</Typography>
           <Box sx={{ bgcolor: 'white', borderRadius: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: 50 }}>
             <Button variant="contained" sx={{ height: 50, backgroundColor: theme.palette.primary.main }} onClick={() => { navigate('/new-case') }}>
-              <Add sx={{ mr: 0 }} />
+              <Add sx={{ mr: 0, color: 'white' }} />
             </Button>
             <Typography variant="body2" sx={{ mr: 2, color: theme.palette.text.primary }}>
               Start a new case
@@ -129,7 +131,7 @@ export const StudentHomepage = () => {
 
           <Box sx={{ bgcolor: "white", borderRadius: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: 50 }}>
             <Button variant="contained" sx={{ height: 50, backgroundColor: theme.palette.primary.main }} onClick={() => { navigate('/cases') }}>
-              <ArrowForward sx={{ mr: 0 }} />
+              <ArrowForward sx={{ mr: 0 , color: 'white'}} />
             </Button>
             <Typography variant="body2" sx={{ mr: 2, color: theme.palette.text.primary }}>
               View All Cases
@@ -169,7 +171,7 @@ export const StudentHomepage = () => {
 
             {loading ? (
               <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "80vh", width: "100%" }}>
-                <l-cardio size="50" stroke="4" speed="2" color="black"></l-cardio>
+                <l-ring size="50" stroke="4" speed="2" color="black"></l-ring>
               </Box>
             ) : error ? (
               <Box sx={{ textAlign: "center", mt: 2 }}>
@@ -189,7 +191,7 @@ export const StudentHomepage = () => {
                       <Grid item xs={12} sm={7.5} md={4} key={index}>
                         <Card sx={{ mb: 2, borderRadius: 1, boxShadow: 2, transition: "transform 0.3s ease", "&:hover": { transform: "scale(1.05)" } }}>
                           <CardContent sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
-                            {/* Case Title Box */}
+                            {caseItem.case_title}
                             <Box sx={{ borderRadius: 1, mb: 2, display: "flex", justifyContent: "flex-start", alignItems: "left" }}>
                               <Typography variant="h6" sx={{ fontWeight: 600, fontSize: "1.25rem", textAlign: "left" }}>
                                 {caseItem.case_title}
@@ -204,12 +206,12 @@ export const StudentHomepage = () => {
                             {/* Case Type & Last Updated */}
                             <Typography variant="body2" sx={{ textAlign: "left", fontWeight: 500 }}>
                               Case Type
-                              <Typography variant="body2">{caseItem.case_type}</Typography>
+                              <Typography variant="body2">{caseItem.law_type}</Typography>
                             </Typography>
                             
                             <Typography variant="body2" sx={{ textAlign: "left", fontWeight: 500 }}>
-                              Last Updated
-                              <Typography variant="body2">{new Date(caseItem.last_updated).toLocaleString()}</Typography>
+                              Status
+                              <Typography variant="body2">{caseItem.status}In Progress</Typography>
                             </Typography>
                           </CardContent>
 

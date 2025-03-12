@@ -17,7 +17,7 @@ import {
   FormControl as MUIFormControl,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { fetchAuthSession } from "aws-amplify/auth";
+import { fetchAuthSession, fetchUserAttributes } from "aws-amplify/auth";
 
 const NewCaseForm = () => {
   // State for form data
@@ -67,18 +67,21 @@ const NewCaseForm = () => {
         throw new Error("Authentication failed. No valid token.");
       }
 
+      const userAttributes = await fetchUserAttributes();
+      const email = userAttributes.email;
+
       console.log(tokens);
   
       const token = tokens.idToken; // Correct token extraction
-      const user_id = tokens.idToken.payload.sub
+      const cognito_id = tokens.idToken.payload.sub
 
-      console.log(user_id);
+      console.log(cognito_id);
       console.log(caseData);
   
       // Make the API request
       const response = await fetch(
         `${import.meta.env.VITE_API_ENDPOINT}student/new_case?` +
-  `user_id=${encodeURIComponent(user_id)}` +
+  `cognito_id=${encodeURIComponent(cognito_id)}` +
   `&case_title=${encodeURIComponent(caseData.case_title)}` +
   `&case_type=${encodeURIComponent(caseData.case_type)}` +
   `&case_description=${encodeURIComponent(caseData.case_description)}` +
@@ -102,7 +105,7 @@ const NewCaseForm = () => {
       console.log("Case submitted successfully:", data);
   
       // Navigate to the Interview Assistant page and pass form data
-      navigate("/case/interview-assistant", { state: { caseData: data } });
+      navigate("/case/interview-assistant",  {state: { caseData: caseData }});
   
     } catch (err) {
       console.error("Error submitting case:", err);

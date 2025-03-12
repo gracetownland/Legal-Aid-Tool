@@ -1,13 +1,23 @@
 import React, { useState } from "react";
 import { Box, Typography, TextField, Button, Paper, Divider } from "@mui/material";
 import SideMenu from "./sidemenu";
+import { useLocation, useNavigate } from "react-router-dom";
+import { fetchAuthSession } from "aws-amplify/auth";
 
-const InterviewAssistant = ({ caseData }) => {
+const InterviewAssistant = () => {
+  const location = useLocation();
+  const caseData = location.state?.caseData;
+  const navigate = useNavigate();
+
+  const handleBack = () => {
+    navigate("/"); // Navigate to the homepage
+  };
+
   console.log(caseData);
   const [messages, setMessages] = useState([
     { sender: "bot", text: "Hello! I'm your Interview Assistant. Let's get started." },
   ]);
-  const [userInput, setUserInput] = useState("");
+  const [userInput, setUserInput] = useState(`I am working on a case about ${caseData.case_title}. Here's a brief overview: ${caseData.case_description} and it is ${caseData.case_type}`);
 
   const handleSendMessage = async () => {
     if (userInput.trim()) {
@@ -35,12 +45,16 @@ const InterviewAssistant = ({ caseData }) => {
   }
 
   async function getAIResponse(userInput) {
+    const session = await fetchAuthSession();
+    const token = session.tokens.idToken;
+
     async function getFetchBody() {
       try {
         const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}student/text_generation`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            Authorization: token
           },
           body: JSON.stringify({
             message_content: userInput
@@ -70,14 +84,21 @@ const InterviewAssistant = ({ caseData }) => {
   return (
     <Box sx={{ display: "flex" }}>
       <SideMenu />
+      
       <Box sx={{ display:"flex", flexDirection: "column", justifyContent: "space-between", padding: 2,width: "100%"}} >
+      <Button 
+                onClick={handleBack} 
+                sx={{ marginBottom: 2, }}
+              >
+                Back to Home Page
+              </Button>
       {/* Case Title and Information */}
-      {/* <Typography variant="h6" sx={{ fontWeight: 600, marginBottom: 2 }}>
+      <Typography variant="h6" sx={{ fontWeight: 600, marginBottom: 2 }}>
         {caseData?.case_title || "Case Title Not Available"}
       </Typography>
       <Typography variant="body2" sx={{ marginBottom: 2 }}>
         <strong>Case Overview:</strong> {caseData?.case_description || "Overview information not available."}
-      </Typography> */}
+      </Typography>
 
       <Divider sx={{ marginBottom: 2 }} />
 

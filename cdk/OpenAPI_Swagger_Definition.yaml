@@ -323,6 +323,12 @@ paths:
           schema:
             type: string
         - in: query
+          name: cognito_id
+          required: false
+          description:  user's cognito_id
+          schema:
+            type: string
+        - in: query
           name: last_name
           required: false
           description: last name of the user
@@ -1192,7 +1198,7 @@ paths:
         passthroughBehavior: "when_no_match"
         httpMethod: "POST"
         type: "aws_proxy"
-  /student/get_all_files:
+  /student/case_page:
     options:
       summary: CORS support
       description: Enable CORS by returning correct headers
@@ -1219,25 +1225,13 @@ paths:
     get:
       tags:
         - student
-      summary: Get a list of all the document files for a specific group and patient
-      operationId: student_get_all_files_GET
+      summary: Get a the case info
+      operationId: student_get_case_GET
       parameters:
         - in: query
-          name: simulation_group_id
+          name: case_id
           required: true
-          description: ID of the group
-          schema:
-            type: string
-        - in: query
-          name: patient_id
-          required: true
-          description: ID of the patient
-          schema:
-            type: string
-        - in: query
-          name: patient_name
-          required: true
-          description: Name of the patient
+          description: ID of the case
           schema:
             type: string
       responses:

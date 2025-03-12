@@ -97,12 +97,11 @@ function App() {
           <Route path="/case-overview" element={<CasePage />} />
           <Route path="/new-case" element={<NewCaseForm />} />
           <Route path="/cases" element={<ViewAllCases />} />
-          <Route path="/interview" element={<InterviewAssistant />} />
           <Route path="/home/*" element={getHomePage()} />
           
         <Route path="/case/overview" element={<CaseOverview />} />
         <Route path="/case/preliminary-summary" element={<PrelimSummary />} />
-        <Route path="/case/interview-assistant" element={<InterviewAssistant />} />
+        <Route path="/case/interview-assistant/*" element={<InterviewAssistant />} />
         </Routes>
       </Router>
     </UserContext.Provider>

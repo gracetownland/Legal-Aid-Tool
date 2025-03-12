@@ -52,6 +52,7 @@ def handler(event, context):
 
             CREATE TABLE IF NOT EXISTS "users" (
                 "user_id" uuid PRIMARY KEY DEFAULT (uuid_generate_v4()),
+                "cognito_id" varchar,
                 "user_email" varchar UNIQUE,
                 "username" varchar,
                 "first_name" varchar,
@@ -80,7 +81,7 @@ def handler(event, context):
                 "case_id" uuid PRIMARY KEY DEFAULT (uuid_generate_v4()),
                 "case_title" varchar,
                 "case_type" varchar,
-                "user_id" uuid
+                "user_id" uuid,
                 "law_type" varchar[],
                 "case_description" text,
                 "status" varchar DEFAULT 'In progress',
