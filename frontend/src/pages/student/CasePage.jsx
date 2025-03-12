@@ -7,25 +7,12 @@ import InterviewAssistant from "./components/InterviewAssistant";
 import DraggableNotes from "../../components/DraggableNotes";
 import SideMenu from "./components/sidemenu";
 
-const CasePage = () => {
+const CasePage = ({caseData}) => {
   const location = useLocation();
   const navigate = useNavigate(); // Initialize navigate hook
-  const { caseData } = location.state || {}; // Get the case data passed via navigate
+ // const { caseData } = location.state || {}; // Get the case data passed via navigate
 
   const [selectedOption, setSelectedOption] = useState("Case Overview");
-  const [isNotesOpen, setIsNotesOpen] = useState(false);
-
-  const toggleNotes = () => {
-    setIsNotesOpen(!isNotesOpen);
-    if (isNotesOpen) {
-      document.getElementById("notesButton").style.backgroundColor = "#00000000";
-      document.getElementById("notes").style.visibility = "hidden";
-    } else {
-      
-      document.getElementById("notes").style.visibility="visible";
-      document.getElementById("notesButton").style.backgroundColor = "var(--background3)";
-    }
-  };
 
   const handleDrawerSelection = (option) => {
     setSelectedOption(option);
@@ -51,9 +38,7 @@ const CasePage = () => {
   return (
     <Box display="flex">
 
-      <Box id="notes" sx={{ position: "absolute", top: 0, left: 0, zIndex: 9999, visibility: "hidden" }}>
-        <DraggableNotes/>
-      </Box>
+      
 
       {/* Left Sidebar Drawer */}
       <Drawer
@@ -84,13 +69,7 @@ const CasePage = () => {
         </ListItem>
       </List>
 
-      <Button 
-      id="notesButton"
-      onClick={toggleNotes} 
-      sx={{ margin: 2, outline: "none", "&:focus": { outline: "none" } }}
-    >
-      Open Notes
-    </Button>
+      
 
     </Drawer>
       <SideMenu />

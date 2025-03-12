@@ -1,8 +1,11 @@
 import {Box, Typography} from '@mui/material'
 import SideMenu from './sidemenu';
+import StudentHeader from '../../../components/StudentHeader';
 
 
 const PrelimSummary = () => (
+  <>
+  <StudentHeader />
     <Box display="flex">
       <SideMenu />
       <Typography variant="h6" gutterBottom sx={{ textAlign: 'left' }}>
@@ -10,6 +13,7 @@ const PrelimSummary = () => (
       </Typography>
       {/* Your Case Overview Content here */}
     </Box>
+    </>
   );
 
   
