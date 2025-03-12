@@ -189,6 +189,15 @@ button:focus-visible {
   flex-direction: column;
 }
 
+.ck.ck-balloon-panel.ck-balloon-panel_visible {
+  z-index: 99999;
+}
+
+.ck.ck-balloon-panel.ck-powered-by-balloon {
+  z-index: -100;
+  opacity: 0;
+}
+
 .editor-container_classic-editor .editor-container__editor {
   flex-grow: 1;
   width: 100%;

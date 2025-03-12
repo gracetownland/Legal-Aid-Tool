@@ -83,12 +83,8 @@ export default function App() {
     }, [isLayoutReady]);
 
     return (
-        <div className="main-container">
-            <div className="editor-container editor-container_classic-editor" ref={editorContainerRef}>
-                <div className="editor-container__editor">
-                    <div ref={editorRef}>{editorConfig && <CKEditor editor={ClassicEditor} config={editorConfig} />}</div>
-                </div>
-            </div>
+        <div className="main-container">     
+                    <div ref={editorRef}>{editorConfig && <CKEditor editor={ClassicEditor} config={editorConfig}/>}</div>
         </div>
     );
 }
