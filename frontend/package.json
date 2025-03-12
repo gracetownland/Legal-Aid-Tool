@@ -27,7 +27,7 @@
     "@smithy/signature-v4": "^4.1.0",
     "@smithy/util-utf8": "^3.0.0",
     "amazon-cognito-identity-js": "^6.3.12",
-    "aws-amplify": "^6.3.8",
+    "aws-amplify": "^6.13.4",
     "aws-jwt-verify": "^4.0.1",
     "aws-sdk": "^2.1659.0",
     "axios": "^1.7.3",
