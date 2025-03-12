@@ -470,7 +470,7 @@ case_memory_store = {}
 
 def get_memory(case_id):
     if case_id not in case_memory_store:
-        case_memory_store[case_id] = ConversationBufferMemory(return_messages=False, max_length=3)  # limits history to 3 messages
+        case_memory_store[case_id] = ConversationBufferMemory(return_messages=False, max_length=5)  # limits history to 5 messages
     return case_memory_store[case_id]
 
 def get_vectorstore_retriever(
@@ -623,12 +623,10 @@ def answer_prompt(user_prompt, case_id):
         prompt = f"""
                 {system_prompt}
                 
-                User: {user_prompt}
-                
-                Assistant:
+                Now, respond to this: {user_prompt}
                 """
     else:
-        prompt = f"""{system_prompt}. Provide your answer as if you are talking to a student.
+        prompt = f"""{system_prompt}. Provide your answer as if you are talking to a law student.
             Here is the question: {user_prompt}
             """
 
@@ -642,7 +640,7 @@ def answer_prompt(user_prompt, case_id):
     )
 
    # Get assistant's response using conversation chain
-    answer = conversation_chain.predict(input=user_prompt)
+    answer = conversation_chain.predict(input=prompt)
 
     # Record the end time and find duration of answer only
     answer_end_time = time.time()
