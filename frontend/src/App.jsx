@@ -47,8 +47,6 @@ function App() {
   const [user, setUser] = useState(null);
   const [userGroup, setUserGroup] = useState(null);
   const [group, setGroup] = useState(null);
-  const [patient, setPatient] = useState(null);
-  const [isInstructorAsStudent, setIsInstructorAsStudent] = useState(false);
 
   useEffect(() => {
     const fetchAuthData = () => {
@@ -78,7 +76,7 @@ function App() {
     } else if (userGroup && userGroup.includes("instructor")) {
         return <InstructorHomepage />;
     } else if (userGroup && userGroup.includes("student")) {
-      return <StudentHomepage setGroup={setGroup} />;
+      return <StudentHomepage />;
     } else {
       return <Login />;
     }
@@ -94,14 +92,13 @@ function App() {
             path="/"
             element={user ? <Navigate to="/home" /> : <Login />}
           />
-          <Route path="/case-overview" element={<CasePage />} />
           <Route path="/new-case" element={<NewCaseForm />} />
           <Route path="/cases" element={<ViewAllCases />} />
           <Route path="/home/*" element={getHomePage()} />
           
-        <Route path="/case/overview" element={<CaseOverview />} />
-        <Route path="/case/preliminary-summary" element={<PrelimSummary />} />
-        <Route path="/case/interview-assistant/*" element={<InterviewAssistant />} />
+          <Route path="/case/overview/*" element={<CaseOverview />} />
+          <Route path="/case/preliminary-summary/*" element={<PrelimSummary />} />
+          <Route path="/case/interview-assistant/*" element={<InterviewAssistant />} />
         </Routes>
       </Router>
     </UserContext.Provider>

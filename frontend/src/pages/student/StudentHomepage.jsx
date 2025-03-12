@@ -89,7 +89,7 @@ export const StudentHomepage = () => {
   
 
   const handleViewCase = (caseData) => {
-    navigate("/case-overview", { state: { caseData } });
+    navigate("/case/overview/*", { state: { caseData } });
   };
 
   return (
@@ -125,7 +125,7 @@ export const StudentHomepage = () => {
               <Add sx={{ mr: 0, color: 'white' }} />
             </Button>
             <Typography variant="body2" sx={{ mr: 2, color: theme.palette.text.primary }}>
-              Start a new case
+              Start A New Case
             </Typography>
           </Box>
 
