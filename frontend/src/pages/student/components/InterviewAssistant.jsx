@@ -2,15 +2,12 @@ import React, { useState } from "react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Box, Typography, TextField, Button, Paper, Divider, useTheme } from "@mui/material";
-
-import TypingIndicator from "./TypingIndicator";
-
-const InterviewAssistant = ({ caseData }) => {
-  const theme = useTheme();
-import { Box, Typography, TextField, Button, Paper, Divider } from "@mui/material";
 import SideMenu from "./sidemenu";
 import { useLocation, useNavigate } from "react-router-dom";
 import { fetchAuthSession } from "aws-amplify/auth";
+
+import TypingIndicator from "./TypingIndicator";
+
 
 const InterviewAssistant = () => {
   const location = useLocation();
@@ -198,6 +195,7 @@ const InterviewAssistant = () => {
         </Button>
       </Box>
       </Box>
+    </Box>
     </Box>
   );
 };

@@ -3,7 +3,7 @@ import { Drawer, Box, Typography, List, ListItem, ListItemText, Button } from "@
 import { useLocation, useNavigate } from "react-router-dom"; // Import useNavigate to navigate back
 import CaseOverview from "./components/CaseOverview";
 import PrelimSummary from "./components/PrelimSummary";
-import InterviewAssistant from "./components/InterviewAs;
+import InterviewAssistant from "./components/InterviewAssistant";
 import DraggableNotes from "../../components/DraggableNotes";
 import SideMenu from "./components/sidemenu";
 
