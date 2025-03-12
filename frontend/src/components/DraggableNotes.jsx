@@ -160,7 +160,6 @@ function DraggableNotes({ onClose, sessionId }) {
         width: `${dimensions.width}px`,
         height: `${dimensions.height}px`,
         backgroundColor: "#f7f07d",
-        opacity: 0.95,
         border: "1px solid #ddd",
         borderRadius: "10px",
         boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
