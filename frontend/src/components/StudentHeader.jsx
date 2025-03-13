@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-//import {jwt } from 'jsonwebtoken';
+//import { jwt } from 'jsonwebtoken';
 
 // MUI
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -73,13 +73,14 @@ const StudentHeader = () => {
 
 
   return (
-    <header className="bg-[#F8F9FD] p-4 flex justify-between items-center max-h-20" style={{ paddingLeft: "15px", paddingRight: "40px" }}>
-      <div className="text-black text-3xl font-roboto font-semibold p-4">
+    <header className="bg-[var(--background2)] p-4 flex justify-between items-center h-20 
+             fixed top-0 left-0 w-full z-50 shadow-md">
+      <div className="text-[var(--text)] text-3xl font-roboto font-semibold p-4">
         {showDashboard && name && `${name}'s Dashboard`} {/* Display the text after the delay */}
       </div>
       <div className="flex items-center space-x-4">
         <button
-          className="bg-gray-800 text-white hover:bg-gray-700 px-4 py-2 rounded"
+          className="bg-[var(--accent)] text-white hover:bg-gray-700 px-4 py-2 rounded"
           onClick={handleSignOut}
         >
           Sign Out

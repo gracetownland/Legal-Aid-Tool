@@ -191,7 +191,7 @@ const InterviewAssistant = () => {
                 },
               }}
             />
-            <Button variant="contained" sx={{ color: "#ffffff" }} onClick={handleSendMessage}>
+            <Button variant="contained" sx={{ color: "#ffffff", backgroundColor: "var(--accent)" }} onClick={handleSendMessage}>
               Send
             </Button>
           </Box>
