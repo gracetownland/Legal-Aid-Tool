@@ -23,7 +23,7 @@ function DraggableNotes({ onClose, sessionId }) {
     }
   }, [sessionId]);
 
-  const fetchNotes = async (sessionId) => {
+  const fetchNotes = async (caseId) => {
     try {
       const authSession = await fetchAuthSession();
       const token = authSession.tokens.idToken;
@@ -60,7 +60,7 @@ function DraggableNotes({ onClose, sessionId }) {
       const token = authSession.tokens.idToken;
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_ENDPOINT}student/update_notes?session_id=${encodeURIComponent(sessionId)}`,
+        `${import.meta.env.VITE_API_ENDPOINT}student/update_notes?case_id=${encodeURIComponent(caseId)}`,
         {
           method: "PUT",
           headers: {

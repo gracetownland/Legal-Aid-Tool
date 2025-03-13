@@ -145,8 +145,7 @@ const InterviewAssistant = () => {
                     marginLeft: message.sender === "bot" ? 0 : "auto",
                     marginRight: message.sender === "bot" ? "auto" : 0,
                     color: "var(--text)",
-                    fontFamily: "'Roboto', sans-serif",
-                    boxShadow: 'none'
+                    fontFamily: "'Roboto', sans-serif"
                   }}
                 >
                   <Typography variant="body1" sx={{ textAlign: "left" }}>

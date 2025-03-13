@@ -96,9 +96,9 @@ function App() {
           <Route path="/cases" element={<ViewAllCases />} />
           <Route path="/home/*" element={getHomePage()} />
           
-          <Route path="/case/overview/*" element={<CaseOverview />} />
-          <Route path="/case/preliminary-summary/*" element={<PrelimSummary />} />
-          <Route path="/case/interview-assistant/*" element={<InterviewAssistant />} />
+          <Route path="/case/:caseId/interview-assistant" element={<InterviewAssistant />} />
+          <Route path="/case/:caseId/overview/*" element={<CaseOverview />} />
+          <Route path="/case/:caseId/prelim-summary" element={<PrelimSummary />} />
         </Routes>
       </Router>
     </UserContext.Provider>

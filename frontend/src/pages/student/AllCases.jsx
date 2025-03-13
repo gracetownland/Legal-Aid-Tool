@@ -82,7 +82,7 @@ const ViewAllCases = () => {
   }, [cases, searchTerm, selectedCaseType, selectedStatus]);
 
   const handleViewCase = (caseData) => {
-    navigate("/case-overview", { state: { caseData } });
+    navigate("/case/overview", { state: { caseData } });
   };
 
   const handleBack = () => {
