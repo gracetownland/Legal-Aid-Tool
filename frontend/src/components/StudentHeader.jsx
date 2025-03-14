@@ -1,18 +1,17 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-//import { jwt } from 'jsonwebtoken';
 
 // MUI
 import SettingsIcon from "@mui/icons-material/Settings";
-// amplify
+// Amplify
 import { signOut } from "aws-amplify/auth";
 import { fetchAuthSession } from "aws-amplify/auth";
 import { fetchUserAttributes } from "aws-amplify/auth";
-import { UserContext } from "../App";
 
 const StudentHeader = () => {
   const [name, setName] = useState("");
-  const [showDashboard, setShowDashboard] = useState(false); 
+  const [showDashboard, setShowDashboard] = useState(false);
+  const [logo, setLogo] = useState("/logo_light.svg"); // Default to light mode
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -21,7 +20,7 @@ const StudentHeader = () => {
         .then((session) => {
           return fetchUserAttributes().then((userAttributes) => {
             const token = session.tokens.idToken;
-            console.log( session.tokens);
+            console.log(session.tokens);
 
             const email = userAttributes.email;
             return fetch(
@@ -51,12 +50,24 @@ const StudentHeader = () => {
   }, []);
 
   useEffect(() => {
-    // Introduce a delay before showing the dashboard text
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+    const updateLogo = () => {
+      setLogo(mediaQuery.matches ? "/logo_dark.svg" : "/logo_light.svg");
+    };
+
+    updateLogo(); // Set initial value
+
+    mediaQuery.addEventListener("change", updateLogo);
+
+    return () => mediaQuery.removeEventListener("change", updateLogo);
+  }, []);
+
+  useEffect(() => {
     const timer = setTimeout(() => {
       setShowDashboard(true);
-    }, 0); // Set delay in milliseconds (2000ms = 2 seconds)
+    }, 0);
 
-    // Clean up the timer when the component unmounts
     return () => clearTimeout(timer);
   }, [name]);
 
@@ -71,22 +82,23 @@ const StudentHeader = () => {
       });
   };
 
-
   return (
-    <header className="bg-[var(--background2)] p-4 flex justify-between items-center h-20 
-             fixed top-0 left-0 w-full z-50 shadow-md">
-      <div className="text-[var(--text)] text-3xl font-roboto font-semibold p-4">
-        {showDashboard && name && `${name}'s Dashboard`} {/* Display the text after the delay */}
-      </div>
-      <div className="flex items-center space-x-4">
-        <button
-          className="bg-[var(--accent)] text-white hover:bg-gray-700 px-4 py-2 rounded"
-          onClick={handleSignOut}
-        >
-          Sign Out
-        </button>
-      </div>
-    </header>
+<header className="bg-[var(--background2)] p-4 flex justify-between items-center h-20 
+             fixed top-0 left-0 w-full z-50 shadow-md border-b-4 border-[var(--border)]">
+  <img src={logo} alt="Logo" className="h-12 w-12 mr-4" />
+  <div className="text-[var(--text)] text-3xl font-roboto font-semibold p-4">
+    {showDashboard && name && `${name}'s Dashboard`}
+  </div>
+  <div className="flex items-center space-x-4">
+    <button
+      className="bg-[var(--accent)] text-white hover:bg-gray-700 px-4 py-2 rounded"
+      onClick={handleSignOut}
+    >
+      Sign Out
+    </button>
+  </div>
+</header>
+
   );
 };
 

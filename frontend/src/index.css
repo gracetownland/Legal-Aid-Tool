@@ -16,6 +16,9 @@
   --accent: #1c187a;
   --bot-text: #cee1ff;
   --sender-text: #f0f0f0;
+  --input: #c4c4c4;
+  --placeholder-text: #696873;
+  --border: var(--accent);
 
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -44,6 +47,9 @@
     --accent: #3949ff;
     --bot-text: #284b69;
     --sender-text: #424141;
+    --input: #5c5c5c;
+    --placeholder-text: #8e8e8e;
+    --border: #fff;
 
     color: var(--text);
     background-color: var(--background);

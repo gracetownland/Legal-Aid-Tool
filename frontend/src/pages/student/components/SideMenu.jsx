@@ -61,7 +61,7 @@ const SideMenu = () => {
             top: "80px", // Push drawer below the student header
             backgroundColor: "var(--background2)",
             color: "var(--text)",
-            // border: "none",
+            border: "none",
           },
         }}
         variant="permanent"
