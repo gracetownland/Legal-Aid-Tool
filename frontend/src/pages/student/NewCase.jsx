@@ -17,6 +17,7 @@ import {
   FormControl as MUIFormControl,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import StudentHeader from "../../components/StudentHeader";
 import { fetchAuthSession, fetchUserAttributes } from "aws-amplify/auth";
 
 const NewCaseForm = () => {
@@ -132,6 +133,7 @@ const NewCaseForm = () => {
     padding: 2,
   }}
 >
+  <StudentHeader />
   <Box
     sx={{
       width: "100%",
