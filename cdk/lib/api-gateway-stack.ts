@@ -59,7 +59,7 @@ export class ApiGatewayStack extends cdk.Stack {
 
     const embeddingStorageBucket = new s3.Bucket(
       this,
-      `${id}-embeddingStorageBucket`,
+      `${id}-system-prompt-bucket`,
       {
         blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
         cors: [
