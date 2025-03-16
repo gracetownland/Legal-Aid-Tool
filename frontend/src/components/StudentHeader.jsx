@@ -83,15 +83,15 @@ const StudentHeader = () => {
   };
 
   return (
-<header className="bg-[var(--background2)] p-4 flex justify-between items-center h-20 
-             fixed top-0 left-0 w-full z-50 shadow-md border-b-4 border-[var(--border)]">
+<header className="bg-[var(--secondary)] p-4 flex justify-between items-center h-20 
+             fixed top-0 left-0 w-full z-50 shadow-md  ">
   <img src={logo} alt="Logo" className="h-12 w-12 mr-4" />
   <div className="text-[var(--text)] text-3xl font-roboto font-semibold p-4">
     {showDashboard && name && `${name}'s Dashboard`}
   </div>
   <div className="flex items-center space-x-4">
     <button
-      className="bg-[var(--accent)] text-white hover:bg-gray-700 px-4 py-2 rounded"
+      className="bg-[white] text-[#5d6c94] hover:bg-gray-700 px-4 py-2 rounded"
       onClick={handleSignOut}
     >
       Sign Out
