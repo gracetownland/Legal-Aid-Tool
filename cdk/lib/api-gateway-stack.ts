@@ -57,7 +57,7 @@ export class ApiGatewayStack extends cdk.Stack {
 
     this.layerList = {};
 
-    const embeddingStorageBucket = new s3.Bucket(
+    const promptStorageBucket = new s3.Bucket(
       this,
       `${id}-system-prompt-bucket`,
       {
@@ -1056,8 +1056,7 @@ export class ApiGatewayStack extends cdk.Stack {
           RDS_PROXY_ENDPOINT: db.rdsProxyEndpointAdmin,
           BUCKET: dataIngestionBucket.bucketName,
           REGION: this.region,
-          EMBEDDING_BUCKET_NAME: embeddingStorageBucket.bucketName,
-          EMBEDDING_MODEL_PARAM: embeddingModelParameter.parameterName,
+          PROMPT_BUCKET_NAME: promptStorageBucket.bucketName,
         },
       }
     );
@@ -1084,7 +1083,7 @@ export class ApiGatewayStack extends cdk.Stack {
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
         actions: ["s3:ListBucket"],
-        resources: [embeddingStorageBucket.bucketArn], // Access to the specific bucket
+        resources: [promptStorageBucket.bucketArn], // Access to the specific bucket
       })
     );
 
@@ -1093,7 +1092,7 @@ export class ApiGatewayStack extends cdk.Stack {
         effect: iam.Effect.ALLOW,
         actions: ["s3:PutObject", "s3:GetObject", "s3:DeleteObject", "s3:HeadObject"],
         resources: [
-          `arn:aws:s3:::${embeddingStorageBucket.bucketName}/*`,  // Grant access to all objects within this bucket
+          `arn:aws:s3:::${promptStorageBucket.bucketName}/*`,  // Grant access to all objects within this bucket
         ],
       })
     );
