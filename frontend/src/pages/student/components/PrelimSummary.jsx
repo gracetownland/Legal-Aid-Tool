@@ -1,5 +1,5 @@
 import {Box, Typography} from '@mui/material'
-import SideMenu from './sidemenu';
+import SideMenu from './SideMenu';
 import StudentHeader from '../../../components/StudentHeader';
 
 
