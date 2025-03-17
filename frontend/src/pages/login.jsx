@@ -510,7 +510,7 @@ console.log(import.meta.env.VITE_COGNITO_USER_POOL_ID);
               >
                 Welcome to
                 <br />
-                Legal Aid Tool
+                Legal Aid Tool!
                 <br />
               </Typography>
 

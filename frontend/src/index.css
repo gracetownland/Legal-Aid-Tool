@@ -12,10 +12,13 @@
   --background2: #ededed;
   --background3: #d4dbdf;
   --primary: #546bdf;
-  --secondary: #c5d6f0;
+  --secondary: #94A1B5;
   --accent: #1c187a;
   --bot-text: #cee1ff;
   --sender-text: #f0f0f0;
+  --input: #c4c4c4;
+  --placeholder-text: #696873;
+  --border: var(--accent);
 
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -40,10 +43,13 @@
     --background2: #171717;
     --background3: #444444;
     --primary: #abc6ff;
-    --secondary: #759ee6;
+    --secondary: #94A1B5;
     --accent: #3949ff;
     --bot-text: #284b69;
     --sender-text: #424141;
+    --input: #5c5c5c;
+    --placeholder-text: #8e8e8e;
+    --border: #fff;
 
     color: var(--text);
     background-color: var(--background);
@@ -181,7 +187,6 @@ button:focus-visible {
 }
 
 .main-container {
-  font-family: var(--font-family);
   width: 100%;
   height: 100vh; /* Full viewport height */
   margin: 0 auto;
@@ -211,11 +216,12 @@ button:focus-visible {
 }
 
 .ck-content {
-  font-family: var(--font-family);
+  font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   line-height: 1.6;
   word-break: break-word;
   background: transparent !important;
   box-shadow: none !important;
   border: none !important;
   max-height: 100%; /* Ensures it respects the parent */
+  color: #303030;
 }

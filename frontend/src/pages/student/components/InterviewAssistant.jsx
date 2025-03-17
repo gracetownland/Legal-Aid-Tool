@@ -6,7 +6,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { fetchAuthSession } from "aws-amplify/auth";
 
 import StudentHeader from "../../../components/StudentHeader";
-import SideMenu from "./sidemenu";
+import SideMenu from "./SideMenu";
 import TypingIndicator from "./TypingIndicator";
 
 const InterviewAssistant = () => {
@@ -218,7 +218,7 @@ const InterviewAssistant = () => {
                 },
               }}
             />
-            <Button variant="contained" sx={{ color: "#ffffff" }} onClick={handleSendMessage}>
+            <Button variant="contained" sx={{ color: "#ffffff", backgroundColor: "var(--accent)" }} onClick={handleSendMessage}>
               Send
             </Button>
           </Box>
