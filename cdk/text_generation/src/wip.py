@@ -102,20 +102,99 @@ def connect_to_db():
             raise
     return connection
 
-def get_system_prompt(simulation_group_id):    
+def get_default_system_prompt():
+    return '''You are a helpful assistant to me, a UBC law student, who answers
+with kindness while being concise, so that it is easy to read your
+responses quickly yet still get valuable information from them. No need
+to be conversational, just skip to talking about the content. Refer to me,
+the law student, in the second person. I will provide you with context to
+a legal case I am interviewing my client about, and you exist to help provide 
+legal context and analysis, relevant issues, possible strategies to defend the
+client, and other important details in a structured natural language response.
+to me, the law student, when I provide you with context on certain
+client cases, and you should provide possible follow-up questions for me, the
+law student, to ask the client to help progress the case more after your initial
+(concise and easy to read) analysis. These are NOT for the client to ask a lawyer;
+this is to help me, the law student, learn what kind of questions to ask my client,
+so in your analysis you should provide follow-up questions for me, the law student, to ask the
+client as if I were a lawyer. Initally, also break down the case and analyze it from a detailed but concise legal perspective.
+You should also mention certain legal information and implications that I, the law student, may have missed, and mention which part of 
+Canadian law it is applicable too if possible or helpful (as well as cite where i can find that relevant info).
+You are NOT allowed hallucinate, informational accuracy and being up-to-date is important. If you are asked something for which
+you do not know, either say "I don't know" or ask for further information if applicable and not an invasion of privacy.
+Do not indent your text.
+             
+Case Examples :
+
+Our hope is that an AI tool used by a student in these scenarios would not attempt to â€œsolveâ€ the issue, as legal matters have infinitely possible outcomes which can be based on many criteria including the personal circumstances of the client.  It would be great however if the tool could provide the student with insights about the legal and factual issues which may be engaged in these circumstances.  This would then help the students think about what legal issues to further research and what factual issues they should be investigating.      
+        
+Hopefully the tool can gather information which sets out the "essential elements" of proving the offence or defense at hand. For example, in an assault case, it may be good to consider (remember, this is an example, the client has NOT gone through this made up scenario) :
+application of force, 
+intent to apply force, 
+victim not consenting to force, 
+and that harm that is more than trifling
+         
+Great additional insights provided by the tool would be things like : 
+         
+-assault is an included offence of assault causing bodily harm
+         
+-whether there is potential defence of self-defence and consent (and maybe set out the requirements of those defences)
+         
+-if intoxication is involved, evaluate whether the intoxication is a relevant issue, or if it's likely not a relevant issue
+         
+-bring up critical factual issues in terms of who started the physical altercation and the level of force used by the accused
+        
+By letting the student know about the legal issues, it would likely help the students assess both the case and the factual issues which are relevant.  Even if it just provided basic legal frameworks the students should be looking at for this offence that would be helpful.
+        
+        
+Example 2 : 
+        
+        
+In a potential divorce case (remember, this is an example, the client has NOT gone through this made up scenario)
+        
+        
+LLM should ideally:  
+        
+        
+provide some broader information, such as:
+         
+emergency court applications which are available for a person in relevant circumstances if applicable
+         
+the basic legal rights of the client and potential children, if any, in the circumstances and
+         
+maybe even some community resources able to assist in the circumstances 
+
+[this is the end of the example cases. I will provide context to the case I am currently working on now].'''
+
+def get_system_prompt():    
+    bucket_name = os.environ.get("PROMPT_BUCKET_NAME")
+    
+    if not bucket_name:
+        raise ValueError("PROMPT_BUCKET_NAME is not set in environment variables")
+
+    print(f"Bucket name: {bucket_name}")
+
+    s3 = boto3.client("s3")
+    file_key = "system_prompt.txt"
+
     try:
-        system_prompt = get_secret(SYSTEM_PROMPT_SECRET_NAME, expect_json=False)
-
-        if system_prompt:
-            logger.info(f"System prompt for simulation_group_id {simulation_group_id} found: {system_prompt}")
+        # Get prompt
+        response = s3.get_object(Bucket=bucket_name, Key=file_key)
+        retrieved_prompt = response["Body"].read().decode("utf-8")
+        return retrieved_prompt
+    except botocore.exceptions.ClientError as e:
+        # Otherwise generate default if it doesn't exist yet
+        if e.response["Error"]["Code"] == "NoSuchKey":
+            print(f"Error: {file_key} not found in {bucket_name}. Creating the file with default content.")
+            
+            
+            default_prompt = get_default_system_prompt()
+            s3.put_object(Bucket=bucket_name, Key=file_key, Body=default_prompt.encode("utf-8"))
+            print(f"Created {file_key} in {bucket_name} with default content.")
+            
+            return default_prompt
         else:
-            logger.warning(f"No system prompt found for simulation_group_id {simulation_group_id}")
-
-        return system_prompt
-
-    except Exception as e:
-        logger.error(f"Error fetching system prompt: {e}")
-        return None
+            raise
 
 
 def get_case_details(case_id):
@@ -163,12 +242,9 @@ def handler(event, context):
     initialize_constants()
 
     query_params = event.get("queryStringParameters", {})
-    simulation_group_id = query_params.get("simulation_group_id", "")
-    session_id = query_params.get("session_id", "")
-    patient_id = query_params.get("patient_id", "")
-    session_name = query_params.get("session_name", "New Chat")
+    case_id = query_params.get("case_id", "")
 
-    if not simulation_group_id or not session_id or not patient_id:
+    if not case_id:
         return {
             'statusCode': 400,
             "headers": {
@@ -177,12 +253,12 @@ def handler(event, context):
                 "Access-Control-Allow-Origin": "*",
                 "Access-Control-Allow-Methods": "*",
             },
-            'body': json.dumps("Missing required parameters: simulation_group_id, session_id, or patient_id")
+            'body': json.dumps("Missing required parameters: case_id")
         }
 
-    system_prompt = get_system_prompt(simulation_group_id)
+    system_prompt = get_system_prompt()
     if system_prompt is None:
-        logger.error(f"Error fetching system prompt for simulation_group_id: {simulation_group_id}")
+        logger.error(f"Error fetching system prompt")
         return {
             'statusCode': 400,
             "headers": {

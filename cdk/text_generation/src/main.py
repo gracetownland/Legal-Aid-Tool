@@ -489,19 +489,19 @@ client cases, and you should provide possible follow-up questions for me, the
 law student, to ask the client to help progress the case more after your initial
 (concise and easy to read) analysis. These are NOT for the client to ask a lawyer;
 this is to help me, the law student, learn what kind of questions to ask my client,
-so you should only provide follow-up questions for me, the law student, to ask the
-client as if I were a lawyer. You may also mention certain legal information and 
-implications that I, the law student, may have missed, and mention which part of 
-Canadian law it is applicable too if possible or helpful. You are NOT allowed hallucinate, 
-informational accuracy is important. If you are asked something for which you do not know, either
-say "I don't know" or ask for further information if applicable and not an invasion of privacy.
+so in your analysis you should provide follow-up questions for me, the law student, to ask the
+client as if I were a lawyer. Initally, also break down the case and analyze it from a detailed but concise legal perspective.
+You should also mention certain legal information and implications that I, the law student, may have missed, and mention which part of 
+Canadian law it is applicable too if possible or helpful (as well as cite where i can find that relevant info).
+You are NOT allowed hallucinate, informational accuracy and being up-to-date is important. If you are asked something for which
+you do not know, either say "I don't know" or ask for further information if applicable and not an invasion of privacy.
 Do not indent your text.
              
 Case Examples :
 
 Our hope is that an AI tool used by a student in these scenarios would not attempt to â€œsolveâ€ the issue, as legal matters have infinitely possible outcomes which can be based on many criteria including the personal circumstances of the client.  It would be great however if the tool could provide the student with insights about the legal and factual issues which may be engaged in these circumstances.  This would then help the students think about what legal issues to further research and what factual issues they should be investigating.      
         
-Hopefully the tool can gather information which sets out the â€œessential elementsâ€ of proving the offence or defense at hand. For example, in an assault case, it may be good to consider (remember, this is an example, the client has NOT gone through this made up scenario) :
+Hopefully the tool can gather information which sets out the "essential elements" of proving the offence or defense at hand. For example, in an assault case, it may be good to consider (remember, this is an example, the client has NOT gone through this made up scenario) :
 application of force, 
 intent to apply force, 
 victim not consenting to force, 
@@ -535,13 +535,9 @@ emergency court applications which are available for a person in relevant circum
          
 the basic legal rights of the client and potential children, if any, in the circumstances and
          
-maybe even some community resources able to assist in the circumstances [this is the end of the example cases. I will provide context to the case I am currently working on now].
+maybe even some community resources able to assist in the circumstances 
 
-Case title: Class action lawsuit against Apple
-
-Area of law case covers: Provincial (Manitoba)
-
-Case details: Client slipped and fell in a McDonald's after they failed to put up a 'wet floor' sign. They wish to sue for negligence and are hoping to get some money from it.'''
+[this is the end of the example cases. I will provide context to the case I am currently working on now].'''
 
 def getSystemPrompt():
     bucket_name = os.environ.get("PROMPT_BUCKET_NAME")
@@ -555,22 +551,23 @@ def getSystemPrompt():
     file_key = "system_prompt.txt"
 
     try:
-        # Retrieve latest prompt
+        # Get prompt
         response = s3.get_object(Bucket=bucket_name, Key=file_key)
         retrieved_prompt = response["Body"].read().decode("utf-8")
         return retrieved_prompt
     except botocore.exceptions.ClientError as e:
+        # Otherwise generate default if it doesn't exist yet
         if e.response["Error"]["Code"] == "NoSuchKey":
             print(f"Error: {file_key} not found in {bucket_name}. Creating the file with default content.")
             
-            # Create the file with default content if not found
+            
             default_prompt = getDefaultSystemPrompt()
             s3.put_object(Bucket=bucket_name, Key=file_key, Body=default_prompt.encode("utf-8"))
             print(f"Created {file_key} in {bucket_name} with default content.")
             
-            return default_prompt  # Return the default system prompt
+            return default_prompt
         else:
-            raise  # Re-raise other S3 errors
+            raise
 
 
 def get_memory(case_id):
