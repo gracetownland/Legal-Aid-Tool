@@ -86,6 +86,10 @@ const NewCaseForm = () => {
         throw new Error(data.error || "Failed to submit case");
       }
 
+
+      console.log(data);
+      const caseId = data.case_id;
+
       navigate(`/case/${caseId}/interview-assistant`);
     } catch (err) {
       setError(err.message);

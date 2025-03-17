@@ -66,7 +66,7 @@ const CaseOverview = () => {
           ) : (
             <>
               <Typography variant="h4" fontWeight={600} mb={3}>
-                {caseData.case_title}
+                Case #{caseData.case_hash}
               </Typography>
 
               <Card sx={{ mb: 3, borderRadius: 3, boxShadow: 3 }}>
