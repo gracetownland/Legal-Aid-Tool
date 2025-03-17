@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, Typography, Card, CardContent, Divider, Grid, Container } from "@mui/material";
 import { useNavigate, useLocation} from "react-router-dom";
-import SideMenu from "./sidemenu";
+import SideMenu from "./SideMenu";
 import StudentHeader from "../../../components/StudentHeader";
 
 const CaseOverview = () => {
