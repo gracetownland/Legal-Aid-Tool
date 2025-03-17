@@ -9,7 +9,14 @@ const {
 const crypto = require("crypto");
 
 function hashUUID(uuid) {
-  return crypto.createHash("sha256").update(uuid).digest("hex");
+  // Generate a SHA-256 hash and take the first 8 hex characters
+  const hash = crypto.createHash("sha256").update(uuid).digest("hex");
+  
+  // Convert the first 8 characters of the hash into a number
+  const numericHash = parseInt(hash.substring(0, 8), 16);
+  
+  // Ensure it's a 4-digit number (0-9999)
+  return numericHash % 10000;
 }
 
 // SQL conneciton from global variable at lib.js
@@ -248,7 +255,7 @@ exports.handler = async (event) => {
             const user_id = user[0]?.user_id;
 
             const data = await sqlConnection`
-              SELECT *
+              SELECT * 
               FROM "cases" WHERE user_id = ${user_id};
               `;
             response.body = JSON.stringify(data);
@@ -342,6 +349,7 @@ exports.handler = async (event) => {
           break;
 
         case "DELETE /student/delete_case":
+          console.log(event);
           if (
             event.queryStringParameters != null &&
             event.queryStringParameters.case_id
