@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Box, Typography, TextField, Button, Paper, Divider } from "@mui/material";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { fetchAuthSession } from "aws-amplify/auth";
 
 import StudentHeader from "../../../components/StudentHeader";
@@ -10,15 +10,49 @@ import SideMenu from "./SideMenu";
 import TypingIndicator from "./TypingIndicator";
 
 const InterviewAssistant = () => {
-  const location = useLocation();
-  const caseData = location.state?.caseData;
+  const { caseId } = useParams();
   const navigate = useNavigate();
+
+  const [caseData, setCaseData] = useState(null);
+    const [loading, setLoading] = useState(true);
+  
+    useEffect(() => {
+      const fetchCaseData = async () => {
+  
+        const session = await fetchAuthSession();
+        const token = session.tokens.idToken;
+        try {
+          
+          const response = await fetch(
+            `${import.meta.env.VITE_API_ENDPOINT}student/case_page?case_id=${caseId}&simulation_group_id=${caseId}=&patient_id=${caseId}`,
+            {
+              method: "GET",
+              headers: {
+                Authorization: token,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+  
+          if (!response.ok) throw new Error("Case not found");
+          const data = await response.json();
+          console.log(response);
+          setCaseData(data);
+        } catch (error) {
+          console.error("Error fetching case data:", error);
+          setCaseData(null);
+        } finally {
+          setLoading(false);
+        }
+      };
+  
+      fetchCaseData();
+    }, [caseId]);
 
   const handleBack = () => {
     navigate("/"); // Navigate to the homepage
   };
 
-  console.log(caseData);
   const [messages, setMessages] = useState([
     { sender: "bot", text: "Hi, I'm your Legal Interview Assistant. Let's get started!" },
   ]);
@@ -106,16 +140,10 @@ const InterviewAssistant = () => {
         <SideMenu />
 
         <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 2, width: "100%" }}>
-          <Button
-            onClick={handleBack}
-            sx={{ marginBottom: 2 }}
-          >
-            Back to Home Page
-          </Button>
 
           {/* Case Title and Information */}
           <Typography variant="h6" sx={{ fontWeight: 600, marginBottom: 2 }}>
-            {caseData?.case_title || "Case Title Not Available"}
+            Case #{caseData?.case_hash || "Case Title Not Available"}
           </Typography>
           <Typography variant="body2" sx={{ marginBottom: 2 }}>
             <strong>Case Overview:</strong> {caseData?.case_description || "Overview information not available."}
@@ -145,8 +173,7 @@ const InterviewAssistant = () => {
                     marginLeft: message.sender === "bot" ? 0 : "auto",
                     marginRight: message.sender === "bot" ? "auto" : 0,
                     color: "var(--text)",
-                    fontFamily: "'Roboto', sans-serif",
-                    boxShadow: 'none'
+                    fontFamily: "'Roboto', sans-serif"
                   }}
                 >
                   <Typography variant="body1" sx={{ textAlign: "left" }}>
