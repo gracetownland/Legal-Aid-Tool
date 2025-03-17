@@ -79,6 +79,7 @@ def handler(event, context):
 
             CREATE TABLE IF NOT EXISTS "cases" (
                 "case_id" uuid PRIMARY KEY DEFAULT (uuid_generate_v4()),
+                "case_hash" varchar UNIQUE,
                 "case_title" varchar,
                 "case_type" varchar,
                 "user_id" uuid,
@@ -86,7 +87,10 @@ def handler(event, context):
                 "case_description" text,
                 "status" varchar DEFAULT 'In progress',
                 "last_updated" timestamp DEFAULT now(),
-                "system_prompt" text
+                "system_prompt" text,
+                "supervisor_message" text,
+                "sent_to_review" boolean,
+                "student_notes" text
             );
 
             CREATE TABLE IF NOT EXISTS "reports" (

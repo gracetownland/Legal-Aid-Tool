@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Drawer, List, ListItem, ListItemText, Box, Button } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import CaseOverview from "./CaseOverview";
 import InterviewAssistant from "./InterviewAssistant";
@@ -10,6 +10,7 @@ import DraggableNotes from "../../../components/DraggableNotes";
 const drawerWidth = 240; // Sidebar width
 
 const SideMenu = () => {
+  const { caseId } = useParams();
   const navigate = useNavigate();
   const [isNotesOpen, setIsNotesOpen] = useState(false);
 
@@ -30,7 +31,7 @@ const SideMenu = () => {
   };
 
   const handleNavigation = (option) => {
-    navigate(`/case/${option.toLowerCase().replace(" ", "-")}`);
+    navigate(`/case/${caseId}/${option.toLowerCase().replace(" ", "-")}`);
   };
 
   return (
@@ -71,7 +72,7 @@ const SideMenu = () => {
           <ListItem button onClick={() => handleNavigation("Overview")}>
             <ListItemText primary="Case Overview" />
           </ListItem>
-          <ListItem button onClick={() => handleNavigation("Preliminary Summary")}>
+          <ListItem button onClick={() => handleNavigation("Prelim Summary")}>
             <ListItemText primary="Preliminary Summary" />
           </ListItem>
           <ListItem button onClick={() => handleNavigation("Interview Assistant")}>

@@ -6,6 +6,19 @@ const {
   AdminGetUserCommand,
 } = require("@aws-sdk/client-cognito-identity-provider");
 
+const crypto = require("crypto");
+
+function hashUUID(uuid) {
+  // Generate a SHA-256 hash and take the first 8 hex characters
+  const hash = crypto.createHash("sha256").update(uuid).digest("hex");
+  
+  // Convert the first 8 characters of the hash into a number
+  const numericHash = parseInt(hash.substring(0, 8), 16);
+  
+  // Ensure it's a 4-digit number (0-9999)
+  return numericHash % 10000;
+}
+
 // SQL conneciton from global variable at lib.js
 let sqlConnection = global.sqlConnection;
 
@@ -190,19 +203,31 @@ exports.handler = async (event) => {
           console.log("case_description:", caseDescription);
           console.log("system_prompt:", systemPrompt);
           
-          const user_id = await sqlConnection`
+          const user = await sqlConnection`
             SELECT user_id FROM "users" WHERE cognito_id = ${cognito_id};
           `;
+
+          console.log("user_id:", user[0]?.user_id);
 
           try {
             // SQL query to insert the new case
             const newCase = await sqlConnection`
-              INSERT INTO "cases" (user_id, case_title, case_type, law_type, case_description, system_prompt)
-              VALUES (${user_id}, ${case_title}, ${case_title}, ARRAY[${case_type}], ${case_description}, ${system_prompt})
+              INSERT INTO "cases" (user_id, case_title, case_type, law_type, case_description, status, system_prompt, last_updated)
+              VALUES (${user[0]?.user_id}, ${case_title}, ${case_title}, ARRAY[${case_type}], ${case_description}, 'In Progress', ${system_prompt}, CURRENT_TIMESTAMP)
               RETURNING case_id;
             `;
 
-            response.body = JSON.stringify({ case_id: newCase[0].case_id });
+            const caseId = newCase[0].case_id;
+
+            // Generate a SHA-256 hash of the case_id
+            const caseHash = hashUUID(caseId);
+
+            // Update the case with the generated case_hash
+            await sqlConnection`
+                UPDATE "cases" SET case_hash = ${caseHash} WHERE case_id = ${caseId};
+            `;
+
+            response.body = JSON.stringify({ case_id: caseId, case_hash: caseHash });
           } catch (err) {
             response.statusCode = 500;
             console.log(err);
@@ -219,12 +244,18 @@ exports.handler = async (event) => {
           event.queryStringParameters &&
           event.queryStringParameters.user_id
         ) {
-          const user_id = event.queryStringParameters.user_id;
+          const cognito_id = event.queryStringParameters.user_id;
 
           try {
             // Retrieve the user ID using the user_id
+            const user = await sqlConnection`
+              SELECT user_id FROM "users" where cognito_id = ${cognito_id};
+              `;
+            
+            const user_id = user[0]?.user_id;
+
             const data = await sqlConnection`
-              SELECT case_id, case_title, case_type, law_type, case_description 
+              SELECT * 
               FROM "cases" WHERE user_id = ${user_id};
               `;
             response.body = JSON.stringify(data);
@@ -238,6 +269,7 @@ exports.handler = async (event) => {
           response.body = "Invalid value";
         }
         break;
+
         case "GET /student/case_page":
           if (event.queryStringParameters && event.queryStringParameters.case_id) {
             const case_id = event.queryStringParameters.case_id;
@@ -290,12 +322,13 @@ exports.handler = async (event) => {
         case "POST /student/create_message":
          
           break;
-        case "GET /student/case_page":
+
+        case "GET /student/notes":
             if (event.queryStringParameters && event.queryStringParameters.case_id) {
               const case_id = event.queryStringParameters.case_id;
               try {
                 const caseData = await sqlConnection`
-                  SELECT * FROM "cases" WHERE case_id = ${case_id};
+                  SELECT notes FROM "cases" WHERE case_id = ${case_id};
                 `;
             
                 if (caseData.length > 0) {
@@ -314,6 +347,109 @@ exports.handler = async (event) => {
               response.body = JSON.stringify({ error: "Case ID is required" });
             }
           break;
+
+        case "DELETE /student/delete_case":
+          console.log(event);
+          if (
+            event.queryStringParameters != null &&
+            event.queryStringParameters.case_id
+        ) {
+            const caseId = event.queryStringParameters.case_id;
+    
+            try {
+                // Delete the patient from the patients table
+                await sqlConnection`
+                    DELETE FROM "cases"
+                    WHERE case_id = ${caseId};
+                `;
+    
+                response.statusCode = 200;
+                response.body = JSON.stringify({
+                    message: "Case deleted successfully",
+                });
+            } catch (err) {
+                response.statusCode = 500;
+                console.error(err);
+                response.body = JSON.stringify({ error: "Internal server error" });
+            }
+        } else {
+            response.statusCode = 400;
+            response.body = JSON.stringify({ error: "case_id is required" });
+        }
+        break;
+
+        case "PUT /student/edit_case":
+          if (
+            event.queryStringParameters != null &&
+            event.queryStringParameters.case_id &&
+            event.queryStringParameters.cognito_id
+        ) {
+            const { case_id, cognito_id } = event.queryStringParameters;
+            const { case_title, case_type, case_description, status , law_type} = JSON.parse(event.body || "{}");
+            try {
+                // Update the patient details in the patients table
+                await sqlConnection`
+                    UPDATE "cases"
+                    SET 
+                        case_title = ${case_title},
+                        case_type = ${case_type},
+                        case_description = ${case_description},
+                        status = ${status},
+                        law_type = ${law_type} 
+                    WHERE case_id = ${case_id}; 
+                `;
+                response.statusCode = 200;
+                response.body = JSON.stringify({
+                    message: "Case Updated Successfully",
+                });
+            } catch (err) {
+                response.statusCode = 500;
+                console.error(err);
+                response.body = JSON.stringify({
+                    error: "Internal server error",
+                });
+            }
+        }
+         
+        break;
+
+
+        case "PUT /student/update_notes":
+          if (
+            event.queryStringParameters != null &&
+            event.queryStringParameters.case_id 
+        ) {
+            const { case_id } = event.queryStringParameters;
+            
+            const {notes} = JSON.parse(event.body || "{}");
+
+            try {
+              // Update the patient details in the patients table
+              await sqlConnection`
+                  UPDATE "cases"
+                  SET 
+                      case_title = ${case_title},
+                      case_type = ${case_type},
+                      case_description = ${case_description},
+                      status = ${status},
+                      law_type = ${law_type} 
+                  WHERE case_id = ${case_id}; 
+              `;
+              response.statusCode = 200;
+              response.body = JSON.stringify({
+                  message: "Case Updated Successfully",
+              });
+          } catch (err) {
+              response.statusCode = 500;
+              console.error(err);
+              response.body = JSON.stringify({
+                  error: "Internal server error",
+              });
+          }
+      }
+
+        break;
+
 
         case "POST /student/create_ai_message":
          
