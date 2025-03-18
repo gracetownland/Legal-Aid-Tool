@@ -82,7 +82,7 @@ const ViewAllCases = () => {
   }, [cases, searchTerm, selectedCaseType, selectedStatus]);
 
   const handleViewCase = (caseData) => {
-    navigate("/case-overview", { state: { caseData } });
+    navigate("/case/overview", { state: { caseData } });
   };
 
   const handleBack = () => {
@@ -97,12 +97,7 @@ const ViewAllCases = () => {
       <StudentHeader />
       <Container sx={{ display: "flex", flexDirection: "column", width: "100%", gap: 2, justifyContent: "center" }}>
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", width: "100%", mt: 2, mb: 2 }}>
-        <Button 
-          onClick={handleBack} 
-          sx={{ width: "280px" }}
-        >
-          Back to Home Page
-        </Button>
+        
       </Box>
         <Typography variant="h5" sx={{ mb: 3 }}>
           View All Cases

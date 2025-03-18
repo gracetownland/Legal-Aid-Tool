@@ -88,9 +88,38 @@ export const StudentHomepage = () => {
     }, []);
   
 
-  const handleViewCase = (caseData) => {
-    navigate("/case/overview/*", { state: { caseData } });
+  const handleViewCase = (caseId) => {
+    navigate(`/case/${caseId}/overview`);
   };
+
+  const handleDeleteCase = async (caseId) => {
+    try {
+      const session = await fetchAuthSession();
+      const token = session.tokens.idToken;
+      const cognito_id = session.tokens.idToken.payload.sub
+  
+      const response = await fetch(
+        `${import.meta.env.VITE_API_ENDPOINT}student/delete_case?case_id=${caseId}&cognito_id=${cognito_id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: token,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+  
+      if (!response.ok) {
+        throw new Error("Failed to delete the case");
+      }
+  
+      // Remove deleted case from state
+      setCases((prevCases) => prevCases.filter((caseItem) => caseItem.case_id !== caseId));
+    } catch (error) {
+      console.error("Error deleting case:", error);
+    }
+  };
+  
 
   return (
     <ThemeProvider theme={theme}>
@@ -191,7 +220,7 @@ export const StudentHomepage = () => {
                       <Grid item xs={12} sm={7.5} md={4} key={index}>
                         <Card sx={{ mb: 2, borderRadius: 1, boxShadow: 2, transition: "transform 0.3s ease", "&:hover": { transform: "scale(1.05)" } }}>
                           <CardContent sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
-                            {caseItem.case_title}
+                            Case #{caseItem.case_hash}
                             <Box sx={{ borderRadius: 1, mb: 2, display: "flex", justifyContent: "flex-start", alignItems: "left" }}>
                               <Typography variant="h6" sx={{ fontWeight: 600, fontSize: "1.25rem", textAlign: "left" }}>
                                 {caseItem.case_title}
@@ -204,23 +233,34 @@ export const StudentHomepage = () => {
                             </Typography>
 
                             {/* Case Type & Last Updated */}
-                            <Typography variant="body2" sx={{ textAlign: "left", fontWeight: 500 }}>
-                              Case Type
-                              <Typography variant="body2">{caseItem.law_type}</Typography>
+                            <Typography variant="body2" sx={{ textAlign: "left", fontWeight: 400 }}>
+                            <strong>Case Type:</strong> {caseItem.law_type}
                             </Typography>
                             
-                            <Typography variant="body2" sx={{ textAlign: "left", fontWeight: 500 }}>
-                              Status
-                              <Typography variant="body2">{caseItem.status}In Progress</Typography>
+                            <Typography variant="body2" sx={{ textAlign: "left", fontWeight: 400 }}>
+                            <strong>Last Updated:</strong> {caseItem.last_updated}
                             </Typography>
                           </CardContent>
 
                           {/* View Case Button */}
-                          <CardActions sx={{ justifyContent: "flex-end", mt: 2 }}>
-                            <Button size="small" sx={{ bgcolor: theme.palette.primary.main, color: "white", fontWeight: "bold", ":hover": { bgcolor: theme.palette.primary.dark } }} onClick={() => handleViewCase(caseItem)}>
-                              View Case
-                            </Button>
-                          </CardActions>
+                          <CardActions sx={{ justifyContent: "space-between", mt: 2 }}>
+  <Button
+    size="small"
+    sx={{ bgcolor: theme.palette.primary.main, color: "white", fontWeight: "bold", ":hover": { bgcolor: theme.palette.primary.dark } }}
+    onClick={() => handleViewCase(caseItem.case_id)}
+  >
+    View Case
+  </Button>
+
+  <Button
+    size="small"
+    sx={{ bgcolor: "red", color: "white", fontWeight: "bold", ":hover": { bgcolor: "darkred" } }}
+    onClick={() => handleDeleteCase(caseItem.case_id)}
+  >
+    Delete
+  </Button>
+</CardActions>
+
                         </Card>
                       </Grid>
                     ))}

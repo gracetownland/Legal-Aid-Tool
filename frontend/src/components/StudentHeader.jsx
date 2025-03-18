@@ -82,22 +82,48 @@ const StudentHeader = () => {
       });
   };
 
+
+  const handleHome = () => {
+    navigate("/home/*");
+  };
+
+  const handleNewCase = () => {
+    navigate("/new-case");
+  };
+
+  const handleAllCases = () => {
+    navigate("/cases");
+  };
+
+
   return (
-<header className="bg-[var(--secondary)] p-4 flex justify-between items-center h-20 
-             fixed top-0 left-0 w-full z-50 shadow-md  ">
-  <img src={logo} alt="Logo" className="h-12 w-12 mr-4" />
-  <div className="text-[var(--text)] text-3xl font-roboto font-semibold p-4">
-    {showDashboard && name && `${name}'s Dashboard`}
-  </div>
-  <div className="flex items-center space-x-4">
-    <button
-      className="bg-[white] text-[#5d6c94] hover:bg-gray-700 px-4 py-2 rounded"
-      onClick={handleSignOut}
-    >
-      Sign Out
-    </button>
-  </div>
-</header>
+    <header className="bg-[#F8F9FD] p-4 flex justify-between items-center max-h-20" style={{ paddingLeft: "15px", paddingRight: "40px" }}>
+      <div className="text-black text-3xl font-roboto font-semibold p-4">
+        {showDashboard && name && `${name}`} {/* Display the text after the delay */}
+      </div>
+
+      <button onClick={handleHome}>
+        Home {/* Display the text after the delay */}
+      </button>
+
+      <button onClick={handleNewCase}>
+        New Case {/* Display the text after the delay */}
+      </button>
+
+      <button onClick={handleAllCases}>
+        All Cases {/* Display the text after the delay */}
+      </button>
+
+
+      <div className="flex items-center space-x-4">
+        <button
+          className="bg-gray-800 text-white hover:bg-gray-700 px-4 py-2 rounded"
+          onClick={handleSignOut}
+        >
+          Sign Out
+        </button>
+      </div>
+    </header>
 
   );
 };
