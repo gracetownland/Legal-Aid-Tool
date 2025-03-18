@@ -121,12 +121,15 @@ def get_initial_student_query(case_type: str, law_type: str, case_description: s
 
 def get_response(
     query: str,
+    case_title: str,
     llm: ChatBedrock,
     history_aware_retriever,
     table_name: str,
-    session_id: str,
+    case_id: str,
     system_prompt: str,
-    llm_completion: bool
+    case_type: str,
+    law_type: str,
+    case_description: str,
 ) -> dict:
     """
     Generates a response to a query using the LLM and a history-aware retriever for context.
@@ -154,33 +157,33 @@ def get_response(
     #             """
 
     # Create a system prompt for the question answering
-    system_prompt = (
-        f"""
-        <|begin_of_text|>
-        <|start_header_id|>case<|end_header_id|>
-        '''You are a helpful assistant to me, a UBC law student, who answers
-         with kindness while being concise, so that it is easy to read your
-         responses quickly yet still get valuable information from them. No need
-         to be conversational, just skip to talking about the content. Refer to me,
-         the law student, in the second person. You will be provided with context to
-         a legal case  is interviewing a client about, and you exist to help provide 
-         legal context and analysis, relevant issues, possible strategies to defend the
-         client, etc. to the law student when they provide you with context on certain
-         client cases, and you should provide possible follow-up questions for me, the
-         law student, to ask the client to help progress the case more after your initial
-         (concise and easy to read) analysis. These are NOT for the client to ask a lawyer;
-         this is to help me, the law student, learn what kind of questions to ask my client,
-         so you should only provide follow-up questions for me, the law student, to ask the
-         client as if I were a lawyer. You may also mention certain legal information and 
-         implications that I, the law student, may have missed, and mention which part of 
-         Canadian law it is applicable too if possible or helpful. You are NOT allowed hallucinate, 
-         informational accuracy is important.'''
-        <|eot_id|>
-        <|start_header_id|>documents<|end_header_id|>
-        {{context}}
-        <|eot_id|>
-        """
-    )
+    # system_prompt = (
+    #     f"""
+    #     <|begin_of_text|>
+    #     <|start_header_id|>case<|end_header_id|>
+    #     '''You are a helpful assistant to me, a UBC law student, who answers
+    #      with kindness while being concise, so that it is easy to read your
+    #      responses quickly yet still get valuable information from them. No need
+    #      to be conversational, just skip to talking about the content. Refer to me,
+    #      the law student, in the second person. You will be provided with context to
+    #      a legal case  is interviewing a client about, and you exist to help provide 
+    #      legal context and analysis, relevant issues, possible strategies to defend the
+    #      client, etc. to the law student when they provide you with context on certain
+    #      client cases, and you should provide possible follow-up questions for me, the
+    #      law student, to ask the client to help progress the case more after your initial
+    #      (concise and easy to read) analysis. These are NOT for the client to ask a lawyer;
+    #      this is to help me, the law student, learn what kind of questions to ask my client,
+    #      so you should only provide follow-up questions for me, the law student, to ask the
+    #      client as if I were a lawyer. You may also mention certain legal information and 
+    #      implications that I, the law student, may have missed, and mention which part of 
+    #      Canadian law it is applicable too if possible or helpful. You are NOT allowed hallucinate, 
+    #      informational accuracy is important.'''
+    #     <|eot_id|>
+    #     <|start_header_id|>documents<|end_header_id|>
+    #     {{context}}
+    #     <|eot_id|>
+    #     """
+    # )
     
     qa_prompt = ChatPromptTemplate.from_messages(
         [
@@ -194,9 +197,9 @@ def get_response(
 
     conversational_rag_chain = RunnableWithMessageHistory(
         rag_chain,
-        lambda session_id: DynamoDBChatMessageHistory(
+        lambda _: DynamoDBChatMessageHistory(
             table_name=table_name, 
-            session_id=session_id
+            session_id=case_id  # Uses case_id from function scope
         ),
         input_messages_key="input",
         history_messages_key="chat_history",
@@ -209,12 +212,12 @@ def get_response(
         response = generate_response(
             conversational_rag_chain,
             query,
-            session_id
+            case_id
         )
     
-    return get_llm_output(response, llm_completion)
+    return get_llm_output(response)
 
-def generate_response(conversational_rag_chain: object, query: str, session_id: str) -> str:
+def generate_response(conversational_rag_chain: object, query: str, case_id: str) -> str:
     """
     Invokes the RAG chain to generate a response to a given query.
 
@@ -231,11 +234,11 @@ def generate_response(conversational_rag_chain: object, query: str, session_id: 
             "input": query
         },
         config={
-            "configurable": {"session_id": session_id}
+            "configurable": {"session_id": case_id}
         },  # constructs a key "session_id" in `store`.
     )["answer"]
 
-def get_llm_output(response: str, llm_completion: bool) -> dict:
+def get_llm_output(response: str) -> dict:
     """
     Processes the response from the LLM to determine if proper diagnosis has been achieved.
 
