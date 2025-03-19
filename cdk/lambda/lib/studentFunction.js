@@ -328,7 +328,7 @@ exports.handler = async (event) => {
               const case_id = event.queryStringParameters.case_id;
               try {
                 const caseData = await sqlConnection`
-                  SELECT notes FROM "cases" WHERE case_id = ${case_id};
+                  SELECT student_notes FROM "cases" WHERE case_id = ${case_id};
                 `;
             
                 if (caseData.length > 0) {
@@ -347,6 +347,36 @@ exports.handler = async (event) => {
               response.body = JSON.stringify({ error: "Case ID is required" });
             }
           break;
+
+        case "PUT /student/update_notes":
+          if (
+            event.queryStringParameters != null &&
+            event.queryStringParameters.case_id 
+        ) {
+            const { case_id } = event.queryStringParameters;
+            
+            const {notes} = JSON.parse(event.body || "{}");
+
+            try {
+              // Update the patient details in the patients table
+              await sqlConnection`
+                  UPDATE "cases"
+                  SET 
+                      student_notes = ${notes}
+                  WHERE case_id = ${case_id}; 
+              `;
+              response.statusCode = 200;
+              response.body = JSON.stringify({
+                  message: "Notes Updated Successfully",
+              });
+          } catch (err) {
+              response.statusCode = 500;
+              console.error(err);
+              response.body = JSON.stringify({
+                  error: "Internal server error",
+              });
+          }
+        }
 
         case "DELETE /student/delete_case":
           console.log(event);
