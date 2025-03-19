@@ -36,7 +36,7 @@ const InterviewAssistant = () => {
   
           if (!response.ok) throw new Error("Case not found");
           const data = await response.json();
-          console.log(response);
+          console.log("Case data: ", data);
           setCaseData(data);
         } catch (error) {
           console.error("Error fetching case data:", error);
@@ -61,6 +61,7 @@ const InterviewAssistant = () => {
   const [isAItyping, setIsAItyping] = useState(false);
 
   const handleSendMessage = async () => {
+    
     if (userInput.trim()) {
       setMessages((prevMessages) => [
         ...prevMessages,
@@ -92,7 +93,7 @@ const InterviewAssistant = () => {
 
     async function getFetchBody() {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}student/text_generation`, {
+        const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}student/text_generation?case_id=${caseId}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
