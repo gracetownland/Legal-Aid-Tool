@@ -13,11 +13,13 @@ import {
   Card,
   CardContent,
   Divider,
+  CardActions,
+  AppBar
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import StudentHeader from "../../components/StudentHeader";
 import { ThemeProvider } from "@mui/material";
-import theme from "../../Theme";
+import theme from "../../theme";
 import { fetchAuthSession, fetchUserAttributes } from "aws-amplify/auth";
 
 const ViewAllCases = () => {
@@ -94,17 +96,19 @@ const ViewAllCases = () => {
 
   return (
     <ThemeProvider theme={theme}>
-      <StudentHeader />
+      <AppBar position="static" color="primary" elevation={0}>
+        <StudentHeader />
+      </AppBar>
       <Container sx={{ display: "flex", flexDirection: "column", width: "100%", gap: 2, justifyContent: "center" }}>
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", width: "100%", mt: 2, mb: 2 }}>
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", width: "100%"}}>
         
       </Box>
-        <Typography variant="h5" sx={{ mb: 3 }}>
+        <Typography variant="h5" sx={{ mb: 1, textAlign: "left" }}>
           View All Cases
         </Typography>
 
         {/* Search and Filters Section */}
-        <Box sx={{ mb: 3, display: "flex", gap: 2 }}>
+        <Box sx={{ mb: 1, display: "flex", gap: 2 }}>
           <TextField
             label="Search by Case Title or Description"
             fullWidth
@@ -146,27 +150,54 @@ const ViewAllCases = () => {
               No cases found
             </Typography>
           ) : (
-            filteredData.map((caseData, index, key) => (
-              <Grid item xs={12} sm={6} md={4} key={index}>
-                <Card sx={{ height: "100%", cursor: "pointer" }} onClick={() => handleViewCase(caseData)}>
-                  <CardContent>
-                    <Typography variant="h6" sx={{ fontWeight: "600" }}>
-                      {caseData.case_title}
-                    </Typography>
-                    <Typography variant="body2" sx={{ mt: 1 }}>
-                      <strong>Case Type:</strong> {caseData.case_type}
-                    </Typography>
-                    <Typography variant="body2" sx={{ mt: 1 }}>
-                      <strong>Status:</strong> In Progress
-                    </Typography>
-                    <Typography variant="body2" sx={{ mt: 1 }}>
-                      <strong>Law Types:</strong> {caseData.law_type.join(", ")}
-                    </Typography>
-                    <Divider sx={{ my: 2 }} />
-                    <Typography variant="body2">{caseData.case_description}</Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
+            filteredData.map((caseItem, index, key) => (
+              <Grid item xs={12} sm={7.5} md={4} key={index}>
+                                      <Card sx={{ mb: 2, mt:2, transition: "transform 0.3s ease", "&:hover": { transform: "scale(1.05)" } }}>
+                                        <CardContent sx={{ display: "flex", flexDirection: "column", height: "100%", textAlign: "left" }}>
+                                          <Typography sx={{color: 'grey',  fontSize: "0.85rem", fontWeight: 500}}>Case #{caseItem.case_hash}</Typography>
+                                          
+                                          <Box sx={{ mb: 2, display: "flex", justifyContent: "flex-start", alignItems: "left" }}>
+                                            <Typography variant="h6" sx={{ fontWeight: 600, fontSize: "1.25rem", textAlign: "left" }}>
+                                              {caseItem.case_title}
+                                            </Typography>
+                                          </Box>
+              
+                                          {/* Status Section */}
+                                          <Typography variant="body1" sx={{ textAlign: "left", fontWeight: 500, mb: 1, color: caseItem.status === "Review Feedback" ? "green" : "grey" }}>
+                                            {caseItem.status}
+                                          </Typography>
+              
+                                          {/* Case Type & Last Updated */}
+                                          <Typography variant="body2" sx={{ textAlign: "left", fontWeight: 400 }}>
+                                          <strong>Jurisdiction:</strong> {caseItem.law_type}
+                                          </Typography>
+                                          
+                                          <Typography variant="body2" sx={{ textAlign: "left", fontWeight: 400 }}>
+                                          <strong>Date Added:</strong> { new Date(caseItem.last_updated).toLocaleString()}
+                                          </Typography>
+                                        </CardContent>
+              
+                                        {/* View Case Button */}
+                                        <CardActions sx={{ justifyContent: "space-between", mt: 2 }}>
+                <Button
+                  size="small"
+                  sx={{ bgcolor: theme.palette.primary.main, color: "white", fontWeight: "bold", ":hover": { bgcolor: theme.palette.primary.dark } }}
+                  onClick={() => handleViewCase(caseItem.case_id)}
+                >
+                  View Case
+                </Button>
+              
+                <Button
+                  size="small"
+                  sx={{ bgcolor: "red", color: "white", fontWeight: "bold", ":hover": { bgcolor: "darkred" } }}
+                  onClick={() => handleDeleteCase(caseItem.case_id)}
+                >
+                  Delete
+                </Button>
+              </CardActions>
+              
+                                      </Card>
+                                    </Grid>
             ))
           )}
         </Grid>

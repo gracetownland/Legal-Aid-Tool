@@ -10,6 +10,12 @@ import { fetchAuthSession } from "aws-amplify/auth";
 import { fetchUserAttributes } from "aws-amplify/auth";
 import { UserContext } from "../App";
 
+// MUI Icons
+import HomeIcon from "@mui/icons-material/Home";
+import AssignmentIcon from "@mui/icons-material/Assignment";
+import FolderOpenIcon from "@mui/icons-material/FolderOpen";
+
+
 const StudentHeader = () => {
   const [name, setName] = useState("");
   const [showDashboard, setShowDashboard] = useState(false); 
@@ -85,29 +91,30 @@ const StudentHeader = () => {
 
 
   return (
-    <header className="bg-[#F8F9FD] p-4 flex justify-between items-center max-h-20" style={{ paddingLeft: "15px", paddingRight: "40px" }}>
-      <div className="text-black text-3xl font-roboto font-semibold p-4">
-        {showDashboard && name && `${name}`} {/* Display the text after the delay */}
+    <header className="bg-[#F8F9FD] p-4 flex justify-between items-center max-h-20">
+      {/* Left: User Name */}
+      <div className="text-black text-3xl font-roboto font-semibold">
+        {showDashboard && name && `${name}`}
       </div>
 
-      <button onClick={handleHome}>
-        Home {/* Display the text after the delay */}
-      </button>
+      {/* Right: Navigation Buttons + Sign Out */}
+      <div className="flex items-center space-x-8 ml-auto">
+        <button onClick={() => navigate("/home/*")} className="flex flex-col items-center text-gray-700 hover:text-black">
+          <HomeIcon fontSize="large" />
+          <span>Home</span>
+        </button>
 
-      <button onClick={handleNewCase}>
-        New Case {/* Display the text after the delay */}
-      </button>
+        <button onClick={() => navigate("/new-case")} className="flex flex-col items-center text-gray-700 hover:text-black ">
+          <AssignmentIcon fontSize="large" />
+          <span>New Case</span>
+        </button>
 
-      <button onClick={handleAllCases}>
-        All Cases {/* Display the text after the delay */}
-      </button>
+        <button onClick={() => navigate("/cases")} className="flex flex-col items-center text-gray-700 hover:text-black">
+          <FolderOpenIcon fontSize="large" />
+          <span>All Cases</span>
+        </button>
 
-
-      <div className="flex items-center space-x-4">
-        <button
-          className="bg-gray-800 text-white hover:bg-gray-700 px-4 py-2 rounded"
-          onClick={handleSignOut}
-        >
+        <button className="bg-gray-800 text-white hover:bg-gray-700 px-4 py-2 rounded" onClick={handleSignOut}>
           Sign Out
         </button>
       </div>
