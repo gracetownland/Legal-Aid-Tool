@@ -24,7 +24,7 @@ const InterviewAssistant = () => {
         try {
           
           const response = await fetch(
-            `${import.meta.env.VITE_API_ENDPOINT}student/case_page?case_id=${caseId}&simulation_group_id=${caseId}=&patient_id=${caseId}`,
+            `${import.meta.env.VITE_API_ENDPOINT}student/case_page?case_id=${caseId}`,
             {
               method: "GET",
               headers: {
@@ -54,7 +54,7 @@ const InterviewAssistant = () => {
   };
 
   const [messages, setMessages] = useState([
-    { sender: "bot", text: "Hi, I'm your Legal Interview Assistant. Let's get started!" },
+    { sender: "bot", text: "Hi, I'm your Legal Interview Assistant. Try asking me to analyze the case to begin!" },
   ]);
 
   const [userInput, setUserInput] = useState("");
