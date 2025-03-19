@@ -46,9 +46,11 @@ const SideMenu = () => {
           visibility: "hidden",
         }}
       >
-        <DraggableNotes />
+        <DraggableNotes 
+        onClose = {toggleNotes}
+        />
       </Box>
-    <Box sx={{ display: "flex", flexDirection: "row", height: "100vh" }}>
+    <Box sx={{ display: "flex", flexDirection: "row", height: "95vh", }}>
       {/* Sidebar */}
       <Drawer
         sx={{
@@ -58,6 +60,9 @@ const SideMenu = () => {
             width: drawerWidth,
             boxSizing: "border-box",
             top: "80px", // Push drawer below the student header
+            backgroundColor: "var(--background2)",
+            color: "var(--text)",
+            border: "none",
           },
         }}
         variant="permanent"

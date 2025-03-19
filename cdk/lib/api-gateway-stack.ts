@@ -57,9 +57,9 @@ export class ApiGatewayStack extends cdk.Stack {
 
     this.layerList = {};
 
-    const embeddingStorageBucket = new s3.Bucket(
+    const promptStorageBucket = new s3.Bucket(
       this,
-      `${id}-embeddingStorageBucket`,
+      `${id}-system-prompt-bucket`,
       {
         blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
         cors: [
@@ -897,6 +897,7 @@ export class ApiGatewayStack extends cdk.Stack {
           BEDROCK_LLM_PARAM: bedrockLLMParameter.parameterName,
           EMBEDDING_MODEL_PARAM: embeddingModelParameter.parameterName,
           TABLE_NAME_PARAM: tableNameParameter.parameterName,
+          PROMPT_BUCKET_NAME: promptStorageBucket.bucketName,
         },
       }
     );
@@ -913,21 +914,24 @@ export class ApiGatewayStack extends cdk.Stack {
       sourceArn: `arn:aws:execute-api:${this.region}:${this.account}:${this.api.restApiId}/*/*/student*`,
     });
 
-    // Custom policy statement for Bedrock access
+        // Attach AWS Managed Policies for full access
+    textGenLambdaDockerFunc.role?.addManagedPolicy(
+      iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonBedrockFullAccess")
+    );
+
+    textGenLambdaDockerFunc.role?.addManagedPolicy(
+      iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonS3FullAccess")
+    );
+
     const bedrockPolicyStatement = new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
       actions: ["bedrock:InvokeModel", "bedrock:InvokeEndpoint"],
       resources: [
-        "arn:aws:bedrock:" +
-          this.region +
-          "::foundation-model/meta.llama3-70b-instruct-v1:0",
-        "arn:aws:bedrock:" +
-          this.region +
-          "::foundation-model/amazon.titan-embed-text-v2:0",
+        `arn:aws:bedrock:${this.region}::foundation-model/meta.llama3-70b-instruct-v1`,
       ],
     });
-
-    // Attach the custom Bedrock policy to Lambda function
+    
+    // Attach the corrected Bedrock policy to Lambda
     textGenLambdaDockerFunc.addToRolePolicy(bedrockPolicyStatement);
 
     // Grant access to Secret Manager
@@ -1056,8 +1060,6 @@ export class ApiGatewayStack extends cdk.Stack {
           RDS_PROXY_ENDPOINT: db.rdsProxyEndpointAdmin,
           BUCKET: dataIngestionBucket.bucketName,
           REGION: this.region,
-          EMBEDDING_BUCKET_NAME: embeddingStorageBucket.bucketName,
-          EMBEDDING_MODEL_PARAM: embeddingModelParameter.parameterName,
         },
       }
     );
@@ -1084,7 +1086,7 @@ export class ApiGatewayStack extends cdk.Stack {
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
         actions: ["s3:ListBucket"],
-        resources: [embeddingStorageBucket.bucketArn], // Access to the specific bucket
+        resources: [promptStorageBucket.bucketArn], // Access to the specific bucket
       })
     );
 
@@ -1093,7 +1095,7 @@ export class ApiGatewayStack extends cdk.Stack {
         effect: iam.Effect.ALLOW,
         actions: ["s3:PutObject", "s3:GetObject", "s3:DeleteObject", "s3:HeadObject"],
         resources: [
-          `arn:aws:s3:::${embeddingStorageBucket.bucketName}/*`,  // Grant access to all objects within this bucket
+          `arn:aws:s3:::${promptStorageBucket.bucketName}/*`,  // Grant access to all objects within this bucket
         ],
       })
     );

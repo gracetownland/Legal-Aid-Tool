@@ -23,6 +23,7 @@ const LICENSE_KEY = 'GPL';
 
 export default function App() {
     const editorContainerRef = useRef(null);
+    const [editorData, setEditorData] = useState('');
     const editorRef = useRef(null);
     const [isLayoutReady, setIsLayoutReady] = useState(false);
 
@@ -84,7 +85,9 @@ export default function App() {
 
     return (
         <div className="main-container">     
-                    <div ref={editorRef}>{editorConfig && <CKEditor editor={ClassicEditor} config={editorConfig}/>}</div>
+                    <div ref={editorRef}>
+                    {editorConfig && <CKEditor editor={ClassicEditor} config={editorConfig} data={editorData}  onChange={(event, editor) => setEditorData(editor.getData())}/>}
+                    </div>
         </div>
     );
 }

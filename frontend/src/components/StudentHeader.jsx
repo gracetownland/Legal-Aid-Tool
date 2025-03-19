@@ -1,14 +1,12 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-//import {jwt } from 'jsonwebtoken';
 
 // MUI
 import SettingsIcon from "@mui/icons-material/Settings";
-// amplify
+// Amplify
 import { signOut } from "aws-amplify/auth";
 import { fetchAuthSession } from "aws-amplify/auth";
 import { fetchUserAttributes } from "aws-amplify/auth";
-import { UserContext } from "../App";
 
 // MUI Icons
 import HomeIcon from "@mui/icons-material/Home";
@@ -18,7 +16,8 @@ import FolderOpenIcon from "@mui/icons-material/FolderOpen";
 
 const StudentHeader = () => {
   const [name, setName] = useState("");
-  const [showDashboard, setShowDashboard] = useState(false); 
+  const [showDashboard, setShowDashboard] = useState(false);
+  const [logo, setLogo] = useState("/logo_light.svg"); // Default to light mode
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -27,7 +26,7 @@ const StudentHeader = () => {
         .then((session) => {
           return fetchUserAttributes().then((userAttributes) => {
             const token = session.tokens.idToken;
-            console.log( session.tokens);
+            console.log(session.tokens);
 
             const email = userAttributes.email;
             return fetch(
@@ -57,12 +56,24 @@ const StudentHeader = () => {
   }, []);
 
   useEffect(() => {
-    // Introduce a delay before showing the dashboard text
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+    const updateLogo = () => {
+      setLogo(mediaQuery.matches ? "/logo_dark.svg" : "/logo_light.svg");
+    };
+
+    updateLogo(); // Set initial value
+
+    mediaQuery.addEventListener("change", updateLogo);
+
+    return () => mediaQuery.removeEventListener("change", updateLogo);
+  }, []);
+
+  useEffect(() => {
     const timer = setTimeout(() => {
       setShowDashboard(true);
-    }, 0); // Set delay in milliseconds (2000ms = 2 seconds)
+    }, 0);
 
-    // Clean up the timer when the component unmounts
     return () => clearTimeout(timer);
   }, [name]);
 
@@ -76,6 +87,7 @@ const StudentHeader = () => {
         console.error("Error signing out: ", error);
       });
   };
+
 
   const handleHome = () => {
     navigate("/home/*");
@@ -119,6 +131,7 @@ const StudentHeader = () => {
         </button>
       </div>
     </header>
+
   );
 };
 
