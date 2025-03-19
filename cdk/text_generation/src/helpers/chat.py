@@ -157,37 +157,27 @@ def get_response(
     #             """
 
     # Create a system prompt for the question answering
-    # system_prompt = (
-    #     f"""
-    #     <|begin_of_text|>
-    #     <|start_header_id|>case<|end_header_id|>
-    #     '''You are a helpful assistant to me, a UBC law student, who answers
-    #      with kindness while being concise, so that it is easy to read your
-    #      responses quickly yet still get valuable information from them. No need
-    #      to be conversational, just skip to talking about the content. Refer to me,
-    #      the law student, in the second person. You will be provided with context to
-    #      a legal case  is interviewing a client about, and you exist to help provide 
-    #      legal context and analysis, relevant issues, possible strategies to defend the
-    #      client, etc. to the law student when they provide you with context on certain
-    #      client cases, and you should provide possible follow-up questions for me, the
-    #      law student, to ask the client to help progress the case more after your initial
-    #      (concise and easy to read) analysis. These are NOT for the client to ask a lawyer;
-    #      this is to help me, the law student, learn what kind of questions to ask my client,
-    #      so you should only provide follow-up questions for me, the law student, to ask the
-    #      client as if I were a lawyer. You may also mention certain legal information and 
-    #      implications that I, the law student, may have missed, and mention which part of 
-    #      Canadian law it is applicable too if possible or helpful. You are NOT allowed hallucinate, 
-    #      informational accuracy is important.'''
-    #     <|eot_id|>
-    #     <|start_header_id|>documents<|end_header_id|>
-    #     {{context}}
-    #     <|eot_id|>
-    #     """
-    # )
+    processed_system_prompt = (
+        f"""
+        <|begin_of_text|>
+        <|start_header_id|>case<|end_header_id|>
+        {system_prompt}
+        Pay close attention to the latest system prompt I've given you, as it may have been updated since the last message, but don't entirely discard the previous system prompts unless they conflict. This is for your behaviour, you do not need to include it in the response.
+
+        Additional case detials that are relevant:
+        Case type: {case_type}
+        Law type: {law_type}
+        Case description: {case_description}
+        <|eot_id|>
+        <|start_header_id|>documents<|end_header_id|>
+        {{context}}
+        <|eot_id|>
+        """
+    )
     
     qa_prompt = ChatPromptTemplate.from_messages(
         [
-            ("system", system_prompt),
+            ("system", processed_system_prompt),
             MessagesPlaceholder("chat_history"),
             ("human", "{input}"),
         ]
@@ -337,7 +327,7 @@ def update_session_name(table_name: str, session_id: str, bedrock_llm_id: str) -
                         model_id = bedrock_llm_id
                     )
     
-    system_prompt = """
+    title_system_prompt = """
         You are given the first message from an AI and the first message from a student in a conversation. 
         Based on these two messages, come up with a name that describes the conversation. 
         The name should be less than 30 characters. ONLY OUTPUT THE NAME YOU GENERATED. NO OTHER TEXT.
@@ -346,7 +336,7 @@ def update_session_name(table_name: str, session_id: str, bedrock_llm_id: str) -
     prompt = f"""
         <|begin_of_text|>
         <|start_header_id|>system<|end_header_id|>
-        {system_prompt}
+        {title_system_prompt}
         <|eot_id|>
         <|start_header_id|>AI Message<|end_header_id|>
         {llm_message}
