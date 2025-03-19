@@ -12,9 +12,46 @@ import TypingIndicator from "./TypingIndicator";
 const InterviewAssistant = () => {
   const { caseId } = useParams();
   const [caseData, setCaseData] = useState(null);
-  const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(true);
+  
+    useEffect(() => {
+      const fetchCaseData = async () => {
+  
+        const session = await fetchAuthSession();
+        const token = session.tokens.idToken;
+        try {
+          
+          const response = await fetch(
+            `${import.meta.env.VITE_API_ENDPOINT}student/case_page?case_id=${caseId}`,
+            {
+              method: "GET",
+              headers: {
+                Authorization: token,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+  
+          if (!response.ok) throw new Error("Case not found");
+          const data = await response.json();
+          console.log("Case data: ", data);
+          setCaseData(data);
+        } catch (error) {
+          console.error("Error fetching case data:", error);
+          setCaseData(null);
+        } finally {
+          setLoading(false);
+        }
+      };
+  
+      fetchCaseData();
+    }, [caseId]);
+
+  const handleBack = () => {
+    navigate("/"); // Navigate to the homepage
+  };
   const [messages, setMessages] = useState([
-    { sender: "bot", text: "Hi, I'm your Legal Interview Assistant. Let's get started!" },
+    { sender: "bot", text: "Hi, I'm your Legal Interview Assistant. Try asking me to analyze the case to begin!" },
   ]);
   const [userInput, setUserInput] = useState("");
   const [isAItyping, setIsAItyping] = useState(false);
@@ -43,6 +80,7 @@ const InterviewAssistant = () => {
   }, [caseId]);
 
   const handleSendMessage = async () => {
+    
     if (userInput.trim()) {
       setMessages([...messages, { sender: "user", text: userInput }]);
       setUserInput("");
@@ -62,18 +100,34 @@ const InterviewAssistant = () => {
   async function getAIResponse(userInput) {
     const session = await fetchAuthSession();
     const token = session.tokens.idToken;
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}student/text_generation`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: token },
-        body: JSON.stringify({ message_content: userInput })
-      });
-      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-      const data = await response.json();
-      return data.llm_output;
-    } catch (error) {
-      console.error('Error:', error);
-      return "Error getting response.";
+
+    async function getFetchBody() {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}student/text_generation?case_id=${caseId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: token
+          },
+          body: JSON.stringify({
+            message_content: userInput
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const res = data.llm_output;
+        console.log('Success:', data);
+        setIsAItyping(false);
+        return res;
+      } catch (error) {
+        console.error('Error:', error);
+        setIsAItyping(false);
+        return "Error getting response.";
+      }
     }
   }
 

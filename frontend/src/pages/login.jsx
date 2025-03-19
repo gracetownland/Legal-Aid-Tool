@@ -359,7 +359,7 @@ console.log(import.meta.env.VITE_COGNITO_USER_POOL_ID);
 
         setLoading(false);
         setNewSignUp(false);
-      //  window.location.reload();
+        window.location.reload();
       } else {
         setLoading(false);
         setError("Automatic login failed. Please try signing in manually.");

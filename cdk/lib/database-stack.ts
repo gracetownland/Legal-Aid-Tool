@@ -166,6 +166,7 @@ export class DatabaseStack extends Stack {
         
         const rdsProxyAdmin = this.dbInstance.addProxy(id + '-proxy-admin', {
             secrets: [secretPathAdmin],
+            
             vpc: vpcStack.vpc,
             role: rdsProxyRole,
             securityGroups: this.dbInstance.connections.securityGroups,
@@ -194,6 +195,7 @@ export class DatabaseStack extends Stack {
         this.dbInstance.grantConnect(rdsProxyRole);
 
         this.rdsProxyEndpoint = rdsProxy.endpoint;
+        
         this.rdsProxyEndpointTableCreator = rdsProxyTableCreator.endpoint;
         this.rdsProxyEndpointAdmin = rdsProxyAdmin.endpoint;
     }
