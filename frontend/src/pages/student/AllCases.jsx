@@ -108,7 +108,6 @@ const ViewAllCases = () => {
         </Typography>
 
         {/* Search and Filters Section */}
-<<<<<<< HEAD
         <Box sx={{ mb: 1, display: "flex", gap: 2 }}>
           <TextField
             label="Search by Case Title or Description"
@@ -118,76 +117,6 @@ const ViewAllCases = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             sx={{ flex: 1 }}
           />
-=======
-        <Box sx={{ mb: 3, display: "flex", gap: 2 }}>
-        <TextField
-          label="Search by Case Title or Description"
-          fullWidth
-          variant="outlined"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          sx={{
-            flex: 1,
-            "& .MuiOutlinedInput-root": {
-              "& fieldset": { borderColor: "var(--input)" }, // Default border color
-              "&:hover fieldset": { borderColor: "var(--text)" }, // Border color on hover
-              // No override for focus to keep the default blue
-              color: "var(--text)", // Text color inside input
-            },
-            "& .MuiInputLabel-root": { color: "var(--placeholder-text)" }, // Label color
-            "& .MuiInputLabel-root.Mui-focused": { color: "var(--text)" }, // Label color when focused
-          }}
-        />
-
-        <FormControl
-          sx={{
-            minWidth: 200,
-            "& .MuiOutlinedInput-root": {
-              "& fieldset": { borderColor: "var(--input)" }, // Default border color
-              "&:hover fieldset": { borderColor: "var(--text)" }, // Border color on hover
-              // No override for focus to keep the default blue
-              color: "var(--text)", // Text color inside select
-            },
-            "& .MuiInputLabel-root": { color: "var(--placeholder-text)" }, // Label color
-            "& .MuiInputLabel-root.Mui-focused": { color: "var(--text)" }, // Label color when focused
-          }}
-        >
-          <InputLabel>Case Type</InputLabel>
-          <Select value={selectedCaseType} onChange={(e) => setSelectedCaseType(e.target.value)}>
-            <MenuItem value="">All Case Types</MenuItem>
-            {caseTypes.map((type) => (
-              <MenuItem key={type} value={type}>
-                {type}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <FormControl
-          sx={{
-            minWidth: 200,
-            "& .MuiOutlinedInput-root": {
-              "& fieldset": { borderColor: "var(--input)" }, // Default border color
-              "&:hover fieldset": { borderColor: "var(--text)" }, // Border color on hover
-              // No override for focus to keep the default blue
-              color: "var(--text)", // Text color inside select
-            },
-            "& .MuiInputLabel-root": { color: "var(--placeholder-text)" }, // Label color
-            "& .MuiInputLabel-root.Mui-focused": { color: "var(--text)" }, // Label color when focused
-          }}
-        >
-          <InputLabel>Status</InputLabel>
-          <Select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)}>
-            <MenuItem value="">All Statuses</MenuItem>
-            {statuses.map((status) => (
-              <MenuItem key={status} value={status}>
-                {status}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
->>>>>>> 4fb3419e93647ac565d3246ee00add94743ff175
 
 
         </Box>

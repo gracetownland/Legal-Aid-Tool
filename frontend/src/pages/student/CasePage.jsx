@@ -5,7 +5,6 @@ import CaseOverview from "./components/CaseOverview";
 import PrelimSummary from "./components/PrelimSummary";
 import InterviewAssistant from "./components/InterviewAssistant";
 import DraggableNotes from "../../components/DraggableNotes";
-import SideMenu from "./components/SideMenu";
 
 const CasePage = ({caseData}) => {
   const location = useLocation();
@@ -72,7 +71,6 @@ const CasePage = ({caseData}) => {
       
 
     </Drawer>
-      <SideMenu />
 
 
       {/* Main Content Area */}
