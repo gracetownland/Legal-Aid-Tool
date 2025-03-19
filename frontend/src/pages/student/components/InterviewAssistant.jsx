@@ -102,12 +102,6 @@ const InterviewAssistant = () => {
             ))}
             {isAItyping && <TypingIndicator />}
           </Box>
-<<<<<<< HEAD
-          <Divider sx={{ marginTop: 1 }} />
-          <Box sx={{ display: "flex", alignItems: "center", padding: 2, backgroundColor: "#f9f9f9", position: "sticky", bottom: 0 }}>
-            <TextField fullWidth multiline value={userInput} onChange={(e) => setUserInput(e.target.value)} onKeyDown={handleKeyPress} label="Type here..." variant="outlined" sx={{ marginRight: 2 }} />
-            <Button variant="contained" onClick={handleSendMessage}>Send</Button>
-=======
           {isAItyping && <TypingIndicator />}
 
           <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -144,7 +138,6 @@ const InterviewAssistant = () => {
             <Button variant="contained" sx={{ color: "#ffffff", backgroundColor: "var(--accent)" }} onClick={handleSendMessage}>
               Send
             </Button>
->>>>>>> 4fb3419e93647ac565d3246ee00add94743ff175
           </Box>
         </Box>
       </Box>
