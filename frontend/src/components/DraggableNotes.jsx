@@ -196,6 +196,7 @@ function DraggableNotes({ onClose, sessionId }) {
         overflow: "auto",
         width: "100%",
         height: "calc(100% - 100px)", // Adjust for header height
+        cursor: "auto",
       }}
     >
       <TextEditor value={noteContent} onChange={setNoteContent} sx={{zIndex: 10}}/>
