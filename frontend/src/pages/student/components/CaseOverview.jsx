@@ -54,14 +54,21 @@ const CaseOverview = () => {
     try {
       const session = await fetchAuthSession();
       const token = session.tokens.idToken;
+      const cognito_id = token.payload.sub;
   
-      const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}student/edit_case?case_id=${caseId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}student/edit_case?case_id=${caseId}&cognito_id=${cognito_id}`, {
         method: "PUT",
         headers: {
           Authorization: token,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ case_id: caseId }),
+        body: JSON.stringify({
+          status: "Sent for Review", 
+          case_title: `${caseData.case_title}`,
+          case_description: `${caseData.case_description}`,
+          case_type: `${caseData.case_type}`,
+          law_type: [`${caseData.law_type}`],
+        }),
       });
   
       if (!response.ok) throw new Error("Failed to send for review");
@@ -72,6 +79,10 @@ const CaseOverview = () => {
       alert("Failed to send case for review.");
     }
   };
+
+  const handleEditCase = () => {
+    
+  }
 
   return (
     <Stack minHeight="100vh">
@@ -94,7 +105,14 @@ const CaseOverview = () => {
                 Case #{caseData.case_hash}
               </Typography>
 
-              {/* <Button onClick={handleSendForReview}>Send For Review</Button> */}
+              <Stack direction="row" spacing={2} mb={3}>
+              <Button variant="contained" color="primary" onClick={handleEditCase}>
+                Edit Case
+              </Button>
+              <Button variant="contained" color="secondary" onClick={handleSendForReview}>
+                Send For Review
+              </Button>
+            </Stack>
 
               <Card sx={{ mb: 3, textAlign: "left" }}>
                 <CardContent>

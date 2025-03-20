@@ -184,7 +184,7 @@ exports.handler = async (event) => {
               case_type,
               case_description,
               system_prompt,
-              cognito_id
+              user_id
             } = event.queryStringParameters;
 
           
