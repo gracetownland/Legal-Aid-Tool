@@ -21,6 +21,7 @@ const InterviewAssistant = () => {
   
         const session = await fetchAuthSession();
         const token = session.tokens.idToken;
+        console.log("Token: ", token)
         try {
           
           const response = await fetch(
@@ -45,8 +46,48 @@ const InterviewAssistant = () => {
           setLoading(false);
         }
       };
-  
+
+      const fetchMessages = async () => {
+        const session = await fetchAuthSession();
+        const token = session.tokens.idToken;
+      
+        try {
+          const response = await fetch(
+            `${import.meta.env.VITE_API_ENDPOINT}student/get_messages?case_id=${caseId}`,
+            {
+              method: "GET",
+              headers: {
+                Authorization: token,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+      
+          if (!response.ok) throw new Error("Messages not found");
+      
+          const data = await response.json();
+          console.log("Messages data: ", data);
+      
+          // Transform fetched data and clean user messages
+          const formattedMessages = data.map((msg) => ({
+            sender: msg.type === "ai" ? "bot" : "user",
+            text:
+              msg.type === "human"
+                ? msg.content.replace(/^\s*user\s*/, "").trim() // Remove the unwanted prefix
+                : msg.content.trim(),
+          }));
+      
+          setMessages(formattedMessages);
+        } catch (error) {
+          console.error("Error fetching messages data:", error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+
       fetchCaseData();
+      fetchMessages();
     }, [caseId]);
 
   const handleBack = () => {
