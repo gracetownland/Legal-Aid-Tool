@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from "react";
-import { Box, Typography, Card, CardContent, Divider, Grid, Container, Stack } from "@mui/material";
+import { Box, Typography, Card, CardContent, Divider, Grid, Container, Stack,Button } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
 import SideMenu from "./SideMenu";
 
@@ -21,7 +21,7 @@ const CaseOverview = () => {
       try {
         
         const response = await fetch(
-          `${import.meta.env.VITE_API_ENDPOINT}student/case_page?case_id=${caseId}&simulation_group_id=${caseId}=&patient_id=${caseId}`,
+          `${import.meta.env.VITE_API_ENDPOINT}student/case_page?case_id=${caseId}`,
           {
             method: "GET",
             headers: {
@@ -50,9 +50,32 @@ const CaseOverview = () => {
     return <Typography align="center" mt={5}>Loading...</Typography>;
   }
 
+  const handleSendForReview = async () => {
+    try {
+      const session = await fetchAuthSession();
+      const token = session.tokens.idToken;
+  
+      const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}student/edit_case?case_id=${caseId}`, {
+        method: "PUT",
+        headers: {
+          Authorization: token,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ case_id: caseId }),
+      });
+  
+      if (!response.ok) throw new Error("Failed to send for review");
+  
+      alert("Case sent for review successfully!");
+    } catch (error) {
+      console.error("Error sending case for review:", error);
+      alert("Failed to send case for review.");
+    }
+  };
+
   return (
-    <Stack minHeight="100vh" bgcolor="#f4f6f8">
-      <Box position="fixed" top={0} left={0} width="100%" zIndex={1000} bgcolor="white" boxShadow={2}>
+    <Stack minHeight="100vh">
+      <Box position="fixed" top={0} left={0} width="100%" zIndex={1000} bgcolor="white" >
         <StudentHeader />
       </Box>
 
@@ -67,18 +90,20 @@ const CaseOverview = () => {
             </Box>
           ) : (
             <>
-              <Typography variant="h4" fontWeight={600} mb={3}>
+              <Typography variant="h4" fontWeight={600} mb={3} textAlign="left">
                 Case #{caseData.case_hash}
               </Typography>
 
-              <Card sx={{ mb: 3, borderRadius: 3, boxShadow: 3 }}>
+              {/* <Button onClick={handleSendForReview}>Send For Review</Button> */}
+
+              <Card sx={{ mb: 3, textAlign: "left" }}>
                 <CardContent>
                   <Grid container spacing={3}>
                     {[
                       { label: "Case Type", value: caseData.case_type },
                       { label: "Status", value: caseData.status },
-                      { label: "Law Type", value: caseData.law_type?.join(", ") || "N/A" },
-                      { label: "Last Updated", value: new Date(caseData.last_updated).toLocaleString() },
+                      { label: "Jursidiction", value: caseData.law_type?.join(", ") || "N/A" },
+                      { label: "Date Added", value: new Date(caseData.last_updated).toLocaleString() },
                     ].map((item, index) => (
                       <Grid item xs={12} md={6} key={index}>
                         <Typography variant="h6" fontWeight={500}>
@@ -91,21 +116,21 @@ const CaseOverview = () => {
                 </CardContent>
               </Card>
 
-              <Typography variant="h6" fontWeight={600} mb={2}>
+              <Typography variant="h6" fontWeight={600} mb={2} textAlign="left">
                 Case Description
               </Typography>
-              <Box p={3} bgcolor="#f9f9f9" borderRadius={2} boxShadow={1}>
-                <Typography variant="body2">{caseData.case_description}</Typography>
+              <Box p={3} bgcolor="#f9f9f9" borderRadius={2} >
+                <Typography variant="body2" textAlign="left">{caseData.case_description}</Typography>
               </Box>
 
               {caseData.system_prompt && (
                 <>
                   <Divider sx={{ my: 4 }} />
-                  <Typography variant="h6" fontWeight={600} mb={2}>
+                  <Typography variant="h6" fontWeight={600} mb={2} textAlign="left">
                     Latest Message From Supervisor
                   </Typography>
-                  <Box p={3} bgcolor="#e7e7e7" borderRadius={2} boxShadow={1}>
-                    <Typography variant="body2">{caseData.system_prompt}</Typography>
+                  <Box p={3} bgcolor="#e7e7e7" borderRadius={2}>
+                    <Typography variant="body2" textAlign="left">{caseData.system_prompt}</Typography>
                   </Box>
                 </>
               )}

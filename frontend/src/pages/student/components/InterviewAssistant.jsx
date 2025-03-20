@@ -24,7 +24,7 @@ const InterviewAssistant = () => {
         try {
           
           const response = await fetch(
-            `${import.meta.env.VITE_API_ENDPOINT}student/case_page?case_id=${caseId}&simulation_group_id=${caseId}=&patient_id=${caseId}`,
+            `${import.meta.env.VITE_API_ENDPOINT}student/case_page?case_id=${caseId}`,
             {
               method: "GET",
               headers: {
@@ -36,7 +36,7 @@ const InterviewAssistant = () => {
   
           if (!response.ok) throw new Error("Case not found");
           const data = await response.json();
-          console.log(response);
+          console.log("Case data: ", data);
           setCaseData(data);
         } catch (error) {
           console.error("Error fetching case data:", error);
@@ -54,13 +54,14 @@ const InterviewAssistant = () => {
   };
 
   const [messages, setMessages] = useState([
-    { sender: "bot", text: "Hi, I'm your Legal Interview Assistant. Let's get started!" },
+    { sender: "bot", text: "Hi, I'm your Legal Interview Assistant. Try asking me to analyze the case to begin!" },
   ]);
 
   const [userInput, setUserInput] = useState("");
   const [isAItyping, setIsAItyping] = useState(false);
 
   const handleSendMessage = async () => {
+    
     if (userInput.trim()) {
       setMessages((prevMessages) => [
         ...prevMessages,
@@ -92,7 +93,7 @@ const InterviewAssistant = () => {
 
     async function getFetchBody() {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}student/text_generation`, {
+        const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}student/text_generation?case_id=${caseId}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
