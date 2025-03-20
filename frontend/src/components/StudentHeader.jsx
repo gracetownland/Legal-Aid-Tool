@@ -90,17 +90,29 @@ const StudentHeader = () => {
         {showDashboard && name && `${name}'s Dashboard`}
       </div>
       <div className="flex items-center space-x-4">
-        <button onClick={() => navigate("/home/*")} className="flex flex-col items-center bg-transparent text-white hover:text-[#dde]">
-          <HomeIcon fontSize="large" />
-          <span>Home</span>
-        </button>
-        <button onClick={() => navigate("/new-case")} className="flex flex-col items-center bg-transparent text-white hover:text-[#dde]">
-          <AssignmentIcon fontSize="large" />
-          <span>New Case</span>
-        </button>
-        <button className="bg-[white] text-[#7c8cb9] hover:bg-[#dde] px-4 py-2 rounded" onClick={handleSignOut}>
-          Sign Out
-        </button>
+      <button 
+        onClick={() => navigate("/home/*")} 
+        className="flex flex-col items-center bg-transparent text-white hover:text-[#dde] focus:outline-none hover:outline-none"
+      >
+        <HomeIcon fontSize="large" />
+        <span>Home</span>
+      </button>
+
+      <button 
+        onClick={() => navigate("/new-case")} 
+        className="flex flex-col items-center bg-transparent text-white hover:text-[#dde] focus:outline-none hover:outline-none"
+      >
+        <AssignmentIcon fontSize="large" />
+        <span>New Case</span>
+      </button>
+
+      <button 
+        className="bg-[white] text-[#7c8cb9] hover:bg-[#dde] px-4 py-2 rounded focus:outline-none hover:outline-none" 
+        onClick={handleSignOut}
+      >
+        Sign Out
+      </button>
+
       </div>
     </header>
   );
