@@ -171,7 +171,7 @@ export const StudentHomepage = () => {
                     No cases yet, start a new one
                   </Typography>
                 ) : (
-                  <Grid container spacing={1} sx={{ width: "100%" }}>
+                  <Grid container spacing={1} sx={{ width: "100%" , marginTop: '100px' }}>
                     {cases.map((caseItem, index) => (
                       <Grid item xs={12} sm={7.5} md={4} key={index}>
                         <Card sx={{ mb: 2, mt:2, transition: "transform 0.3s ease", "&:hover": { transform: "scale(1.05)" } }}>

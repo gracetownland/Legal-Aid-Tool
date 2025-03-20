@@ -154,7 +154,7 @@ function DraggableNotes({ onClose, sessionId }) {
     <Box
       ref={noteRef}
       sx={{
-        position: "absolute",
+        position: "fixed",
         top: `${position.y}px`,
         left: `${position.x}px`,
         width: `${dimensions.width}px`,

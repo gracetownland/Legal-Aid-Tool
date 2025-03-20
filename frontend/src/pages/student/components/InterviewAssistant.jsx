@@ -48,6 +48,7 @@ const InterviewAssistant = () => {
       };
 
       const fetchMessages = async () => {
+        setLoading(true);
         const session = await fetchAuthSession();
         const token = session.tokens.idToken;
       
@@ -211,7 +212,7 @@ const InterviewAssistant = () => {
                     padding: "0 1em",
                     backgroundColor: message.sender === "bot" ? "var(--bot-text)" : "var(--sender-text)",
                     borderRadius: 2,
-                    boxShadow: 1,
+                    boxShadow: 'none',
                     marginLeft: message.sender === "bot" ? 0 : "auto",
                     marginRight: message.sender === "bot" ? "auto" : 0,
                     color: "var(--text)",
