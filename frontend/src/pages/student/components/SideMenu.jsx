@@ -31,7 +31,7 @@ const SideMenu = () => {
       } else {
         notes.style.visibility = "visible";
         notesButton.style.backgroundColor = "var(--background3)";
-        notesButton.style.color = "#333";
+        notesButton.style.color = "#808080";
       }
     }
   };
