@@ -491,7 +491,7 @@ console.log(import.meta.env.VITE_COGNITO_USER_POOL_ID);
               alignItems: "center",
               justifyContent: "center",
               padding: "20px",
-              backgroundColor: '#94A1B5',
+              backgroundColor: 'var(--secondary)',
             }}
           >
 
