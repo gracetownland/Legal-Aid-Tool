@@ -180,7 +180,7 @@ function DraggableNotes({ onClose, sessionId }) {
           color: "white",
         }}
       >
-        <Typography variant="h6">Notes</Typography>
+        <Typography variant="h6">Case Notes</Typography>
         <HighlightOffIcon
           onClick={onClose}
           sx={{ cursor: "pointer", color: "white" }}
