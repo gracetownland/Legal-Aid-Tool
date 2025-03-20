@@ -3,21 +3,17 @@ import { useNavigate } from "react-router-dom";
 
 // MUI
 import SettingsIcon from "@mui/icons-material/Settings";
+import HomeIcon from "@mui/icons-material/Home";
+import AssignmentIcon from "@mui/icons-material/Assignment";
 // Amplify
 import { signOut } from "aws-amplify/auth";
 import { fetchAuthSession } from "aws-amplify/auth";
 import { fetchUserAttributes } from "aws-amplify/auth";
 
-// MUI Icons
-import HomeIcon from "@mui/icons-material/Home";
-import AssignmentIcon from "@mui/icons-material/Assignment";
-import FolderOpenIcon from "@mui/icons-material/FolderOpen";
-
-
 const StudentHeader = () => {
   const [name, setName] = useState("");
   const [showDashboard, setShowDashboard] = useState(false);
-  const [logo, setLogo] = useState("/logo_light.svg"); // Default to light mode
+  const [logo, setLogo] = useState("/logo_dark.svg"); // Default to light mode
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -30,9 +26,7 @@ const StudentHeader = () => {
 
             const email = userAttributes.email;
             return fetch(
-              `${
-                import.meta.env.VITE_API_ENDPOINT
-              }student/get_name?user_email=${encodeURIComponent(email)}`,
+              `${import.meta.env.VITE_API_ENDPOINT}student/get_name?user_email=${encodeURIComponent(email)}`,
               {
                 method: "GET",
                 headers: {
@@ -55,19 +49,19 @@ const StudentHeader = () => {
     fetchName();
   }, []);
 
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+  // useEffect(() => {
+  //   const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
-    const updateLogo = () => {
-      setLogo(mediaQuery.matches ? "/logo_dark.svg" : "/logo_light.svg");
-    };
+  //   const updateLogo = () => {
+  //     setLogo(mediaQuery.matches ? "/logo_dark.svg" : "/logo_light.svg");
+  //   };
 
-    updateLogo(); // Set initial value
+  //   updateLogo(); // Set initial value
 
-    mediaQuery.addEventListener("change", updateLogo);
+  //   mediaQuery.addEventListener("change", updateLogo);
 
-    return () => mediaQuery.removeEventListener("change", updateLogo);
-  }, []);
+  //   return () => mediaQuery.removeEventListener("change", updateLogo);
+  // }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -88,50 +82,27 @@ const StudentHeader = () => {
       });
   };
 
-
-  const handleHome = () => {
-    navigate("/home/*");
-  };
-
-  const handleNewCase = () => {
-    navigate("/new-case");
-  };
-
-  const handleAllCases = () => {
-    navigate("/cases");
-  };
-
-
   return (
-    <header className="bg-[#F8F9FD] p-4 flex justify-between items-center max-h-20">
-      {/* Left: User Name */}
-      <div className="text-black text-3xl font-roboto font-semibold">
-        {showDashboard && name && `${name}`}
+    <header className="bg-[var(--secondary)] p-4 flex justify-between items-center h-20 
+             fixed top-0 left-0 w-full z-50 shadow-md">
+      <img src={logo} alt="Logo" className="h-12 w-12 mr-4" />
+      <div className="flex-grow text-[white] text-3xl font-roboto font-semibold p-4 text-left">
+        {showDashboard && name && `${name}'s Dashboard`}
       </div>
-
-      {/* Right: Navigation Buttons + Sign Out */}
-      <div className="flex items-center space-x-8 ml-auto">
-        <button onClick={() => navigate("/home/*")} className="flex flex-col items-center text-gray-700 hover:text-black">
+      <div className="flex items-center space-x-4">
+        <button onClick={() => navigate("/home/*")} className="flex flex-col items-center bg-transparent text-white hover:text-[#dde]">
           <HomeIcon fontSize="large" />
           <span>Home</span>
         </button>
-
-        <button onClick={() => navigate("/new-case")} className="flex flex-col items-center text-gray-700 hover:text-black ">
+        <button onClick={() => navigate("/new-case")} className="flex flex-col items-center bg-transparent text-white hover:text-[#dde]">
           <AssignmentIcon fontSize="large" />
           <span>New Case</span>
         </button>
-
-        <button onClick={() => navigate("/cases")} className="flex flex-col items-center text-gray-700 hover:text-black">
-          <FolderOpenIcon fontSize="large" />
-          <span>All Cases</span>
-        </button>
-
-        <button className="bg-gray-800 text-white hover:bg-gray-700 px-4 py-2 rounded" onClick={handleSignOut}>
+        <button className="bg-[white] text-[#7c8cb9] hover:bg-[#dde] px-4 py-2 rounded" onClick={handleSignOut}>
           Sign Out
         </button>
       </div>
     </header>
-
   );
 };
 

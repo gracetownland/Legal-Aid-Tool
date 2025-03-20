@@ -227,7 +227,7 @@ function DraggableNotes({ onClose, sessionId }) {
       {/* Autosave Toggle Button */}
       
 
-      <FormControlLabel
+      {/* <FormControlLabel
         control={
           <Switch
             checked={isAutosaveEnabled}
@@ -247,7 +247,7 @@ function DraggableNotes({ onClose, sessionId }) {
         },
 
          }}
-      />
+      /> */}
 
 
       {/* Resizer Handle */}
@@ -256,12 +256,12 @@ function DraggableNotes({ onClose, sessionId }) {
         sx={{
           width: "10px",
           height: "10px",
-          backgroundColor: "#ccc",
+          backgroundColor: "#db5",
           position: "absolute",
           right: "0",
           bottom: "0",
           cursor: "nwse-resize",
-          borderRadius: "0 0 10px 0",
+          borderRadius: "5px 0 10px 0",
         }}
       ></Box>
 

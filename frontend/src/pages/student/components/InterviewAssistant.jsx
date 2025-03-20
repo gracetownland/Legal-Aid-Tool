@@ -166,7 +166,7 @@ const InterviewAssistant = () => {
               >
                 <Paper
                   sx={{
-                    maxWidth: "55%",
+                    maxWidth: "60%",
                     padding: "0 1em",
                     backgroundColor: message.sender === "bot" ? "var(--bot-text)" : "var(--sender-text)",
                     borderRadius: 2,
