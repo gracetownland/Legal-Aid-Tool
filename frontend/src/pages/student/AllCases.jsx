@@ -19,7 +19,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import StudentHeader from "../../components/StudentHeader";
 import { ThemeProvider } from "@mui/material";
-import theme from "../../theme";
+import theme from "../../Theme";
 import { fetchAuthSession, fetchUserAttributes } from "aws-amplify/auth";
 
 const ViewAllCases = () => {
