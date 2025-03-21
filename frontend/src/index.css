@@ -12,7 +12,7 @@
   --background2: #ededed;
   --background3: #d4dbdf;
   --primary: #546bdf;
-  --secondary: #94A1B5;
+  --secondary: #627188;
   --accent: #1c187a;
   --bot-text: #cee1ff;
   --sender-text: #f0f0f0;
@@ -65,9 +65,9 @@
     background-color: #333;
     color: white;
   }
-  button:hover {
+  /* button:hover {
     border-color: #77dd77;
-  }
+  } */
 }
 
 
@@ -104,9 +104,9 @@ button {
   cursor: pointer;
   transition: border-color 0.25s;
 }
-button:hover {
+/* button:hover {
   border-color: #099433;
-}
+} */
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;

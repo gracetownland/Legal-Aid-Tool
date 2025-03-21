@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 
 // MUI
 import SettingsIcon from "@mui/icons-material/Settings";
+import HomeIcon from "@mui/icons-material/Home";
+import AssignmentIcon from "@mui/icons-material/Assignment";
 // Amplify
 import { signOut } from "aws-amplify/auth";
 import { fetchAuthSession } from "aws-amplify/auth";
@@ -11,7 +13,7 @@ import { fetchUserAttributes } from "aws-amplify/auth";
 const StudentHeader = () => {
   const [name, setName] = useState("");
   const [showDashboard, setShowDashboard] = useState(false);
-  const [logo, setLogo] = useState("/logo_light.svg"); // Default to light mode
+  const [logo, setLogo] = useState("/logo_dark.svg"); // Default to light mode
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,9 +26,7 @@ const StudentHeader = () => {
 
             const email = userAttributes.email;
             return fetch(
-              `${
-                import.meta.env.VITE_API_ENDPOINT
-              }student/get_name?user_email=${encodeURIComponent(email)}`,
+              `${import.meta.env.VITE_API_ENDPOINT}student/get_name?user_email=${encodeURIComponent(email)}`,
               {
                 method: "GET",
                 headers: {
@@ -49,19 +49,19 @@ const StudentHeader = () => {
     fetchName();
   }, []);
 
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+  // useEffect(() => {
+  //   const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
-    const updateLogo = () => {
-      setLogo(mediaQuery.matches ? "/logo_dark.svg" : "/logo_light.svg");
-    };
+  //   const updateLogo = () => {
+  //     setLogo(mediaQuery.matches ? "/logo_dark.svg" : "/logo_light.svg");
+  //   };
 
-    updateLogo(); // Set initial value
+  //   updateLogo(); // Set initial value
 
-    mediaQuery.addEventListener("change", updateLogo);
+  //   mediaQuery.addEventListener("change", updateLogo);
 
-    return () => mediaQuery.removeEventListener("change", updateLogo);
-  }, []);
+  //   return () => mediaQuery.removeEventListener("change", updateLogo);
+  // }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -82,49 +82,39 @@ const StudentHeader = () => {
       });
   };
 
-
-  const handleHome = () => {
-    navigate("/home/*");
-  };
-
-  const handleNewCase = () => {
-    navigate("/new-case");
-  };
-
-  const handleAllCases = () => {
-    navigate("/cases");
-  };
-
-
   return (
-    <header className="bg-[#F8F9FD] p-4 flex justify-between items-center max-h-20" style={{ paddingLeft: "15px", paddingRight: "40px" }}>
-      <div className="text-black text-3xl font-roboto font-semibold p-4">
-        {showDashboard && name && `${name}`} {/* Display the text after the delay */}
+    <header className="bg-[var(--secondary)] p-4 flex justify-between items-center h-20 
+             fixed top-0 left-0 w-full z-50 shadow-md">
+      <img src={logo} alt="Logo" className="h-12 w-12 mr-4" />
+      <div className="flex-grow text-[white] text-3xl font-roboto font-semibold p-4 text-left">
+        {showDashboard && name && `${name}'s Dashboard`}
       </div>
-
-      <button onClick={handleHome}>
-        Home {/* Display the text after the delay */}
-      </button>
-
-      <button onClick={handleNewCase}>
-        New Case {/* Display the text after the delay */}
-      </button>
-
-      <button onClick={handleAllCases}>
-        All Cases {/* Display the text after the delay */}
-      </button>
-
-
       <div className="flex items-center space-x-4">
-        <button
-          className="bg-gray-800 text-white hover:bg-gray-700 px-4 py-2 rounded"
-          onClick={handleSignOut}
-        >
-          Sign Out
-        </button>
+      <button 
+        onClick={() => navigate("/home/*")} 
+        className="flex flex-col items-center bg-transparent text-white hover:text-[#dde] focus:outline-none hover:outline-none"
+      >
+        <HomeIcon fontSize="large" />
+        <span>Home</span>
+      </button>
+
+      <button 
+        onClick={() => navigate("/new-case")} 
+        className="flex flex-col items-center bg-transparent text-white hover:text-[#dde] focus:outline-none hover:outline-none"
+      >
+        <AssignmentIcon fontSize="large" />
+        <span>New Case</span>
+      </button>
+
+      <button 
+        className="bg-[white] text-[#7c8cb9] hover:bg-[#dde] px-4 py-2 rounded focus:outline-none hover:outline-none" 
+        onClick={handleSignOut}
+      >
+        Sign Out
+      </button>
+
       </div>
     </header>
-
   );
 };
 

@@ -1,6 +1,7 @@
 import os
 import json
 import boto3
+import botocore
 import logging
 import psycopg2
 from langchain_aws import BedrockEmbeddings

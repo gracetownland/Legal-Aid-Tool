@@ -891,8 +891,8 @@ export class ApiGatewayStack extends cdk.Stack {
         vpc: vpcStack.vpc, // Pass the VPC
         functionName: `${id}-TextGenLambdaDockerFunction`,
         environment: {
-          SM_DB_CREDENTIALS: db.secretPathUser.secretName,
-          RDS_PROXY_ENDPOINT: db.rdsProxyEndpoint,
+          SM_DB_CREDENTIALS: db.secretPathAdminName,
+          RDS_PROXY_ENDPOINT: db.rdsProxyEndpointAdmin,
           REGION: this.region,
           BEDROCK_LLM_PARAM: bedrockLLMParameter.parameterName,
           EMBEDDING_MODEL_PARAM: embeddingModelParameter.parameterName,

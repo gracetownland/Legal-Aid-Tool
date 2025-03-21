@@ -270,54 +270,90 @@ exports.handler = async (event) => {
         }
         break;
 
-        case "GET /student/case_page":
+      case "GET /student/case_page":
+        if (event.queryStringParameters && event.queryStringParameters.case_id) {
+          const case_id = event.queryStringParameters.case_id;
+          try {
+            const caseData = await sqlConnection`
+              SELECT * FROM "cases" WHERE case_id = ${case_id};
+            `;
+      
+            if (caseData.length > 0) {
+              response.body = JSON.stringify(caseData[0]);
+            } else {
+              response.statusCode = 404;
+              response.body = JSON.stringify({ error: "Case not found" });
+            }
+          } catch (err) {
+            response.statusCode = 500;
+            console.log(err);
+            response.body = JSON.stringify({ error: "Internal server error" });
+          }
+        } else {
+          response.statusCode = 400;
+          response.body = JSON.stringify({ error: "Case ID is required" });
+        }
+        break;  
+        
+        case "GET /student/get_messages":
           if (event.queryStringParameters && event.queryStringParameters.case_id) {
             const case_id = event.queryStringParameters.case_id;
             try {
-              const caseData = await sqlConnection`
-                SELECT * FROM "cases" WHERE case_id = ${case_id};
-              `;
+              console.log("Received case_id: ", case_id);
         
-              if (caseData.length > 0) {
-                response.body = JSON.stringify(caseData[0]);
+              // Initialize the DynamoDB client
+              const { DynamoDBClient, QueryCommand } = require('@aws-sdk/client-dynamodb');
+              const ddbClient = new DynamoDBClient();
+        
+              // Query DynamoDB for messages with the provided case_id (which is used as SessionId)
+              const params = {
+                TableName: "DynamoDB-Conversation-Table",
+                KeyConditionExpression: "SessionId = :case_id",
+                ExpressionAttributeValues: {
+                  ":case_id": { S: case_id }
+                }
+              };
+        
+              const command = new QueryCommand(params);
+              console.log("Query params: ", params);  // Log the params
+        
+              const data = await ddbClient.send(command);
+        
+              console.log("Query results: ", data);
+        
+              if (data.Items && data.Items.length > 0) {
+                const messages = data.Items[0].History.L;
+
+                console.log("MESSAGES: ", messages)
+                const extractedMessages = messages.map(m => ({
+                  type: m.M.data.M.type.S,  // "human" or "ai"
+                  content: m.M.data.M.content.S  // Extracting only the message content
+                }));
+                
+                console.log("EXTRACTED MESSAGES: ", extractedMessages)
+                if (messages.length > 0) {
+                  response.body = JSON.stringify(extractedMessages);  // Return the message content as JSON
+                } else {
+                  response.statusCode = 404;
+                  response.body = JSON.stringify({ error: "No messages found for the case_id" });
+                }
               } else {
                 response.statusCode = 404;
-                response.body = JSON.stringify({ error: "Case not found" });
+                response.body = JSON.stringify({ error: "No messages found for the case_id" });
               }
             } catch (err) {
+              console.log("Error occurred: ", err);
               response.statusCode = 500;
-              console.log(err);
               response.body = JSON.stringify({ error: "Internal server error" });
             }
           } else {
+            console.log("Case ID missing");
             response.statusCode = 400;
             response.body = JSON.stringify({ error: "Case ID is required" });
           }
-          break;  
+          break;
           
-            case "GET /student/get_messages":
-              if (event.queryStringParameters && event.queryStringParameters.user_id) {
-                const user_id = event.queryStringParameters.user_id;
-                try {
-                  const messages = await sqlConnection`
-                    SELECT m.message_id, m.message_content, m.time_sent, c.case_title
-                    FROM "messages" m
-                    JOIN "cases" c ON m.case_id = c.case_id
-                    WHERE m.user_id = ${user_id}
-                    ORDER BY m.time_sent;
-                  `;
-            
-                  response.body = JSON.stringify(messages);
-                } catch (err) {
-                  response.statusCode = 500;
-                  console.log(err);
-                  response.body = JSON.stringify({ error: "Internal server error" });
-                }
-              } else {
-                response.statusCode = 400;
-                response.body = JSON.stringify({ error: "User ID is required" });
-              }
-              break;
+          
             
         case "POST /student/create_message":
          
@@ -328,7 +364,7 @@ exports.handler = async (event) => {
               const case_id = event.queryStringParameters.case_id;
               try {
                 const caseData = await sqlConnection`
-                  SELECT notes FROM "cases" WHERE case_id = ${case_id};
+                  SELECT student_notes FROM "cases" WHERE case_id = ${case_id};
                 `;
             
                 if (caseData.length > 0) {
@@ -347,6 +383,36 @@ exports.handler = async (event) => {
               response.body = JSON.stringify({ error: "Case ID is required" });
             }
           break;
+
+        case "PUT /student/update_notes":
+          if (
+            event.queryStringParameters != null &&
+            event.queryStringParameters.case_id 
+        ) {
+            const { case_id } = event.queryStringParameters;
+            
+            const {notes} = JSON.parse(event.body || "{}");
+
+            try {
+              // Update the patient details in the patients table
+              await sqlConnection`
+                  UPDATE "cases"
+                  SET 
+                      student_notes = ${notes}
+                  WHERE case_id = ${case_id}; 
+              `;
+              response.statusCode = 200;
+              response.body = JSON.stringify({
+                  message: "Notes Updated Successfully",
+              });
+          } catch (err) {
+              response.statusCode = 500;
+              console.error(err);
+              response.body = JSON.stringify({
+                  error: "Internal server error",
+              });
+          }
+        }
 
         case "DELETE /student/delete_case":
           console.log(event);
