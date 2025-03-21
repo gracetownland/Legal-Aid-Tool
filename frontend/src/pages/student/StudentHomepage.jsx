@@ -84,6 +84,9 @@ export const StudentHomepage = () => {
             console.error("Error fetching name:", error);
           });
       };
+
+
+      
   
       fetchCases();
     }, []);
@@ -174,7 +177,7 @@ export const StudentHomepage = () => {
                   <Grid container spacing={1} sx={{ width: "100%" , marginTop: '100px' }}>
                     {cases.map((caseItem, index) => (
                       <Grid item xs={12} sm={7.5} md={4} key={index}>
-                        <Card sx={{ mb: 2, mt:2, transition: "transform 0.3s ease", "&:hover": { transform: "scale(1.05)" } }}>
+                        <Card sx={{ mb: 2, mt:2, transition: "transform 0.3s ease", "&:hover": { transform: "scale(1.01)" } }}>
                           <CardContent sx={{ display: "flex", flexDirection: "column", height: "100%", textAlign: "left" }}>
                             <Typography sx={{color: 'grey',  fontSize: "0.85rem", fontWeight: 500}}>Case #{caseItem.case_hash}</Typography>
                             
