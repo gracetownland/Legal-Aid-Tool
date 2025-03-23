@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Box, Typography, TextField, Button, Paper, Divider } from "@mui/material";
+import { Box, Typography, TextField, Button, Paper, Divider, CircularProgress } from "@mui/material";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { fetchAuthSession } from "aws-amplify/auth";
 
@@ -14,82 +14,79 @@ const InterviewAssistant = () => {
   const navigate = useNavigate();
 
   const [caseData, setCaseData] = useState(null);
-    const [loading, setLoading] = useState(true);
-  
-    useEffect(() => {
-      const fetchCaseData = async () => {
-  
-        const session = await fetchAuthSession();
-        const token = session.tokens.idToken;
-        console.log("Token: ", token)
-        try {
-          
-          const response = await fetch(
-            `${import.meta.env.VITE_API_ENDPOINT}student/case_page?case_id=${caseId}`,
-            {
-              method: "GET",
-              headers: {
-                Authorization: token,
-                "Content-Type": "application/json",
-              },
-            }
-          );
-  
-          if (!response.ok) throw new Error("Case not found");
-          const data = await response.json();
-          console.log("Case data: ", data);
-          setCaseData(data);
-        } catch (error) {
-          console.error("Error fetching case data:", error);
-          setCaseData(null);
-        } finally {
-          setLoading(false);
-        }
-      };
+  const [loading, setLoading] = useState(true);
 
-      const fetchMessages = async () => {
-        setLoading(true);
-        const session = await fetchAuthSession();
-        const token = session.tokens.idToken;
-      
-        try {
-          const response = await fetch(
-            `${import.meta.env.VITE_API_ENDPOINT}student/get_messages?case_id=${caseId}`,
-            {
-              method: "GET",
-              headers: {
-                Authorization: token,
-                "Content-Type": "application/json",
-              },
-            }
-          );
-      
-          if (!response.ok) throw new Error("Messages not found");
-      
-          const data = await response.json();
-          console.log("Messages data: ", data);
-      
-          // Transform fetched data and clean user messages
-          const formattedMessages = data.map((msg) => ({
-            sender: msg.type === "ai" ? "bot" : "user",
-            text:
-              msg.type === "human"
-                ? msg.content.replace(/^\s*user\s*/, "").trim() // Remove the unwanted prefix
-                : msg.content.trim(),
-          }));
-      
-          setMessages(formattedMessages);
-        } catch (error) {
-          console.error("Error fetching messages data:", error);
-        } finally {
-          setLoading(false);
-        }
-      };
-      
+  useEffect(() => {
+    const fetchCaseData = async () => {
+      const session = await fetchAuthSession();
+      const token = session.tokens.idToken;
+      console.log("Token: ", token);
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_ENDPOINT}student/case_page?case_id=${caseId}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: token,
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
-      fetchCaseData();
-      fetchMessages();
-    }, [caseId]);
+        if (!response.ok) throw new Error("Case not found");
+        const data = await response.json();
+        console.log("Case data: ", data);
+        setCaseData(data);
+      } catch (error) {
+        console.error("Error fetching case data:", error);
+        setCaseData(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const fetchMessages = async () => {
+      setLoading(true);
+      const session = await fetchAuthSession();
+      const token = session.tokens.idToken;
+
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_ENDPOINT}student/get_messages?case_id=${caseId}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: token,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) throw new Error("Messages not found");
+
+        const data = await response.json();
+        console.log("Messages data: ", data);
+
+        // Transform fetched data and clean user messages
+        const formattedMessages = data.map((msg) => ({
+          sender: msg.type === "ai" ? "bot" : "user",
+          text:
+            msg.type === "human"
+              ? msg.content.replace(/^\s*user\s*/, "").trim() // Remove the unwanted prefix
+              : msg.content.trim(),
+        }));
+
+        setMessages(formattedMessages);
+      } catch (error) {
+        console.error("Error fetching messages data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCaseData();
+    fetchMessages();
+  }, [caseId]);
 
   const handleBack = () => {
     navigate("/"); // Navigate to the homepage
@@ -103,7 +100,6 @@ const InterviewAssistant = () => {
   const [isAItyping, setIsAItyping] = useState(false);
 
   const handleSendMessage = async () => {
-    
     if (userInput.trim()) {
       setMessages((prevMessages) => [
         ...prevMessages,
@@ -150,11 +146,20 @@ const InterviewAssistant = () => {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
 
-        const data = await response.json();
-        const res = data.llm_output;
-        console.log('Success:', data);
-        setIsAItyping(false);
-        return res;
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          console.log(decoder.decode(value)); // Process and display each chunk
+        }
+
+        // const data = await response.json();
+        // const res = data.llm_output;
+        // console.log('Success:', data);
+        // setIsAItyping(false);
+        // return res;
       } catch (error) {
         console.error('Error:', error);
         setIsAItyping(false);
@@ -174,7 +179,8 @@ const InterviewAssistant = () => {
         justifyContent: "space-between",
         padding: 2,
         backgroundColor: "transparent",
-        color: "var(--text)"
+        color: "var(--text)",
+        marginTop: '75px'
       }}
     >
       <StudentHeader /> {/* StudentHeader added at the top */}
@@ -194,40 +200,64 @@ const InterviewAssistant = () => {
 
           <Divider sx={{ marginBottom: 2, borderColor: "var(--text)" }} />
 
-          <Box sx={{ overflowY: "auto", marginBottom: 2 }}>
-            {messages.map((message, index) => (
-              <Box
-                key={index}
-                sx={{
-                  display: "flex",
-                  flexDirection: message.sender === "bot" ? "row" : "row-reverse",
-                  marginBottom: 2,
-                  fontFamily: "'Roboto', sans-serif",
-                  boxShadow: 'none'
-                }}
-              >
-                <Paper
-                  sx={{
-                    maxWidth: "60%",
-                    padding: "0 1em",
-                    backgroundColor: message.sender === "bot" ? "var(--bot-text)" : "var(--sender-text)",
-                    borderRadius: 2,
-                    boxShadow: 'none',
-                    marginLeft: message.sender === "bot" ? 0 : "auto",
-                    marginRight: message.sender === "bot" ? "auto" : 0,
-                    color: "var(--text)",
-                    fontFamily: "'Roboto', sans-serif"
-                  }}
-                >
-                  <Typography variant="body1" sx={{ textAlign: "left" }}>
-                    <div className="markdown">
-                      <ReactMarkdown>{message.text}</ReactMarkdown>
-                    </div>
-                  </Typography>
-                </Paper>
-              </Box>
-            ))}
-          </Box>
+          {/* Loading screen */}
+          {loading ? (
+  <Box 
+    sx={{
+      display: "flex", 
+      justifyContent: "center", 
+      alignItems: "center", 
+      height: "500px", 
+      backgroundColor: "rgba(255, 255, 255, 0.3)", // White translucent background
+      borderRadius: 2, // Optional: Adds rounded corners for a smoother look
+      padding: 2, // Optional: Adds padding around the progress circle
+      position: "absolute", // Optional: Makes sure it overlays the content if needed
+      top: 0, 
+      left: 0, 
+      width: "100%", 
+      zIndex: 999, // Ensure it's on top of other elements
+    }}
+  >
+    <CircularProgress sx={{ width: '150px' }} /> {/* Increased size for the circular progress */}
+  </Box>
+) : (
+  <Box sx={{ overflowY: "auto", marginBottom: 2 }}>
+    {messages.map((message, index) => (
+      <Box
+        key={index}
+        sx={{
+          display: "flex",
+          flexDirection: message.sender === "bot" ? "row" : "row-reverse",
+          marginBottom: 2,
+          fontFamily: "'Roboto', sans-serif",
+          boxShadow: 'none'
+        }}
+      >
+        <Paper
+          sx={{
+            maxWidth: "60%",
+            padding: "0 1em",
+            backgroundColor: message.sender === "bot" ? "var(--bot-text)" : "var(--sender-text)",
+            borderRadius: 2,
+            boxShadow: 'none',
+            marginLeft: message.sender === "bot" ? 0 : "auto",
+            marginRight: message.sender === "bot" ? "auto" : 0,
+            color: "var(--text)",
+            fontFamily: "'Roboto', sans-serif"
+          }}
+        >
+          <Typography variant="body1" sx={{ textAlign: "left" }}>
+            <div className="markdown">
+              <ReactMarkdown>{message.text}</ReactMarkdown>
+            </div>
+          </Typography>
+        </Paper>
+      </Box>
+    ))}
+  </Box>
+)}
+
+
           {isAItyping && <TypingIndicator />}
 
           <Box sx={{ display: "flex", alignItems: "center" }}>

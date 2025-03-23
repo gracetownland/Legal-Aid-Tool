@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Drawer, List, ListItem, ListItemText, Box, Button } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
@@ -11,6 +11,8 @@ import EditNoteIcon from '@mui/icons-material/EditNote';
 import IconButton from "@mui/material/IconButton";
 
 const drawerWidth = 240; // Sidebar width
+
+
 
 const SideMenu = () => {
   const { caseId } = useParams();
@@ -54,6 +56,7 @@ const SideMenu = () => {
       >
         <DraggableNotes 
         onClose = {toggleNotes}
+        noteContent = {"Hi"}
         />
       </Box>
     <Box sx={{ display: "flex", flexDirection: "row", height: "95vh", }}>

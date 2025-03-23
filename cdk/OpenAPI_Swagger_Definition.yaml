@@ -974,7 +974,7 @@ paths:
         httpMethod: "POST"
         type: "aws_proxy"
 
-  /student/get_notes:
+  /student/notes:
     options:
       summary: CORS support
       description: Enable CORS by returning correct headers
@@ -1050,30 +1050,6 @@ paths:
         passthroughBehavior: "when_no_match"
         httpMethod: "POST"
         type: "aws_proxy"
-  /student/update_notes:
-    options:
-      summary: CORS support
-      description: Enable CORS by returning correct headers
-      responses:
-        200:
-          $ref: "#/components/responses/Success"
-      x-amazon-apigateway-integration:
-        type: mock
-        requestTemplates:
-          application/json: |
-            {
-              "statusCode" : 200
-            }
-        responses:
-          default:
-            statusCode: "200"
-            responseParameters:
-              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key'"
-              method.response.header.Access-Control-Allow-Methods: "'*'"
-              method.response.header.Access-Control-Allow-Origin: "'*'"
-            responseTemplates:
-              application/json: |
-                {}
     put:
       tags:
         - Student
@@ -1081,11 +1057,11 @@ paths:
       operationId: update_notes_PUT
       parameters:
         - in: query
-          name: session_id
+          name: case_id
           required: true
           schema:
             type: string
-          description: The ID of the session
+          description: The ID of the case
       requestBody:
         required: true
         content:
@@ -1101,7 +1077,7 @@ paths:
         "400":
           description: Bad Request
         "404":
-          description: Session not found
+          description: Case not found
         "500":
           description: Internal Server Error
       security:
@@ -1111,7 +1087,7 @@ paths:
           Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${studentFunction.Arn}/invocations"
         passthroughBehavior: "when_no_match"
         httpMethod: "POST"
-        type: "aws_proxy"
+        type: "aws_proxy"      
   /student/update_patient_score:
     options:
       summary: CORS support
