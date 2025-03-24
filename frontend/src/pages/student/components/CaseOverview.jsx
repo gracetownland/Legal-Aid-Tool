@@ -102,7 +102,7 @@ const CaseOverview = () => {
                     {[
                       { label: "Case Type", value: caseData.case_type },
                       { label: "Status", value: caseData.status },
-                      { label: "Jursidiction", value: caseData.law_type?.join(", ") || "N/A" },
+                      { label: "Jursidiction", value: caseData.jurisdiction?.join(", ") || "N/A" },
                       { label: "Date Added", value: new Date(caseData.last_updated).toLocaleString() },
                     ].map((item, index) => (
                       <Grid item xs={12} md={6} key={index}>
@@ -123,7 +123,7 @@ const CaseOverview = () => {
                 <Typography variant="body2" textAlign="left">{caseData.case_description}</Typography>
               </Box>
 
-              {caseData.system_prompt && (
+              {/* {caseData.system_prompt && (
                 <>
                   <Divider sx={{ my: 4 }} />
                   <Typography variant="h6" fontWeight={600} mb={2} textAlign="left">
@@ -133,7 +133,7 @@ const CaseOverview = () => {
                     <Typography variant="body2" textAlign="left">{caseData.system_prompt}</Typography>
                   </Box>
                 </>
-              )}
+              )} */}
             </>
           )}
         </Container>

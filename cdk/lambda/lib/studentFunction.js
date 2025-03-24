@@ -216,7 +216,7 @@ exports.handler = async (event) => {
           try {
             // SQL query to insert the new case
             const newCase = await sqlConnection`
-              INSERT INTO "cases" (user_id, case_title, case_type, law_type, case_description, status, system_prompt, last_updated)
+              INSERT INTO "cases" (user_id, case_title, case_type, jurisdiction, case_description, status, last_updated)
               VALUES (${user[0]?.user_id}, ${case_title}, ${case_title}, ARRAY[${case_type}], ${case_description}, 'In Progress', ${system_prompt}, CURRENT_TIMESTAMP)
               RETURNING case_id;
             `;
@@ -486,7 +486,7 @@ exports.handler = async (event) => {
             event.queryStringParameters.cognito_id
         ) {
             const { case_id, cognito_id } = event.queryStringParameters;
-            const { case_title, case_type, case_description, status , law_type} = JSON.parse(event.body || "{}");
+            const { case_title, case_type, case_description, status , jurisdiction} = JSON.parse(event.body || "{}");
             try {
                 // Update the patient details in the patients table
                 await sqlConnection`
@@ -496,7 +496,7 @@ exports.handler = async (event) => {
                         case_type = ${case_type},
                         case_description = ${case_description},
                         status = ${status},
-                        law_type = ${law_type} 
+                        jurisdiction = ${jurisdiction} 
                     WHERE case_id = ${case_id}; 
                 `;
                 response.statusCode = 200;
@@ -533,7 +533,7 @@ exports.handler = async (event) => {
                       case_type = ${case_type},
                       case_description = ${case_description},
                       status = ${status},
-                      law_type = ${law_type} 
+                      jurisdiction = ${jurisdiction} 
                   WHERE case_id = ${case_id}; 
               `;
               response.statusCode = 200;

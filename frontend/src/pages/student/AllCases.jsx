@@ -147,7 +147,7 @@ const ViewAllCases = () => {
               
                                           {/* Case Type & Last Updated */}
                                           <Typography variant="body2" sx={{ textAlign: "left", fontWeight: 400 }}>
-                                          <strong>Jurisdiction:</strong> {caseItem.law_type}
+                                          <strong>Jurisdiction:</strong> {caseItem.jurisdiction}
                                           </Typography>
                                           
                                           <Typography variant="body2" sx={{ textAlign: "left", fontWeight: 400 }}>

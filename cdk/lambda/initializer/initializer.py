@@ -83,14 +83,13 @@ def handler(event, context):
                 "case_title" varchar,
                 "case_type" varchar,
                 "user_id" uuid,
-                "law_type" varchar[],
+                "jurisdiction" varchar[],
                 "case_description" text,
                 "status" varchar DEFAULT 'In progress',
                 "last_updated" timestamp DEFAULT now(),
-                "system_prompt" text,
                 "supervisor_message" text,
                 "sent_to_review" boolean,
-                "student_notes" text
+                "student_notes" text DEFAULT ""
             );
 
             CREATE TABLE IF NOT EXISTS "reports" (
