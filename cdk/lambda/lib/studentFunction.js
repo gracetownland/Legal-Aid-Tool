@@ -28,7 +28,7 @@ let sqlConnection = global.sqlConnection;
 
 exports.handler = async (event) => {
   console.log(event);
-  const cognito_id = event.requestContext.authorizer.userId;
+  const cognito_id =  event.requestContext?.authorizer?.userId ||  event.queryStringParameters?.user_id ||  null;
   const client = new CognitoIdentityProviderClient();
   const userAttributesCommand = new AdminGetUserCommand({
     UserPoolId: USER_POOL,
