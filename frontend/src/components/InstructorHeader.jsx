@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 // amplify
 import { signOut } from "aws-amplify/auth";
@@ -7,6 +7,8 @@ import { UserContext } from "../App";
 const InstructorHeader = () => {
   const navigate = useNavigate();
   const { setIsInstructorAsStudent } = useContext(UserContext);
+  
+    const [logo, setLogo] = useState("/logo_dark.svg"); // Default to light mode
 
   const handleSignOut = (event) => {
     event.preventDefault();
@@ -25,16 +27,14 @@ const InstructorHeader = () => {
   };
 
   return (
-    <header className="bg-[#F8F9FD] p-4 flex justify-between items-center max-h-20">
-      <div className="text-black text-3xl font-semibold p-4">Instructor</div>
+    <header className="bg-[var(--secondary)] p-4 flex justify-between items-center h-20 
+             fixed top-0 left-0 w-full z-50 shadow-md">
+              <div className="flex row">
+      <img src={logo} alt="Logo" className="h-12 w-12 mr-4" />
+      <div className="text-white text-3xl font-semibold p-4">Instructor</div>
+      </div>
       <div className="flex items-center space-x-4">
-        <button
-          type="button"
-          className="bg-[#36bd78] text-black px-4 py-2 rounded hover:bg-[#2e9b64]"
-          onClick={handleViewAsStudent} // Set context state to true
-        >
-          Student View
-        </button>
+        
         <button
           type="button"
           className="bg-gray-800 text-white hover:bg-gray-700 px-4 py-2 rounded"

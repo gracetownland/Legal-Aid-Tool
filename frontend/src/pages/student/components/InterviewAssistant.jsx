@@ -125,6 +125,22 @@ const InterviewAssistant = () => {
     }
   };
 
+  const promptPreliminarySummary = () => {
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      {
+        sender: "bot",
+        text: "Would you like me to generate a preliminary summary of the case so far? This can help consolidate key points from our discussion.",
+      },
+    ]);
+  };
+
+  useEffect(() => {
+    if (messages.length === 5) {
+      promptPreliminarySummary();
+    }
+  }, [messages]);
+
   async function getAIResponse(userInput) {
     const session = await fetchAuthSession();
     const token = session.tokens.idToken;
@@ -180,6 +196,7 @@ const InterviewAssistant = () => {
         padding: 2,
         backgroundColor: "transparent",
         color: "var(--text)",
+
         marginTop: '75px'
       }}
     >
@@ -191,14 +208,17 @@ const InterviewAssistant = () => {
         <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 2, width: "100%" }}>
 
           {/* Case Title and Information */}
-          <Typography variant="h6" sx={{ fontWeight: 600, marginBottom: 2 }}>
+          <Box>
+          <Typography variant="h6" sx={{ fontWeight: 600, marginBottom: 2, textAlign: "left"}}>
             Case #{caseData?.case_hash || "Case Title Not Available"}
           </Typography>
-          <Typography variant="body2" sx={{ marginBottom: 2 }}>
+          <Typography variant="body2" sx={{ marginBottom: 2, textAlign: "left" }}>
             <strong>Case Overview:</strong> {caseData?.case_description || "Overview information not available."}
           </Typography>
+          <Divider sx={{  borderColor: "var(--text)" }} />
+          </Box>
 
-          <Divider sx={{ marginBottom: 2, borderColor: "var(--text)" }} />
+          
 
           {/* Loading screen */}
           {loading ? (

@@ -5,6 +5,8 @@ import { useNavigate } from "react-router-dom";
 import SettingsIcon from "@mui/icons-material/Settings";
 import HomeIcon from "@mui/icons-material/Home";
 import AssignmentIcon from "@mui/icons-material/Assignment";
+import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
+
 // Amplify
 import { signOut } from "aws-amplify/auth";
 import { fetchAuthSession } from "aws-amplify/auth";
@@ -102,8 +104,16 @@ const StudentHeader = () => {
         onClick={() => navigate("/new-case")} 
         className="flex flex-col items-center bg-transparent text-white hover:text-[#dde] focus:outline-none hover:outline-none"
       >
-        <AssignmentIcon fontSize="large" />
+        <CreateNewFolderIcon fontSize="large" />
         <span>New Case</span>
+      </button>
+
+      <button 
+        onClick={() => navigate("/cases")} 
+        className="flex flex-col items-center bg-transparent text-white hover:text-[#dde] focus:outline-none hover:outline-none"
+      >
+        <AssignmentIcon fontSize="large" />
+        <span>All Cases</span>
       </button>
 
       <button 
