@@ -19,7 +19,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import StudentHeader from "../../components/StudentHeader";
 import { ThemeProvider } from "@mui/material";
-import theme from "../../theme";
+import theme from "../../Theme";
 import { fetchAuthSession, fetchUserAttributes } from "aws-amplify/auth";
 
 const ViewAllCases = () => {
@@ -147,7 +147,7 @@ const ViewAllCases = () => {
               
                                           {/* Case Type & Last Updated */}
                                           <Typography variant="body2" sx={{ textAlign: "left", fontWeight: 400 }}>
-                                          <strong>Jurisdiction:</strong> {caseItem.law_type}
+                                          <strong>Jurisdiction:</strong> {caseItem.jurisdiction}
                                           </Typography>
                                           
                                           <Typography variant="body2" sx={{ textAlign: "left", fontWeight: 400 }}>

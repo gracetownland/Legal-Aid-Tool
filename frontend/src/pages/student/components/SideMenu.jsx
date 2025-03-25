@@ -12,6 +12,8 @@ import IconButton from "@mui/material/IconButton";
 
 const drawerWidth = 240; // Sidebar width
 
+
+
 const SideMenu = () => {
   const { caseId } = useParams();
   const navigate = useNavigate();
@@ -58,7 +60,9 @@ const SideMenu = () => {
         }}
       >
         <DraggableNotes 
-          onClose={toggleNotes}
+
+        onClose = {toggleNotes}
+        noteContent = {"Hi"}
         />
       </Box>
 

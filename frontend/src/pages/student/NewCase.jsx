@@ -17,7 +17,7 @@ import {
   ThemeProvider,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import theme from "../../theme";
+import theme from "../../Theme";
 import StudentHeader from "../../components/StudentHeader";
 import { fetchAuthSession, fetchUserAttributes } from "aws-amplify/auth";
 

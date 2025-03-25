@@ -179,6 +179,7 @@ export const StudentHomepage = () => {
                     </Typography>
                   </Box>
                 ) : (
+
                   <Box
                     paddingLeft={3}
                     paddingRight={3}
@@ -322,6 +323,7 @@ export const StudentHomepage = () => {
                             </Card>
                           </Grid>
                         ))}
+
                       </Grid>
                     )}
                   </Box>

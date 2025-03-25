@@ -4,8 +4,6 @@ import { useLocation, useNavigate } from "react-router-dom"; // Import useNaviga
 import CaseOverview from "./components/CaseOverview";
 import PrelimSummary from "./components/PrelimSummary";
 import InterviewAssistant from "./components/InterviewAssistant";
-import DraggableNotes from "../../components/DraggableNotes";
-import theme from "../../theme";
 
 const CasePage = ({caseData}) => {
   const location = useLocation();
