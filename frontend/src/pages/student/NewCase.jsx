@@ -84,6 +84,21 @@ const NewCaseForm = () => {
           body: JSON.stringify(caseData),
         }
       );
+                  
+      const init_llm_response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}student/text_generation?case_id=${caseId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token
+        },
+        body: JSON.stringify({
+          message_content: "Please provide a brief summary of the legal matter first to show me all of the legal case facts and relevant legal resources I can refer to, using legal vocabulary. In addition to this breif summary, list some possible next steps and follow up questions for me to share with my client."
+        })
+      });
+
+      if (!init_llm_response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
 
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Failed to submit case");
