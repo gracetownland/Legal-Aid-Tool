@@ -70,11 +70,7 @@ const NewCaseForm = () => {
 
       const response = await fetch(
         `${import.meta.env.VITE_API_ENDPOINT}student/new_case?` +
-          `user_id=${encodeURIComponent(cognito_id)}` +
-          `&case_title=${encodeURIComponent(caseData.case_title)}` +
-          `&case_type=${encodeURIComponent(caseData.case_type)}` +
-          `&case_description=${encodeURIComponent(caseData.case_description)}` +
-          `&system_prompt=${encodeURIComponent(caseData.case_description)}`,
+          `user_id=${encodeURIComponent(cognito_id)}`,
         {
           method: "POST",
           headers: {

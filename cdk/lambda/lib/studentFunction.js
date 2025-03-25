@@ -177,31 +177,8 @@ exports.handler = async (event) => {
       case "POST /student/new_case":
           console.log(event);
           console.log("Received event:", JSON.stringify(event, null, 2));
-
-          if (event.queryStringParameters) {
-            const {
-              case_title,
-              case_type,
-              case_description,
-              system_prompt,
-              user_id
-            } = event.queryStringParameters;
-
-          
-          // Extract query parameters safely
-          const userId = event.queryStringParameters?.user_id;
-          const caseTitle = event.queryStringParameters?.case_title;
-          const caseType = event.queryStringParameters?.case_type;
-          const caseDescription = event.queryStringParameters?.case_description;
-          const systemPrompt = event.queryStringParameters?.system_prompt;
-
-          // Log extracted values
-          console.log("Parsed Parameters:");
-          console.log("user_id:", userId);
-          console.log("case_title:", caseTitle);
-          console.log("case_type:", caseType);
-          console.log("case_description:", caseDescription);
-          console.log("system_prompt:", systemPrompt);
+          const cognito_id = event.queryStringParameters.user_id;
+          const { case_title, case_type, case_description, system_prompt} = JSON.parse(event.body || "{}");
           
           const user = await sqlConnection`
             SELECT user_id FROM "users" WHERE cognito_id = ${cognito_id};
@@ -233,10 +210,10 @@ exports.handler = async (event) => {
             console.log(err);
             response.body = JSON.stringify({ error: "Internal server error" });
           }
-        } else {
-          response.statusCode = 400;
-          response.body = JSON.stringify({ error: "Case data is required" });
-        }
+        // } else {
+        //   response.statusCode = 400;
+        //   response.body = JSON.stringify({ error: "Case data is required" });
+        // }
       break;
 
       case "GET /student/get_cases":
