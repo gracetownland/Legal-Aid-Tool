@@ -8,7 +8,6 @@ import TextEditor from "./TextEditor";
 import zIndex from "@mui/material/styles/zIndex";
 
 function DraggableNotes({ onClose, sessionId }) {
-  const [noteContent, setNoteContent] = useState("");
   const [position, setPosition] = useState({ x: 100, y: 100 });
   const [dimensions, setDimensions] = useState({ width: 400, height: 300 });
   const noteRef = useRef(null);
@@ -16,77 +15,8 @@ function DraggableNotes({ onClose, sessionId }) {
   const isResizing = useRef(false);
   const [isAutosaveEnabled, setIsAutosaveEnabled] = useState(false);
 
-  // Load notes when component mounts
-  useEffect(() => {
-    if (sessionId) {
-      fetchNotes(sessionId);
-    }
-  }, [sessionId]);
-
-  const fetchNotes = async (caseId) => {
-    try {
-      const authSession = await fetchAuthSession();
-      const token = authSession.tokens.idToken;
-
-      const response = await fetch(
-        `${import.meta.env.VITE_API_ENDPOINT}student/get_notes?session_id=${encodeURIComponent(sessionId)}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: token,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        setNoteContent(data.notes || "");
-      } else {
-        console.error("Failed to fetch notes.");
-      }
-    } catch (error) {
-      console.error("Error fetching notes:", error);
-    }
-  };
-
   const handleNoteChange = (e) => {
     setNoteContent(e.target.value);
-  };
-
-  const handleSave = async () => {
-    try {
-      const authSession = await fetchAuthSession();
-      const token = authSession.tokens.idToken;
-
-      const response = await fetch(
-        `${import.meta.env.VITE_API_ENDPOINT}student/update_notes?case_id=${encodeURIComponent(caseId)}`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: token,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ notes: noteContent }),
-        }
-      );
-
-      if (response.ok) {
-        toast.success("Notes saved successfully!", {
-          position: "top-center",
-          autoClose: 1000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          theme: "colored",
-        });
-      } else {
-        console.error("Failed to save notes.");
-      }
-    } catch (error) {
-      console.error("Error saving notes:", error);
-    }
   };
 
   const handleMouseDown = (e) => {
@@ -199,30 +129,41 @@ function DraggableNotes({ onClose, sessionId }) {
         cursor: "auto",
       }}
     >
-      <TextEditor value={noteContent} onChange={setNoteContent} sx={{zIndex: 10}}/>
+      <TextEditor sx={{zIndex: 10}}/>
     </Box>
 
       {/* Save Button */}
       <Box sx={{ padding: "5px 10px", textAlign: "right", marginTop: "5px", marginBottom: "10px" }}>
-        <Button
-          variant="contained"
-          onClick={handleSave}
-          sx={{
-            backgroundColor: "#36bd78",
-            color: "white",
-            border: "none",
-            padding: "5px 10px",
-            fontSize: "12px",
-            borderRadius: "4px",
-            cursor: "pointer",
-            width: "80px",
-            position: "absolute",
-            bottom: 10,
-            right: 10,
-          }}
-        >
-          Save
-        </Button>
+      <Button
+        id="saveButton"
+        variant="contained"
+        sx={{
+          backgroundColor: "#36bd78",
+          color: "white",
+          border: "none",
+          padding: "5px 10px",
+          fontSize: "12px",
+          borderRadius: "4px",
+          cursor: "pointer",
+          width: "80px",
+          position: "absolute",
+          bottom: 10,
+          right: 10,
+          '&:focus': {
+            outline: 'none', // Remove the focus outline
+            boxShadow: 'none', // Remove the focus box shadow
+          },
+          '&:active': {
+            backgroundColor: '#36bd78', // Prevent the color change when the button is clicked
+            boxShadow: 'none', // Remove any active state styles
+          },
+          '&:hover': {
+            backgroundColor: '#45c485', // Set custom hover color (change as needed)
+          },
+        }}
+      >
+        Save
+      </Button>
       </Box>
 
       {/* Autosave Toggle Button */}

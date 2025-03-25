@@ -70,11 +70,7 @@ const NewCaseForm = () => {
 
       const response = await fetch(
         `${import.meta.env.VITE_API_ENDPOINT}student/new_case?` +
-          `cognito_id=${encodeURIComponent(cognito_id)}` +
-          `&case_title=${encodeURIComponent(caseData.case_title)}` +
-          `&case_type=${encodeURIComponent(caseData.case_type)}` +
-          `&case_description=${encodeURIComponent(caseData.case_description)}` +
-          `&system_prompt=${encodeURIComponent(caseData.case_description)}`,
+          `user_id=${encodeURIComponent(cognito_id)}`,
         {
           method: "POST",
           headers: {
@@ -102,7 +98,7 @@ const NewCaseForm = () => {
         <StudentHeader />
       </AppBar>
       <Container sx={{ display: "flex", justifyContent: "center" }}>
-        <Box sx={{ mt: 4, p: 4, backgroundColor: "white", borderRadius: 2, width: "80%" }}>
+        <Box sx={{ mt: 8, p: 4, backgroundColor: "white", borderRadius: 2, width: "80%" }}>
           <Typography variant="h5" sx={{ textAlign: "left", mb: 2 }}>
             Start A New Case
           </Typography>

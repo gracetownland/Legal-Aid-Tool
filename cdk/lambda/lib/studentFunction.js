@@ -1,10 +1,14 @@
 // const { v4: uuidv4 } = require('uuid')
 const { initializeConnection } = require("./lib.js");
-let { SM_DB_CREDENTIALS, RDS_PROXY_ENDPOINT, USER_POOL } = process.env;
+let { SM_DB_CREDENTIALS, RDS_PROXY_ENDPOINT, USER_POOL, BUCKET } = process.env;
 const {
   CognitoIdentityProviderClient,
   AdminGetUserCommand,
 } = require("@aws-sdk/client-cognito-identity-provider");
+
+const { S3Client, GetObjectCommand, PutObjectCommand, HeadObjectCommand } = require("@aws-sdk/client-s3");
+
+const s3 = new S3Client({ region: 'ca-central-1' }); // Replace with your desired region
 
 const crypto = require("crypto");
 
@@ -24,7 +28,7 @@ let sqlConnection = global.sqlConnection;
 
 exports.handler = async (event) => {
   console.log(event);
-  const cognito_id = event.requestContext.authorizer.userId;
+  const cognito_id =  event.requestContext?.authorizer?.userId ||  event.queryStringParameters?.user_id ||  null;
   const client = new CognitoIdentityProviderClient();
   const userAttributesCommand = new AdminGetUserCommand({
     UserPoolId: USER_POOL,
@@ -177,31 +181,8 @@ exports.handler = async (event) => {
       case "POST /student/new_case":
           console.log(event);
           console.log("Received event:", JSON.stringify(event, null, 2));
-
-          if (event.queryStringParameters) {
-            const {
-              case_title,
-              case_type,
-              case_description,
-              system_prompt,
-              cognito_id
-            } = event.queryStringParameters;
-
-          
-          // Extract query parameters safely
-          const userId = event.queryStringParameters?.user_id;
-          const caseTitle = event.queryStringParameters?.case_title;
-          const caseType = event.queryStringParameters?.case_type;
-          const caseDescription = event.queryStringParameters?.case_description;
-          const systemPrompt = event.queryStringParameters?.system_prompt;
-
-          // Log extracted values
-          console.log("Parsed Parameters:");
-          console.log("user_id:", userId);
-          console.log("case_title:", caseTitle);
-          console.log("case_type:", caseType);
-          console.log("case_description:", caseDescription);
-          console.log("system_prompt:", systemPrompt);
+          const cognito_id = event.queryStringParameters.user_id;
+          const { case_title, case_type, case_description, system_prompt} = JSON.parse(event.body || "{}");
           
           const user = await sqlConnection`
             SELECT user_id FROM "users" WHERE cognito_id = ${cognito_id};
@@ -212,7 +193,7 @@ exports.handler = async (event) => {
           try {
             // SQL query to insert the new case
             const newCase = await sqlConnection`
-              INSERT INTO "cases" (user_id, case_title, case_type, law_type, case_description, status, system_prompt, last_updated)
+              INSERT INTO "cases" (user_id, case_title, case_type, jurisdiction, case_description, status, last_updated)
               VALUES (${user[0]?.user_id}, ${case_title}, ${case_title}, ARRAY[${case_type}], ${case_description}, 'In Progress', ${system_prompt}, CURRENT_TIMESTAMP)
               RETURNING case_id;
             `;
@@ -233,10 +214,10 @@ exports.handler = async (event) => {
             console.log(err);
             response.body = JSON.stringify({ error: "Internal server error" });
           }
-        } else {
-          response.statusCode = 400;
-          response.body = JSON.stringify({ error: "Case data is required" });
-        }
+        // } else {
+        //   response.statusCode = 400;
+        //   response.body = JSON.stringify({ error: "Case data is required" });
+        // }
       break;
 
       case "GET /student/get_cases":
@@ -358,33 +339,64 @@ exports.handler = async (event) => {
         case "POST /student/create_message":
          
           break;
-
+          
         case "GET /student/notes":
-            if (event.queryStringParameters && event.queryStringParameters.case_id) {
-              const case_id = event.queryStringParameters.case_id;
-              try {
-                const caseData = await sqlConnection`
-                  SELECT student_notes FROM "cases" WHERE case_id = ${case_id};
-                `;
-            
-                if (caseData.length > 0) {
-                  response.body = JSON.stringify(caseData[0]); // Return the case data
-                } else {
-                  response.statusCode = 404;
-                  response.body = JSON.stringify({ error: "Case not found" });
-                }
-              } catch (err) {
+          if (event.queryStringParameters && event.queryStringParameters.case_id) {
+            const case_id = event.queryStringParameters.case_id;
+            const key = `${case_id}.txt`;  // Dynamically creating the key using case_id
+            const bucketName = BUCKET; // Using the already defined BUCKET variable
+        
+            const headParams = {
+              Bucket: bucketName,
+              Key: key,
+            };
+        
+            try {
+              // Attempt to fetch metadata of the object
+              await s3.send(new HeadObjectCommand(headParams));
+              
+              // If the object exists, retrieve it
+              const getParams = {
+                Bucket: bucketName,
+                Key: key,
+              };
+        
+              const data = await s3.send(new GetObjectCommand(getParams));
+        
+              // Directly convert the stream to a string
+              const body = await data.Body.transformToString(); // Assuming small text files
+        
+              response.statusCode = 200;
+              response.body = JSON.stringify({ notes: body }); // Return the object content (text data)
+        
+            } catch (err) {
+              if (err.name === 'NotFound') {
+                // Object does not exist, create an empty .txt file
+                const putParams = {
+                  Bucket: bucketName,
+                  Key: key,
+                  Body: '', // Empty string for the blank text file
+                  ContentType: 'text/plain',
+                };
+        
+                await s3.send(new PutObjectCommand(putParams)); // Create the empty file
+        
+                response.statusCode = 200;
+                response.body = JSON.stringify({ notes: '' }); // Return empty string since the file was created
+              } else {
+                // Handle other errors
                 response.statusCode = 500;
-                console.log(err);
+                console.error(err);
                 response.body = JSON.stringify({ error: "Internal server error" });
               }
-            } else {
-              response.statusCode = 400;
-              response.body = JSON.stringify({ error: "Case ID is required" });
             }
+          } else {
+            response.statusCode = 400;
+            response.body = JSON.stringify({ error: "Case ID is required" });
+          }
           break;
 
-        case "PUT /student/update_notes":
+        case "PUT /student/notes":
           if (
             event.queryStringParameters != null &&
             event.queryStringParameters.case_id 
@@ -451,7 +463,7 @@ exports.handler = async (event) => {
             event.queryStringParameters.cognito_id
         ) {
             const { case_id, cognito_id } = event.queryStringParameters;
-            const { case_title, case_type, case_description, status , law_type} = JSON.parse(event.body || "{}");
+            const { case_title, case_type, case_description, status , jurisdiction} = JSON.parse(event.body || "{}");
             try {
                 // Update the patient details in the patients table
                 await sqlConnection`
@@ -461,7 +473,7 @@ exports.handler = async (event) => {
                         case_type = ${case_type},
                         case_description = ${case_description},
                         status = ${status},
-                        law_type = ${law_type} 
+                        jurisdiction = ${jurisdiction} 
                     WHERE case_id = ${case_id}; 
                 `;
                 response.statusCode = 200;
@@ -498,7 +510,7 @@ exports.handler = async (event) => {
                       case_type = ${case_type},
                       case_description = ${case_description},
                       status = ${status},
-                      law_type = ${law_type} 
+                      jurisdiction = ${jurisdiction} 
                   WHERE case_id = ${case_id}; 
               `;
               response.statusCode = 200;

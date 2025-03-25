@@ -492,6 +492,27 @@ export class ApiGatewayStack extends cdk.Stack {
       },
     });
 
+    // Create S3 Bucket to store notes for each case
+    const noteStorageBucket = new s3.Bucket(this, `${id}-NoteStorageBucket`, {
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      cors: [
+        {
+          allowedHeaders: ["*"],
+          allowedMethods: [
+            s3.HttpMethods.GET,
+            s3.HttpMethods.PUT,
+            s3.HttpMethods.HEAD,
+            s3.HttpMethods.POST,
+            s3.HttpMethods.DELETE,
+          ],
+          allowedOrigins: ["*"],
+        },
+      ],
+      // When deleting the stack, need to empty the Bucket and delete it manually
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+      enforceSSL: true,
+    });
+
     const lambdaStudentFunction = new lambda.Function(this, `${id}-studentFunction`, {
       runtime: lambda.Runtime.NODEJS_20_X,
       code: lambda.Code.fromAsset("lambda/lib"),
@@ -502,12 +523,24 @@ export class ApiGatewayStack extends cdk.Stack {
         SM_DB_CREDENTIALS: db.secretPathUser.secretName,
         RDS_PROXY_ENDPOINT: db.rdsProxyEndpoint,
         USER_POOL: this.userPool.userPoolId,
+        BUCKET: noteStorageBucket.bucketName,
       },
       functionName: `${id}-studentFunction`,
       memorySize: 512,
       layers: [postgres],
       role: lambdaRole,
     });
+
+    noteStorageBucket.grantReadWrite(lambdaStudentFunction);
+    lambdaStudentFunction.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["s3:PutObject", "s3:GetObject"],
+        resources: [
+          noteStorageBucket.bucketArn,
+          `${noteStorageBucket.bucketArn}/*`,
+        ],
+      })
+    );
 
     // Add the permission to the Lambda function's policy to allow API Gateway access
     lambdaStudentFunction.addPermission("AllowApiGatewayInvoke", {

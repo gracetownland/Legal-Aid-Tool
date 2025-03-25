@@ -210,7 +210,7 @@ def get_case_details(case_id):
         cur = connection.cursor()
         logger.info("Connected to RDS instance!")
         cur.execute("""
-            SELECT case_title, case_type, law_type, case_description
+            SELECT case_title, case_type, jurisdiction, case_description
             FROM "cases"
             WHERE case_id = %s;
         """, (case_id,))
@@ -221,10 +221,10 @@ def get_case_details(case_id):
         cur.close()
 
         if result:
-            case_title, case_type, law_type, case_description = result
+            case_title, case_type, jurisdiction, case_description = result
             logger.info(f"Patient details found for case_id {case_id}: "
-                        f"Title: {case_title} \n Case type: {case_type} \n Law type: {law_type} \n Case description: {case_description}")
-            return case_title, case_type, law_type, case_description
+                        f"Title: {case_title} \n Case type: {case_type} \n Jurisdiction: {jurisdiction} \n Case description: {case_description}")
+            return case_title, case_type, jurisdiction, case_description
         else:
             logger.warning(f"No details found for case_id {case_id}")
             return None, None, None, None
@@ -270,8 +270,8 @@ def handler(event, context):
             'body': json.dumps('Error fetching system prompt')
         }
 
-    case_title, case_type, law_type, case_description = get_case_details(case_id)
-    if case_title is None or case_type is None or law_type is None or case_description is None:
+    case_title, case_type, jurisdiction, case_description = get_case_details(case_id)
+    if case_title is None or case_type is None or jurisdiction is None or case_description is None:
         logger.error(f"Error fetching case details for case_id: {case_id}")
         return {
             'statusCode': 400,
@@ -366,7 +366,7 @@ def handler(event, context):
             case_id=case_id,
             system_prompt=system_prompt,
             case_type=case_type,
-            law_type=law_type,
+            jurisdiction=jurisdiction,
             case_description=case_description
         )
     except Exception as e:
@@ -405,7 +405,7 @@ def handler(event, context):
             "Access-Control-Allow-Methods": "*",
         },
         "body": json.dumps({
-            "llm_output": response.get("llm_output", "LLM failed to create response"),
+            "llm_output": response #.get("llm_output", "LLM failed to create response"),
         })
     }
 
