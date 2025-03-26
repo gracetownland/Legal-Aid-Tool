@@ -84,7 +84,7 @@ const ViewAllCases = () => {
   }, [cases, searchTerm, selectedCaseType, selectedStatus]);
 
   const handleViewCase = (caseId) => {
-    navigate(`/case${caseId}/overview`);
+    navigate(`/case/${caseId}/overview`);
   };
 
   const handleBack = () => {
