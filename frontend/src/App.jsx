@@ -22,6 +22,7 @@ import AdminHomepage from "./pages/admin/AdminHomepage";
 import CaseOverview from "./pages/student/components/CaseOverview";
 import InterviewAssistant from "./pages/student/components/InterviewAssistant";
 import PrelimSummary from "./pages/student/components/PrelimSummary";
+import AdminChangeSystemPrompt  from "./pages/admin/AdminChangeSystemPrompt";
 
 export const UserContext = createContext();
 
@@ -99,6 +100,7 @@ function App() {
           <Route path="/case/:caseId/interview-assistant" element={<InterviewAssistant />} />
           <Route path="/case/:caseId/overview/*" element={<CaseOverview />} />
           <Route path="/case/:caseId/prelim-summary" element={<PrelimSummary />} />
+          <Route path="/system-prompt" element={<AdminChangeSystemPrompt />} />
         </Routes>
       </Router>
     </UserContext.Provider>
