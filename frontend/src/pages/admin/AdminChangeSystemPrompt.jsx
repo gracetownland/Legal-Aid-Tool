@@ -11,7 +11,30 @@ export default function EditSystemPrompts() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+
+    const fetchCurrentPrompt = async () => {
+      
+      const token = tokens.idToken;
+
+      const prompt = await fetch(
+        `${import.meta.env.VITE_API_ENDPOINT}admin/get_prompt`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: token,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(caseData),
+        }
+      );
+    };
+
+    setLoading(true);
+    fetchCurrentPrompt();
     setLoading(false);
+
+    setCurrentPrompt(`You are a helpful assistant to me, a UBC law student, who answers with kindness while being concise, so that it is easy to read your responses quickly yet still get valuable information from them. No need to be conversational, just skip to talking about the content. Refer to me, the law student, in the second person. You will be provided with context to a legal case  is interviewing a client about, and you exist to help provide legal context and analysis, relevant issues, possible strategies to defend the client, etc. to the law student when they provide you with context on certain client cases, and you should provide possible follow-up questions for me, the law student, to ask the client to help progress the case more after your initial (concise and easy to read) analysis. These are NOT for the client to ask a lawyer; this is to help me, the law student, learn what kind of questions to ask my client, so you should only provide follow-up questions for me, the law student, to ask the client as if I were a lawyer. You may also mention certain legal information and implications that I, the law student, may have missed, and mention which part of Canadian law it is applicable too if possible or helpful. You are NOT allowed hallucinate, informational accuracy is important.`)
+
   }, []);
 
   const savePrompt = async () => {
@@ -26,8 +49,8 @@ export default function EditSystemPrompts() {
 
   return (
     <div className="max-w-4xl mx-auto p-4">
-      <StudentHeader/>
-      <Card sx={{ background: "transparent", color: "var(--text)", border: "1px solid var(--border)", boxShadow: 'none'}}>
+      <StudentHeader />
+      <Card sx={{ marginTop: '80px', background: "transparent", color: "var(--text)", border: "1px solid var(--border)", boxShadow: 'none'}}>
         <div className="items-left" style={{textAlign: 'left', color: 'var(--text)', marginLeft: '17px', marginTop: '17px'}}>
           <h1 style={{fontSize: '30px'}}><strong>Current System Prompt</strong></h1> 
           <br/>
