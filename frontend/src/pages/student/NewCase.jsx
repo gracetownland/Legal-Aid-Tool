@@ -80,8 +80,10 @@ const NewCaseForm = () => {
           body: JSON.stringify(caseData),
         }
       );
+
+      const data = await response.json();
                   
-      const init_llm_response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}student/text_generation?case_id=${caseId}`, {
+      const init_llm_response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}student/text_generation?case_id=${data.case_id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -96,7 +98,7 @@ const NewCaseForm = () => {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
 
-      const data = await response.json();
+      
       if (!response.ok) throw new Error(data.error || "Failed to submit case");
 
       navigate(`/case/${data.case_id}/interview-assistant`);
