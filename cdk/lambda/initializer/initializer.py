@@ -48,10 +48,10 @@ def handler(event, context):
 
         # Create tables based on the schema
         sqlTableCreation = """
-            CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+            CREATE EXTENSION IF NOT EXISTS uuid_ossp;
 
             CREATE TABLE IF NOT EXISTS "users" (
-                "user_id" uuid PRIMARY KEY DEFAULT (uuid_generate_v4()),
+                "user_id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
                 "cognito_id" varchar,
                 "user_email" varchar UNIQUE,
                 "username" varchar,
@@ -62,23 +62,28 @@ def handler(event, context):
                 "last_sign_in" timestamp DEFAULT now()
             );
 
-            CREATE TABLE IF NOT EXISTS "sessions" (
-                "session_id" uuid PRIMARY KEY DEFAULT (uuid_generate_v4()),
-                "user_id" uuid,
-                "case_id" uuid,
-                "last_accessed" timestamp DEFAULT now()
-            );
-
             CREATE TABLE IF NOT EXISTS "messages" (
-                "message_id" uuid PRIMARY KEY DEFAULT (uuid_generate_v4()),
-                "user_id" uuid,
+                "message_id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+                "instructor_id" uuid,
                 "message_content" text,
                 "case_id" uuid,
                 "time_sent" timestamp DEFAULT now()
             );
 
+            CREATE TABLE IF NOT EXISTS "system_prompt" (
+                "system_prompt_id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+                "prompt" text,
+                "time_created" timestamp DEFAULT now()
+            );
+
+            CREATE TABLE IF NOT EXISTS "instructor_students" (
+                "instructor_id" uuid NOT NULL,
+                "student_id" uuid NOT NULL,
+                PRIMARY KEY ("instructor_id", "student_id")
+            );
+
             CREATE TABLE IF NOT EXISTS "cases" (
-                "case_id" uuid PRIMARY KEY DEFAULT (uuid_generate_v4()),
+                "case_id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
                 "case_hash" varchar UNIQUE,
                 "case_title" varchar,
                 "case_type" varchar,
@@ -87,26 +92,38 @@ def handler(event, context):
                 "case_description" text,
                 "status" varchar DEFAULT 'In progress',
                 "last_updated" timestamp DEFAULT now(),
-                "supervisor_message" text,
                 "sent_to_review" boolean,
-                "student_notes" text DEFAULT ""
+                "student_notes" text DEFAULT ''
             );
 
-            CREATE TABLE IF NOT EXISTS "reports" (
-                "report_id" uuid PRIMARY KEY DEFAULT (uuid_generate_v4()),
+            CREATE TABLE IF NOT EXISTS "summaries" (
+                "summary_id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
                 "case_id" uuid,
                 "content" text,
                 "time_created" timestamp DEFAULT now()
+            );
+
+            -- Ensure "sessions" table exists before adding foreign keys
+            CREATE TABLE IF NOT EXISTS "sessions" (
+                "session_id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+                "user_id" uuid NOT NULL,
+                "case_id" uuid NOT NULL
             );
 
             -- Add foreign key constraints
             ALTER TABLE "sessions" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
             ALTER TABLE "sessions" ADD FOREIGN KEY ("case_id") REFERENCES "cases" ("case_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
-            ALTER TABLE "messages" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
+            ALTER TABLE "messages" ADD FOREIGN KEY ("case_id") REFERENCES "cases" ("case_id") ON DELETE CASCADE ON UPDATE CASCADE;
+            ALTER TABLE "messages" ADD FOREIGN KEY ("instructor_id") REFERENCES "users" ("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
             ALTER TABLE "cases" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
+            ALTER TABLE "summaries" ADD FOREIGN KEY ("case_id") REFERENCES "cases" ("case_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
-            ALTER TABLE "reports" ADD FOREIGN KEY ("case_id") REFERENCES "cases" ("case_id") ON DELETE CASCADE ON UPDATE CASCADE;
+            ALTER TABLE "instructor_students" 
+            ADD FOREIGN KEY ("instructor_id") REFERENCES "users" ("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+            ALTER TABLE "instructor_students" 
+            ADD FOREIGN KEY ("student_id") REFERENCES "users" ("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
         """
 
         #

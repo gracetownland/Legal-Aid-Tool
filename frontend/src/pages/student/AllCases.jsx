@@ -83,8 +83,8 @@ const ViewAllCases = () => {
     setFilteredData(filtered);
   }, [cases, searchTerm, selectedCaseType, selectedStatus]);
 
-  const handleViewCase = (caseData) => {
-    navigate("/case/overview", { state: { caseData } });
+  const handleViewCase = (caseId) => {
+    navigate(`/case/${caseId}/overview`);
   };
 
   const handleBack = () => {
@@ -103,7 +103,7 @@ const ViewAllCases = () => {
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", width: "100%"}}>
         
       </Box>
-        <Typography variant="h5" sx={{ mb: 1, textAlign: "left" }}>
+        <Typography variant="h5" sx={{ mb: 1, mt: 3, textAlign: "left" }}>
           View All Cases
         </Typography>
 

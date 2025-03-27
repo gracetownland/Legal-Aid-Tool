@@ -181,31 +181,8 @@ exports.handler = async (event) => {
       case "POST /student/new_case":
           console.log(event);
           console.log("Received event:", JSON.stringify(event, null, 2));
-
-          if (event.queryStringParameters) {
-            const {
-              case_title,
-              case_type,
-              case_description,
-              system_prompt,
-              cognito_id
-            } = event.queryStringParameters;
-
-          
-          // Extract query parameters safely
-          const userId = event.queryStringParameters?.user_id;
-          const caseTitle = event.queryStringParameters?.case_title;
-          const caseType = event.queryStringParameters?.case_type;
-          const caseDescription = event.queryStringParameters?.case_description;
-          const systemPrompt = event.queryStringParameters?.system_prompt;
-
-          // Log extracted values
-          console.log("Parsed Parameters:");
-          console.log("user_id:", userId);
-          console.log("case_title:", caseTitle);
-          console.log("case_type:", caseType);
-          console.log("case_description:", caseDescription);
-          console.log("system_prompt:", systemPrompt);
+          const cognito_id = event.queryStringParameters.user_id;
+          const { case_title, case_type, case_description, system_prompt} = JSON.parse(event.body || "{}");
           
           const user = await sqlConnection`
             SELECT user_id FROM "users" WHERE cognito_id = ${cognito_id};
@@ -237,10 +214,10 @@ exports.handler = async (event) => {
             console.log(err);
             response.body = JSON.stringify({ error: "Internal server error" });
           }
-        } else {
-          response.statusCode = 400;
-          response.body = JSON.stringify({ error: "Case data is required" });
-        }
+        // } else {
+        //   response.statusCode = 400;
+        //   response.body = JSON.stringify({ error: "Case data is required" });
+        // }
       break;
 
       case "GET /student/get_cases":
@@ -366,58 +343,27 @@ exports.handler = async (event) => {
         case "GET /student/notes":
           if (event.queryStringParameters && event.queryStringParameters.case_id) {
             const case_id = event.queryStringParameters.case_id;
-            const key = `${case_id}.txt`;  // Dynamically creating the key using case_id
-            const bucketName = BUCKET; // Using the already defined BUCKET variable
-        
-            const headParams = {
-              Bucket: bucketName,
-              Key: key,
-            };
-        
             try {
-              // Attempt to fetch metadata of the object
-              await s3.send(new HeadObjectCommand(headParams));
-              
-              // If the object exists, retrieve it
-              const getParams = {
-                Bucket: bucketName,
-                Key: key,
-              };
-        
-              const data = await s3.send(new GetObjectCommand(getParams));
-        
-              // Directly convert the stream to a string
-              const body = await data.Body.transformToString(); // Assuming small text files
-        
-              response.statusCode = 200;
-              response.body = JSON.stringify({ notes: body }); // Return the object content (text data)
-        
-            } catch (err) {
-              if (err.name === 'NotFound') {
-                // Object does not exist, create an empty .txt file
-                const putParams = {
-                  Bucket: bucketName,
-                  Key: key,
-                  Body: '', // Empty string for the blank text file
-                  ContentType: 'text/plain',
-                };
-        
-                await s3.send(new PutObjectCommand(putParams)); // Create the empty file
-        
-                response.statusCode = 200;
-                response.body = JSON.stringify({ notes: '' }); // Return empty string since the file was created
+              const caseData = await sqlConnection`
+                SELECT student_notes FROM "cases" WHERE case_id = ${case_id};
+              `;
+          
+              if (caseData.length > 0) {
+                response.body = JSON.stringify(caseData[0]); // Return the case data
               } else {
-                // Handle other errors
-                response.statusCode = 500;
-                console.error(err);
-                response.body = JSON.stringify({ error: "Internal server error" });
+                response.statusCode = 404;
+                response.body = JSON.stringify({ error: "Case not found" });
               }
+            } catch (err) {
+              response.statusCode = 500;
+              console.log(err);
+              response.body = JSON.stringify({ error: "Internal server error" });
             }
           } else {
             response.statusCode = 400;
             response.body = JSON.stringify({ error: "Case ID is required" });
           }
-          break;
+        break;
 
         case "PUT /student/notes":
           if (
@@ -448,6 +394,7 @@ exports.handler = async (event) => {
               });
           }
         }
+        break;
 
         case "DELETE /student/delete_case":
           console.log(event);

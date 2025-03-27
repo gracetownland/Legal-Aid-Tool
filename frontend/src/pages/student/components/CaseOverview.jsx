@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from "react";
-import { Box, Typography, Card, CardContent, Divider, Grid, Container, Stack,Button } from "@mui/material";
+import { Box, Typography, Card, CardContent, Divider, Grid, Container, Stack,Button, TextField } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
 import SideMenu from "./SideMenu";
 
@@ -12,6 +12,28 @@ const CaseOverview = () => {
   const navigate = useNavigate();
   const [caseData, setCaseData] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const [editMode, setEditMode] = useState(false);
+  const [editedCase, setEditedCase] = useState({
+    case_title: "",
+    case_description: "",
+    case_type: "",
+    law_type: [],
+  });
+
+
+  useEffect(() => {
+    if (caseData) {
+      setEditedCase({
+        case_title: caseData.case_title,
+        case_description: caseData.case_description,
+        case_type: caseData.case_type,
+        law_type: caseData.law_type,
+      });
+    }
+  }, [caseData]);
+  
+
 
   useEffect(() => {
     const fetchCaseData = async () => {
@@ -54,14 +76,21 @@ const CaseOverview = () => {
     try {
       const session = await fetchAuthSession();
       const token = session.tokens.idToken;
+      const cognito_id = token.payload.sub;
   
-      const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}student/edit_case?case_id=${caseId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}student/edit_case?case_id=${caseId}&cognito_id=${cognito_id}`, {
         method: "PUT",
         headers: {
           Authorization: token,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ case_id: caseId }),
+        body: JSON.stringify({
+          status: "Sent for Review", 
+          case_title: `${caseData.case_title}`,
+          case_description: `${caseData.case_description}`,
+          case_type: `${caseData.case_type}`,
+          law_type: [`${caseData.law_type}`],
+        }),
       });
   
       if (!response.ok) throw new Error("Failed to send for review");
@@ -72,6 +101,42 @@ const CaseOverview = () => {
       alert("Failed to send case for review.");
     }
   };
+
+  const handleEditCase = () => {
+    setEditMode(true);
+  };
+
+  const handleSaveChanges = async () => {
+    try {
+      const session = await fetchAuthSession();
+      const token = session.tokens.idToken;
+      const response = await fetch(
+        `${import.meta.env.VITE_API_ENDPOINT}student/edit_case?case_id=${caseId}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: token,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...caseData, // Preserve existing fields
+            case_title: editedCase.case_title,
+            case_description: editedCase.case_description,
+          }),
+        }
+      );
+  
+      if (!response.ok) throw new Error("Failed to save changes");
+  
+      alert("Case updated successfully!");
+      setCaseData({ ...caseData, ...editedCase });
+      setEditMode(false);
+    } catch (error) {
+      console.error("Error updating case:", error);
+      alert("Failed to save changes.");
+    }
+  };
+  
 
   return (
     <Stack minHeight="100vh">
@@ -94,34 +159,86 @@ const CaseOverview = () => {
                 Case #{caseData.case_hash}
               </Typography>
 
-              {/* <Button onClick={handleSendForReview}>Send For Review</Button> */}
+              <Stack direction="row" spacing={2} mb={3}>
+              {editMode ? (
+    <Button variant="contained" color="success" onClick={handleSaveChanges}>
+      Save Changes
+    </Button>
+  ) : (
+    <Button variant="contained" color="primary" onClick={handleEditCase} sx={{ color: "white"}}>
+      Edit Case
+    </Button>
+  )}
+              <Button variant="contained" color="secondary" onClick={handleSendForReview}>
+                Send For Review
+              </Button>
+            </Stack>
 
               <Card sx={{ mb: 3, textAlign: "left" }}>
-                <CardContent>
-                  <Grid container spacing={3}>
-                    {[
-                      { label: "Case Type", value: caseData.case_type },
-                      { label: "Status", value: caseData.status },
-                      { label: "Jursidiction", value: caseData.jurisdiction?.join(", ") || "N/A" },
-                      { label: "Date Added", value: new Date(caseData.last_updated).toLocaleString() },
-                    ].map((item, index) => (
-                      <Grid item xs={12} md={6} key={index}>
-                        <Typography variant="h6" fontWeight={500}>
-                          {item.label}
-                        </Typography>
-                        <Typography variant="body2">{item.value}</Typography>
-                      </Grid>
-                    ))}
-                  </Grid>
-                </CardContent>
-              </Card>
+              <Card sx={{ mb: 3, textAlign: "left" }}>
+  <CardContent>
+    {editMode ? (
+      <>
+        <TextField
+          label="Case Title"
+          fullWidth
+          value={editedCase.case_title}
+          onChange={(e) => setEditedCase({ ...editedCase, case_title: e.target.value })}
+          sx={{ mb: 2 }}
+        />
+        <TextField
+          label="Case Description"
+          fullWidth
+          multiline
+          rows={4}
+          value={editedCase.case_description}
+          onChange={(e) => setEditedCase({ ...editedCase, case_description: e.target.value })}
+          sx={{ mb: 2 }}
+        />
+      </>
+    ) : (
+      <>
+        <Typography variant="h6">{caseData.case_title}</Typography>
+        <Typography variant="body2">{caseData.case_description}</Typography>
+      </>
+    )}
+  </CardContent>
+</Card>
 
-              <Typography variant="h6" fontWeight={600} mb={2} textAlign="left">
-                Case Description
-              </Typography>
-              <Box p={3} bgcolor="#f9f9f9" borderRadius={2} >
-                <Typography variant="body2" textAlign="left">{caseData.case_description}</Typography>
-              </Box>
+<CardContent>
+  <Grid container spacing={3}>
+    {[ "case_type", "status", "jurisdiction" ].map((key, index) => (
+      <Grid item xs={12} md={6} key={index}>
+        <Typography variant="h6" fontWeight={500}>
+          {key.replace("_", " ").replace(/\b\w/g, (char) => char.toUpperCase())}
+        </Typography>
+        {editMode ? (
+          <TextField
+            fullWidth
+            value={editedCase[key] || ""}
+            onChange={(e) => setEditedCase({ ...editedCase, [key]: e.target.value })}
+          />
+        ) : (
+          <Typography variant="body2">{caseData[key] || "N/A"}</Typography>
+        )}
+      </Grid>
+    ))}
+    
+    <Grid item xs={12} md={6}>
+      <Typography variant="h6" fontWeight={500}>
+        Last Updated
+      </Typography>
+        <Typography variant="body2">
+          {caseData.last_updated
+            ? new Date(caseData.last_updated).toLocaleString()
+            : "N/A"}
+        </Typography>
+    </Grid>
+  </Grid>
+</CardContent>
+
+              </Card>
+              
 
               {/* {caseData.system_prompt && (
                 <>
