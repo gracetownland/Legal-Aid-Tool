@@ -48,7 +48,7 @@ def handler(event, context):
 
         # Create tables based on the schema
         sqlTableCreation = """
-            CREATE EXTENSION IF NOT EXISTS uuid_ossp;
+            CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
             CREATE TABLE IF NOT EXISTS "users" (
                 "user_id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
