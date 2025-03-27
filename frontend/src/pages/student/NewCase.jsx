@@ -54,10 +54,10 @@ const NewCaseForm = () => {
     setError(null);
 
     const caseData = {
-      case_title: formData.broadAreaOfLaw,
-      case_type: formData.jurisdiction.join(", "),
+      case_title: "New Case",
+      case_type: formData.broadAreaOfLaw,
+      jurisdiction: formData.jurisdiction,
       case_description: formData.legalMatterSummary,
-      system_prompt: formData.legalMatterSummary,
     };
 
     try {
@@ -81,16 +81,26 @@ const NewCaseForm = () => {
         }
       );
 
-      const data = await response.json();
-                  
+      const data = await response.json();  
       
+      if (!response.ok) throw new Error(data.error || "Failed to submit case");
+
+
+      const init_llm_response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}student/text_generation?case_id=${data.case_id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token
+        },
+        body: JSON.stringify({
+          message_content: "Please provide a brief summary of the legal matter first to show me all of the legal case facts and relevant legal resources I can refer to, using legal vocabulary. In addition to this breif summary, list some possible next steps and follow up questions for me to share with my client."
+        })
+      });
 
       if (!init_llm_response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
 
-      
-      if (!response.ok) throw new Error(data.error || "Failed to submit case");
 
       navigate(`/case/${data.case_id}/interview-assistant`);
     } catch (err) {
