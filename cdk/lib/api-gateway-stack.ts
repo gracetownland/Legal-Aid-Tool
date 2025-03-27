@@ -947,15 +947,6 @@ export class ApiGatewayStack extends cdk.Stack {
       sourceArn: `arn:aws:execute-api:${this.region}:${this.account}:${this.api.restApiId}/*/*/student*`,
     });
 
-        // Attach AWS Managed Policies for full access
-    textGenLambdaDockerFunc.role?.addManagedPolicy(
-      iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonBedrockFullAccess")
-    );
-
-    textGenLambdaDockerFunc.role?.addManagedPolicy(
-      iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonS3FullAccess")
-    );
-
     const bedrockPolicyStatement = new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
       actions: ["bedrock:InvokeModel", "bedrock:InvokeEndpoint"],
@@ -963,6 +954,13 @@ export class ApiGatewayStack extends cdk.Stack {
         `arn:aws:bedrock:${this.region}::foundation-model/meta.llama3-70b-instruct-v1`,
       ],
     });
+    
+
+    textGenLambdaDockerFunc.role?.addManagedPolicy(
+      iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonS3FullAccess")
+    );
+
+    
     
     // Attach the corrected Bedrock policy to Lambda
     textGenLambdaDockerFunc.addToRolePolicy(bedrockPolicyStatement);
@@ -1010,6 +1008,70 @@ export class ApiGatewayStack extends cdk.Stack {
       })
     );
 
+
+
+    const titleGenLambdaDockerFunc = new lambda.DockerImageFunction(
+      this,
+      `${id}-TitleGenLambdaDockerFunction`,
+      {
+        code: lambda.DockerImageCode.fromImageAsset("./title_generation"),
+        memorySize: 512,
+        timeout: cdk.Duration.seconds(300),
+        vpc: vpcStack.vpc, // Pass the VPC
+        functionName: `${id}-TitleLambdaDockerFunction`,
+        environment: {
+          SM_DB_CREDENTIALS: db.secretPathAdminName,
+          RDS_PROXY_ENDPOINT: db.rdsProxyEndpointAdmin,
+          REGION: this.region,
+          BEDROCK_LLM_PARAM: bedrockLLMParameter.parameterName,
+          TABLE_NAME_PARAM: tableNameParameter.parameterName,
+        },
+      }
+    );
+
+    // Override the Logical ID of the Lambda Function to get ARN in OpenAPI
+    const cfnTitleGenDockerFunc = titleGenLambdaDockerFunc.node
+      .defaultChild as lambda.CfnFunction;
+    cfnTitleGenDockerFunc.overrideLogicalId("TitleGenLambdaDockerFunc");
+
+    // Add the permission to the Lambda function's policy to allow API Gateway access
+    titleGenLambdaDockerFunc.addPermission("AllowApiGatewayInvoke", {
+      principal: new iam.ServicePrincipal("apigateway.amazonaws.com"),
+      action: "lambda:InvokeFunction",
+      sourceArn: `arn:aws:execute-api:${this.region}:${this.account}:${this.api.restApiId}/*/*/student*`,
+    });
+
+
+    // Attach the corrected Bedrock policy to Lambda
+    titleGenLambdaDockerFunc.addToRolePolicy(bedrockPolicyStatement);
+
+    // Grant access to Secret Manager
+    titleGenLambdaDockerFunc.addToRolePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: [
+          //Secrets Manager
+          "secretsmanager:GetSecretValue",
+        ],
+        resources: [
+          `arn:aws:secretsmanager:${this.region}:${this.account}:secret:*`,
+        ],
+      })
+    );
+
+
+    // Grant access to SSM Parameter Store for specific parameters
+    titleGenLambdaDockerFunc.addToRolePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: ["ssm:GetParameter"],
+        resources: [
+          bedrockLLMParameter.parameterArn,
+          embeddingModelParameter.parameterArn,
+          tableNameParameter.parameterArn,
+        ],
+      })
+    );
     // Create S3 Bucket to handle documents for each simulation group
     const dataIngestionBucket = new s3.Bucket(this, `${id}-DataIngestionBucket`, {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
