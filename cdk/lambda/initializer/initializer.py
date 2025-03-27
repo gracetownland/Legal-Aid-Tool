@@ -48,7 +48,7 @@ def handler(event, context):
 
         # Create tables based on the schema
         sqlTableCreation = """
-            CREATE EXTENSION IF NOT EXISTS uuid_ossp;
+            CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
             CREATE TABLE IF NOT EXISTS "users" (
                 "user_id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -103,16 +103,7 @@ def handler(event, context):
                 "time_created" timestamp DEFAULT now()
             );
 
-            -- Ensure "sessions" table exists before adding foreign keys
-            CREATE TABLE IF NOT EXISTS "sessions" (
-                "session_id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-                "user_id" uuid NOT NULL,
-                "case_id" uuid NOT NULL
-            );
-
             -- Add foreign key constraints
-            ALTER TABLE "sessions" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
-            ALTER TABLE "sessions" ADD FOREIGN KEY ("case_id") REFERENCES "cases" ("case_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
             ALTER TABLE "messages" ADD FOREIGN KEY ("case_id") REFERENCES "cases" ("case_id") ON DELETE CASCADE ON UPDATE CASCADE;
             ALTER TABLE "messages" ADD FOREIGN KEY ("instructor_id") REFERENCES "users" ("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -218,10 +209,11 @@ def handler(event, context):
         # Print sample queries to validate data
         sample_queries = [
             'SELECT * FROM "users";',
-            'SELECT * FROM "sessions";',
+            'SELECT * FROM "instructor_students";',
             'SELECT * FROM "messages";',
             'SELECT * FROM "cases";',
-            'SELECT * FROM "reports";',
+            'SELECT * FROM "summaries";',
+            'SELECT * FROM "system_prompt";',
         ]
 
         for query in sample_queries:
