@@ -74,8 +74,7 @@ def get_bedrock_llm(
     """
     return ChatBedrock(
         model_id=bedrock_llm_id,
-        model_kwargs=dict(temperature=temperature, max_tokens=8192),
-        streaming=True
+        model_kwargs=dict(temperature=temperature),
     )
 
 def get_student_query(raw_query: str) -> str:
@@ -102,7 +101,7 @@ def get_initial_student_query(case_type: str, jurisdiction: str, case_descriptio
 
     Args:
     case_type (str): The type of case being discussed.
-    jurisdiction (str): The type of law relevant to the case.
+    jurisdiction (str): The jurisdiction the case is under.
     case_description (str): A brief description of the case.
 
     Returns:
@@ -131,26 +130,31 @@ def get_response(
     case_type: str,
     jurisdiction: str,
     case_description: str,
-):
+) -> dict:
     """
-    Generates a response to a query using the LLM and a history-aware retriever for context,
-    returning a streaming response instead of a fully formed string.
+    Generates a response to a query using the LLM and a history-aware retriever for context.
 
     Args:
     query (str): The student's query string for which a response is needed.
-    case_title (str): The title of the legal case.
+    patient_name (str): The specific patient that the student needs to diagnose.
     llm (ChatBedrock): The language model instance used to generate the response.
     history_aware_retriever: The history-aware retriever instance that provides relevant context documents for the query.
     table_name (str): The DynamoDB table name used to store and retrieve the chat history.
-    case_id (str): The unique identifier for the chat session to manage history.
-    system_prompt (str): The system-level instructions for the LLM.
-    case_type (str): The type of case being discussed.
-    jurisdiction (str): The type of law relevant to the case.
-    case_description (str): A brief description of the case.
+    session_id (str): The unique identifier for the chat session to manage history.
 
-    Yields:
-    str: The next chunk of the response from the LLM.
+    Returns:
+    dict: A dictionary containing the generated response and the source documents used in the retrieval.
     """
+    
+    # completion_string = """
+    #             Once I, the law student, have give you a diagnosis, politely leave the conversation and wish me goodbye.
+    #             Regardless if I have given you the proper diagnosis or not for the patient you are pretending to be, stop talking to me.
+    #             """
+    # if llm_completion:
+    #     completion_string = """
+    #             Continue this process until you determine that me, the law student, has properly diagnosed the patient you are pretending to be.
+    #             Once the proper diagnosis is provided, include PROPER DIAGNOSIS ACHIEVED in your response and do not continue the conversation.
+    #             """
 
     # Create a system prompt for the question answering
     processed_system_prompt = (
@@ -160,7 +164,7 @@ def get_response(
         {system_prompt}
         Pay close attention to the latest system prompt I've given you, as it may have been updated since the last message, but don't entirely discard the previous system prompts unless they conflict. This is for your behaviour, you do not need to include it in the response.
 
-        Additional case details that are relevant:
+        Additional case detials that are relevant:
         Case type: {case_type}
         Jurisdiction: {jurisdiction}
         Case description: {case_description}
@@ -170,7 +174,7 @@ def get_response(
         <|eot_id|>
         """
     )
-
+    
     qa_prompt = ChatPromptTemplate.from_messages(
         [
             ("system", processed_system_prompt),
@@ -184,23 +188,28 @@ def get_response(
     conversational_rag_chain = RunnableWithMessageHistory(
         rag_chain,
         lambda _: DynamoDBChatMessageHistory(
-            table_name=table_name,
-            session_id=case_id,
+            table_name=table_name, 
+            session_id=case_id  # Uses case_id from function scope
         ),
         input_messages_key="input",
         history_messages_key="chat_history",
         output_messages_key="answer",
     )
-
-    # Stream response from the model
-    response_generator = generate_response(conversational_rag_chain, query, case_id)
-
-    for chunk in response_generator:
-        yield chunk  # Stream chunks one by one to the caller
+    
+    # Generate the response until it's not empty
+    response = ""
+    while not response:
+        response = generate_response(
+            conversational_rag_chain,
+            query,
+            case_id
+        )
+    
+    return get_llm_output(response)
 
 def generate_response(conversational_rag_chain: object, query: str, case_id: str) -> str:
     """
-    Invokes the RAG chain to generate a response to a given query with streaming for realtime responses.
+    Invokes the RAG chain to generate a response to a given query.
 
     Args:
     conversational_rag_chain: The Conversational RAG chain object that processes the query and retrieves relevant responses.
@@ -210,16 +219,14 @@ def generate_response(conversational_rag_chain: object, query: str, case_id: str
     Returns:
     str: The answer generated by the Conversational RAG chain, based on the input query and session context.
     """
-    response_stream = conversational_rag_chain.stream(
+    return conversational_rag_chain.invoke(
         {
             "input": query
         },
         config={
             "configurable": {"session_id": case_id}
-        }
-    )
-    for chunk in response_stream:
-        yield chunk["answer"]
+        },  # constructs a key "session_id" in `store`.
+    )["answer"]
 
 def get_llm_output(response: str) -> dict:
     """
