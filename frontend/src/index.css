@@ -56,10 +56,10 @@
   }
 
   a {
-    color: #77dd77;
+    color: #5289ff;
   }
   a:hover {
-    color: #66bb66;
+    color: #79a8ff;
   }
   button {
     background-color: #333;
@@ -71,14 +71,7 @@
 }
 
 
-a {
-  font-weight: 500;
-  color: #099433;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #099433;
-}
+
 
 body {
   margin: 0;
@@ -117,8 +110,12 @@ button:focus-visible {
     color: #213547;
     background-color: #ffffff;
   }
+  a {
+    color: #4f6cee;
+    text-decoration: inherit;
+  }
   a:hover {
-    color: #099433;
+    color: #3d32d4;
   }
   button {
     background-color: #f9f9f9;

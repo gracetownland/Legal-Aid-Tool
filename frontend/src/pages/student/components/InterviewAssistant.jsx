@@ -75,8 +75,13 @@ const InterviewAssistant = () => {
               ? msg.content.replace(/^\s*user\s*/, "").trim() // Remove the unwanted prefix
               : msg.content.trim(),
         }));
-
-        setMessages(formattedMessages);
+        
+        // Remove the first message only if it's from a user (to prompt llm to start, but hide that user prompt to make it look like it spoke first)
+        const filteredMessages =
+          formattedMessages[0]?.sender === "user" ? formattedMessages.slice(1) : formattedMessages;
+        
+        setMessages(filteredMessages);
+        setMessages(formattedMessages.slice(1)); // Remove the initial message to prompt llm to respond first
       } catch (error) {
         console.error("Error fetching messages data:", error);
       } finally {
@@ -248,6 +253,7 @@ const InterviewAssistant = () => {
         sx={{
           display: "flex",
           flexDirection: message.sender === "bot" ? "row" : "row-reverse",
+          marginTop: 3,
           marginBottom: 2,
           fontFamily: "'Roboto', sans-serif",
           boxShadow: 'none'
