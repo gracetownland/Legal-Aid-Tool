@@ -29,6 +29,7 @@ import * as logs from "aws-cdk-lib/aws-logs";
 import * as cloudwatch from "aws-cdk-lib/aws-cloudwatch";
 import * as events from "aws-cdk-lib/aws-events";
 import * as targets from "aws-cdk-lib/aws-events-targets";
+import { text } from "stream/consumers";
 
 export class ApiGatewayStack extends cdk.Stack {
   private readonly api: apigateway.SpecRestApi;
@@ -969,6 +970,34 @@ export class ApiGatewayStack extends cdk.Stack {
       sourceArn: `arn:aws:execute-api:${this.region}:${this.account}:${this.api.restApiId}/*/*/student*`,
     });
 
+    textGenLambdaDockerFunc.role?.attachInlinePolicy(
+      new iam.Policy(this, "S3ReadWritePolicy", {
+        statements: [
+          new iam.PolicyStatement({
+            actions: ["s3:GetObject", "s3:PutObject"],
+            resources: ["arn:aws:s3:::your-bucket-name/*"], // Adjust bucket name
+            effect: iam.Effect.ALLOW,
+          }),
+        ],
+      })
+    );
+
+    textGenLambdaDockerFunc.role?.attachInlinePolicy(
+      new iam.Policy(this, "DynamoDBReadWritePolicy", {
+        statements: [
+          new iam.PolicyStatement({
+            actions: [
+              "dynamodb:PutItem",
+              "dynamodb:GetItem",
+              "dynamodb:Query",
+            ],
+            resources: [`arn:aws:dynamodb:${this.region}:${this.account}:table/*`],
+            effect: iam.Effect.ALLOW,
+          }),
+        ],
+      })
+    );
+
     const bedrockPolicyStatement = new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
       actions: ["bedrock:InvokeModel"],
@@ -977,16 +1006,7 @@ export class ApiGatewayStack extends cdk.Stack {
         `arn:aws:bedrock:${this.region}::foundation-model/meta.llama3-70b-instruct-v1:0`,  // Explicitly add the versioned model
         `arn:aws:bedrock:${this.region}::foundation-model/amazon.titan-embed-text-v2:0`,  // If using Titan
       ],
-    });    
-    
-
-    textGenLambdaDockerFunc.role?.addManagedPolicy(
-      iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonS3FullAccess")
-    );
-
-    textGenLambdaDockerFunc.role?.addManagedPolicy(
-      iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonDynamoDBFullAccess")
-    );    
+    });       
     
     // Attach the corrected Bedrock policy to Lambda
     textGenLambdaDockerFunc.addToRolePolicy(bedrockPolicyStatement);
