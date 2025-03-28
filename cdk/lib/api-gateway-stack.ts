@@ -975,7 +975,7 @@ export class ApiGatewayStack extends cdk.Stack {
         statements: [
           new iam.PolicyStatement({
             actions: ["s3:GetObject", "s3:PutObject"],
-            resources: ["arn:aws:s3:::your-bucket-name/*"], // Adjust bucket name
+            resources: [`arn:aws:s3:::${promptStorageBucket.bucketName}/*`], // Adjust bucket name
             effect: iam.Effect.ALLOW,
           }),
         ],
