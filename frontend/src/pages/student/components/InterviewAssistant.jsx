@@ -168,7 +168,7 @@ const InterviewAssistant = () => {
         }
 
         const data = await response.json();
-        const res = data.llm_output;
+        const res = data.llm_output.llm_output;
         console.log('Success:', data);
         setIsAItyping(false);
         return res;
