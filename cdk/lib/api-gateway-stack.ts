@@ -542,6 +542,17 @@ export class ApiGatewayStack extends cdk.Stack {
       })
     );
 
+    // Allow access to DynamoDB Table for reading chat history
+    lambdaStudentFunction.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["dynamodb:Query"],
+        resources: [
+          `arn:aws:dynamodb:${this.region}:${this.account}:table/DynamoDB-Conversation-Table`
+        ],
+        effect: iam.Effect.ALLOW
+      })
+    );   
+
     // Add the permission to the Lambda function's policy to allow API Gateway access
     lambdaStudentFunction.addPermission("AllowApiGatewayInvoke", {
       principal: new iam.ServicePrincipal("apigateway.amazonaws.com"),
@@ -580,6 +591,17 @@ export class ApiGatewayStack extends cdk.Stack {
       action: "lambda:InvokeFunction",
       sourceArn: `arn:aws:execute-api:${this.region}:${this.account}:${this.api.restApiId}/*/*/instructor*`,
     });
+
+    // Allow access to DynamoDB Table for reading chat history
+    lambdaInstructorFunction.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["dynamodb:Query"],
+        resources: [
+          `arn:aws:dynamodb:${this.region}:${this.account}:table/DynamoDB-Conversation-Table`
+        ],
+        effect: iam.Effect.ALLOW
+      })
+    );    
 
     const cfnLambda_Instructor = lambdaInstructorFunction.node
       .defaultChild as lambda.CfnFunction;
@@ -949,18 +971,22 @@ export class ApiGatewayStack extends cdk.Stack {
 
     const bedrockPolicyStatement = new iam.PolicyStatement({
       effect: iam.Effect.ALLOW,
-      actions: ["bedrock:InvokeModel", "bedrock:InvokeEndpoint"],
+      actions: ["bedrock:InvokeModel"],
       resources: [
         `arn:aws:bedrock:${this.region}::foundation-model/meta.llama3-70b-instruct-v1`,
+        `arn:aws:bedrock:${this.region}::foundation-model/meta.llama3-70b-instruct-v1:0`,  // Explicitly add the versioned model
+        `arn:aws:bedrock:${this.region}::foundation-model/amazon.titan-embed-text-v2:0`,  // If using Titan
       ],
-    });
+    });    
     
 
     textGenLambdaDockerFunc.role?.addManagedPolicy(
       iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonS3FullAccess")
     );
 
-    
+    textGenLambdaDockerFunc.role?.addManagedPolicy(
+      iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonDynamoDBFullAccess")
+    );    
     
     // Attach the corrected Bedrock policy to Lambda
     textGenLambdaDockerFunc.addToRolePolicy(bedrockPolicyStatement);
