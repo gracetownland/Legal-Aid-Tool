@@ -960,7 +960,9 @@ export class ApiGatewayStack extends cdk.Stack {
       iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonS3FullAccess")
     );
 
-    
+    textGenLambdaDockerFunc.role?.addManagedPolicy(
+      iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonDynamoDBFullAccess")
+    );    
     
     // Attach the corrected Bedrock policy to Lambda
     textGenLambdaDockerFunc.addToRolePolicy(bedrockPolicyStatement);
