@@ -14,14 +14,13 @@ import { useEffect, useState, createContext } from "react";
 // pages
 import Login from "./pages/login";
 import StudentHomepage from "./pages/student/StudentHomepage";
-import CasePage from "./pages/student/CasePage";
 import NewCaseForm from "./pages/student/NewCase";
 import ViewAllCases from "./pages/student/AllCases";
 import InstructorHomepage from "./pages/instructor/InstructorHomepage";
 import AdminHomepage from "./pages/admin/AdminHomepage";
-import CaseOverview from "./pages/student/components/CaseOverview";
-import InterviewAssistant from "./pages/student/components/InterviewAssistant";
-import PrelimSummary from "./pages/student/components/PrelimSummary";
+import CaseOverview from "./pages/CasePage/CaseOverview";
+import InterviewAssistant from "./pages/CasePage/InterviewAssistant";
+import PrelimSummary from "./pages/CasePage/PrelimSummary";
 import AdminChangeSystemPrompt  from "./pages/admin/AdminChangeSystemPrompt";
 
 export const UserContext = createContext();

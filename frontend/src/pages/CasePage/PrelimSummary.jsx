@@ -1,5 +1,5 @@
 import {Box, Typography} from '@mui/material'
-import StudentHeader from '../../../components/StudentHeader';
+import StudentHeader from '../../components/StudentHeader';
 
 
 const PrelimSummary = () => (

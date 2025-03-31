@@ -5,7 +5,7 @@ import { Box, Typography, TextField, Button, Paper, Divider, CircularProgress } 
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { fetchAuthSession } from "aws-amplify/auth";
 
-import StudentHeader from "../../../components/StudentHeader";
+import StudentHeader from "../../components/StudentHeader";
 import SideMenu from "./SideMenu";
 import TypingIndicator from "./TypingIndicator";
 

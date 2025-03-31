@@ -5,7 +5,7 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import CaseOverview from "./CaseOverview";
 import InterviewAssistant from "./InterviewAssistant";
 import PrelimSummary from "./PrelimSummary";
-import DraggableNotes from "../../../components/DraggableNotes";
+import DraggableNotes from "../../components/DraggableNotes";
 import SaveIcon from "@mui/icons-material/Save";
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import IconButton from "@mui/material/IconButton";

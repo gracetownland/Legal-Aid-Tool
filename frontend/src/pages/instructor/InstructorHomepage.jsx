@@ -57,7 +57,7 @@ const InstructorHomepage = () => {
       {/* Main Content */}
       <div style={{ marginTop: "80px", padding: "20px" }}> {/* Adjust marginTop as needed */}
         <Typography color="black" fontWeight="bold" textAlign="left" variant="h6">
-          Submitted Cases for Review
+          Cases Submitted for Review
         </Typography>
         <Paper sx={{ width: "80%", margin: "0 auto", padding: 2 }}>
           {submittedCases.length > 0 ? (
