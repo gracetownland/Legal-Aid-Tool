@@ -4,7 +4,7 @@ import { Box, Typography, Card, CardContent, Divider, Grid, Container, Stack,But
 import { useNavigate, useParams } from "react-router-dom";
 import SideMenu from "./SideMenu";
 
-import StudentHeader from "../../../components/StudentHeader";
+import StudentHeader from "../../components/StudentHeader";
 import { fetchAuthSession } from "aws-amplify/auth";
 
 const CaseOverview = () => {
@@ -28,7 +28,7 @@ const CaseOverview = () => {
         case_title: caseData.case_title,
         case_description: caseData.case_description,
         case_type: caseData.case_type,
-        law_type: caseData.law_type,
+        jurisdiction: caseData.jurisdiction,
       });
     }
   }, [caseData]);

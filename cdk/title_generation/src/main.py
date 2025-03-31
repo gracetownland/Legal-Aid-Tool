@@ -4,7 +4,7 @@ import boto3
 import botocore
 import logging
 import psycopg2
-from langchain_aws import BedrockEmbeddings
+
 
 from helpers.chat import get_bedrock_llm, get_response
 
@@ -17,7 +17,6 @@ DB_SECRET_NAME = os.environ["SM_DB_CREDENTIALS"]
 REGION = os.environ["REGION"]
 RDS_PROXY_ENDPOINT = os.environ["RDS_PROXY_ENDPOINT"]
 BEDROCK_LLM_PARAM = os.environ["BEDROCK_LLM_PARAM"]
-EMBEDDING_MODEL_PARAM = os.environ["EMBEDDING_MODEL_PARAM"]
 TABLE_NAME_PARAM = os.environ["TABLE_NAME_PARAM"]
 
 # AWS Clients
@@ -31,8 +30,7 @@ db_secret = None
 BEDROCK_LLM_ID = None
 TABLE_NAME = None
 
-# Cached embeddings instance
-embeddings = None
+
 
 def get_secret(secret_name, expect_json=True):
     global db_secret
@@ -63,12 +61,10 @@ def get_parameter(param_name, cached_var):
     return cached_var
 
 def initialize_constants():
-    global BEDROCK_LLM_ID, EMBEDDING_MODEL_ID, TABLE_NAME, embeddings
+    global BEDROCK_LLM_ID, TABLE_NAME
     BEDROCK_LLM_ID = get_parameter(BEDROCK_LLM_PARAM, BEDROCK_LLM_ID)
 
-    
 
-    
     
 
 def connect_to_db():

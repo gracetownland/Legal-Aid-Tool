@@ -79,17 +79,17 @@ exports.handler = async (event) => {
   try {
     const pathData = event.httpMethod + " " + event.resource;
     switch (pathData) {
-      case "GET /instructor/student_group":
+      case "GET /instructor/students":
         if (
           event.queryStringParameters != null &&
-          event.queryStringParameters.email
+          event.queryStringParameters.cognito_id
         ) {
-          const email = event.queryStringParameters.email;
+          const cognito_id = event.queryStringParameters.cognito_id;
 
           try {
             // First, get the user_id for the given email
             const userResult = await sqlConnection`
-              SELECT user_id FROM "users" WHERE user_email = ${email};
+              SELECT user_id FROM "users" WHERE cognito_id = ${cognito_id};
             `;
 
             if (userResult.length === 0) {
@@ -100,14 +100,9 @@ exports.handler = async (event) => {
 
             const userId = userResult[0].user_id;
 
-            // Now, fetch the simulation groups for that user_id
+            // Now, fetch the students for that user_id
             const data = await sqlConnection`
-              SELECT sg.*
-              FROM "enrolments" e
-              JOIN "simulation_groups" sg 
-              ON e.simulation_group_id = sg.simulation_group_id
-              WHERE e.user_id = ${userId}
-              ORDER BY sg.group_name, sg.simulation_group_id;
+              SELECT student_id FROM "instructor_students" WHERE instructor_id = ${userId};
             `;
 
             response.statusCode = 200;

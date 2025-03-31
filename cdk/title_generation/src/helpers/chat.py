@@ -83,6 +83,7 @@ def get_response(
         "- If a description is given, distill its essence\n"
         "- Keep the title under 100 characters\n"
         "- Avoid unnecessary words\n\n"
+        "Do not mention anything like: Here is a professional and concise case title:, just return the title.\n"
         f"Case Type: {case_type}\n"
     )
     

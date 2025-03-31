@@ -278,7 +278,7 @@ export const StudentHomepage = () => {
                                   sx={{ textAlign: "left", fontWeight: 400 }}
                                 >
                                   <strong>Jurisdiction:</strong>{" "}
-                                  {caseItem.law_type}
+                                  {caseItem.jurisdiction}
                                 </Typography>
   
                                 <Typography
