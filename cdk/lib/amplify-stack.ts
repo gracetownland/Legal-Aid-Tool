@@ -2,6 +2,7 @@ import {
   App,
   BasicAuth,
   GitHubSourceCodeProvider,
+  RedirectStatus,
 } from "@aws-cdk/aws-amplify-alpha";
 import * as cdk from "aws-cdk-lib";
 import { BuildSpec } from "aws-cdk-lib/aws-codebuild";
@@ -75,6 +76,12 @@ export class AmplifyStack extends cdk.Stack {
         VITE_IDENTITY_POOL_ID: apiStack.getIdentityPoolId(),
       },
       buildSpec: BuildSpec.fromObjectToYaml(amplifyYaml),
+    });
+
+    amplifyApp.addCustomRule({
+      source: '/<*>',
+      target: '	/index.html',
+      status: RedirectStatus.NOT_FOUND_REWRITE ,
     });
 
     amplifyApp.addBranch("main");
