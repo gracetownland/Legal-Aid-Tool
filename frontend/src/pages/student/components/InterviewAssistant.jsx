@@ -115,7 +115,7 @@ const InterviewAssistant = () => {
       // Await the AI response before updating the messages
       setIsAItyping(true);
       const llmResponse = await getAIResponse(userInput);
-      console.log(llmResponse); // Check the response in the console
+      console.log("LLM Responded with: ", llmResponse); // Check the response in the console
 
       setMessages((prevMessages) => [
         ...prevMessages,
@@ -167,20 +167,11 @@ const InterviewAssistant = () => {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
 
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-          console.log(decoder.decode(value)); // Process and display each chunk
-        }
-
-        // const data = await response.json();
-        // const res = data.llm_output;
-        // console.log('Success:', data);
-        // setIsAItyping(false);
-        // return res;
+        const data = await response.json();
+        const res = data.llm_output.llm_output;
+        console.log('Success:', data);
+        setIsAItyping(false);
+        return res;
       } catch (error) {
         console.error('Error:', error);
         setIsAItyping(false);
