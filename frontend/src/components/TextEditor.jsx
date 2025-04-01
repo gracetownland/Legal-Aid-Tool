@@ -105,7 +105,7 @@ export default function App() {
         return {
             editorConfig: {
                 toolbar: {
-                    items: ['bold', 'italic', '|', 'link', 'insertTable'],
+                    items: ['bold', 'italic', '|', 'link'],
                     shouldNotGroupWhenFull: false
                 },
                 plugins: [
