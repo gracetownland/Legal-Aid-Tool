@@ -47,11 +47,11 @@ export default function App() {
                     "Content-Type": "application/json",
                   },
                 }
-              );
+              );     
         
               if (response.ok) {
                 const data = await response.json();
-                setEditorData(data.notes || "");
+                setEditorData(data.student_notes || "");
               } else {
                 console.error("Failed to fetch notes.");
               }
