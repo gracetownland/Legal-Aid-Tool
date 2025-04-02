@@ -461,6 +461,37 @@ exports.handler = async (event) => {
          
         break;
 
+        case "PUT /student/review_case":
+          if (
+            event.queryStringParameters != null &&
+            event.queryStringParameters.case_id &&
+            event.queryStringParameters.cognito_id
+        ) {
+            const { case_id, cognito_id } = event.queryStringParameters;
+            try {
+                // Update the patient details in the patients table
+                await sqlConnection`
+                    UPDATE "cases"
+                    SET 
+                        sent_to_review = true,
+                        status = 'Sent to Review'
+                    WHERE case_id = ${case_id}; 
+                `;
+                response.statusCode = 200;
+                response.body = JSON.stringify({
+                    message: "Case Updated Successfully",
+                });
+            } catch (err) {
+                response.statusCode = 500;
+                console.error(err);
+                response.body = JSON.stringify({
+                    error: "Internal server error",
+                });
+            }
+        }
+         
+        break;
+
 
         case "PUT /student/update_notes":
           if (
