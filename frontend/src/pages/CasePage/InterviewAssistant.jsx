@@ -125,7 +125,8 @@ const InterviewAssistant = () => {
   };
 
   const handleKeyPress = (event) => {
-    if (event.key === 'Enter') {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault(); // Prevent default behavior of Enter key
       handleSendMessage();
     }
   };
@@ -295,7 +296,7 @@ const InterviewAssistant = () => {
     position: "fixed", 
     bottom: 0, 
     right: 0,
-    height: "65px",
+    minHeight: "65px",
     width: "calc(100% - 250px)",  // Exclude sidebar
     minWidth: "70vw", // Ensure it doesn't get too small
     display: "flex", 
@@ -309,6 +310,7 @@ const InterviewAssistant = () => {
     sx={{ 
       width: "100%", 
       maxWidth: "90vw",  // Keep it readable
+      maxHeight: "650px", // Limit height for better UX
       display: "flex", 
       alignItems: "center" 
     }}
@@ -321,6 +323,8 @@ const InterviewAssistant = () => {
       value={userInput}
       onChange={(e) => setUserInput(e.target.value)}
       sx={{
+        maxHeight: "300px",
+        overflowY: "auto",
         marginRight: 2,
         '& .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--border)' },
         '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--border)' },
@@ -331,7 +335,7 @@ const InterviewAssistant = () => {
     />
     <Button 
       variant="contained" 
-      sx={{ color: "#ffffff", backgroundColor: "var(--secondary)" }} 
+      sx={{ color: "#ffffff", backgroundColor: "var(--secondary)", minHeight: "50px" }} 
       onClick={handleSendMessage}
     >
       Send
