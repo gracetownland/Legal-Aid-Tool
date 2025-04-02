@@ -3,9 +3,8 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { fetchAuthSession } from "aws-amplify/auth";
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
-import { Box, Button, Typography, Switch, FormControlLabel} from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
 import TextEditor from "./TextEditor";
-import zIndex from "@mui/material/styles/zIndex";
 
 function DraggableNotes({ onClose, sessionId }) {
   const [position, setPosition] = useState({ x: 100, y: 100 });
@@ -14,10 +13,7 @@ function DraggableNotes({ onClose, sessionId }) {
   const isDragging = useRef(false);
   const isResizing = useRef(false);
   const [isAutosaveEnabled, setIsAutosaveEnabled] = useState(false);
-
-  const handleNoteChange = (e) => {
-    setNoteContent(e.target.value);
-  };
+  const [lastSaved, setLastSaved] = useState(null);
 
   const handleMouseDown = (e) => {
     if (e.target.tagName.toLowerCase() === "textarea" || isResizing.current) return;
@@ -76,10 +72,6 @@ function DraggableNotes({ onClose, sessionId }) {
     document.addEventListener("mouseup", onMouseUp);
   };
 
-  const handleToggleAutosave = () => {
-    setIsAutosaveEnabled((prev) => !prev);
-  };
-
   return (
     <Box
       ref={noteRef}
@@ -117,80 +109,56 @@ function DraggableNotes({ onClose, sessionId }) {
         />
       </Box>
 
-      {/* Textarea */}
+      {/* Text Editor */}
       <Box
-      sx={{
-        flexGrow: 1,
-        display: "flex",
-        flexDirection: "column",
-        overflow: "auto",
-        width: "100%",
-        height: "calc(100% - 100px)", // Adjust for header height
-        cursor: "auto",
-      }}
-    >
-      <TextEditor sx={{zIndex: 10}}/>
-    </Box>
+        sx={{
+          flexGrow: 1,
+          display: "flex",
+          flexDirection: "column",
+          overflow: "auto",
+          width: "100%",
+          height: "calc(100% - 100px)", // Adjust for header height
+          cursor: "auto",
+        }}
+      >
+        <TextEditor lastSaved={lastSaved} setLastSaved={setLastSaved} />
+      </Box>
+
+      {lastSaved && (
+                <div style={{
+                    position: 'absolute',
+                    zIndex: 1000,
+                    bottom: '8px',
+                    left: '10px',
+                    fontSize: '12px',
+                    color: '#808080',
+                }}>
+                    Last saved at {lastSaved}
+                </div>
+            )}
 
       {/* Save Button */}
       <Box sx={{ padding: "5px 10px", textAlign: "right", marginTop: "5px", marginBottom: "10px" }}>
-      <Button
-        id="saveButton"
-        variant="contained"
-        sx={{
-          backgroundColor: "#36bd78",
-          color: "white",
-          border: "none",
-          padding: "5px 10px",
-          fontSize: "12px",
-          borderRadius: "4px",
-          cursor: "pointer",
-          width: "80px",
-          position: "absolute",
-          bottom: 10,
-          right: 10,
-          '&:focus': {
-            outline: 'none', // Remove the focus outline
-            boxShadow: 'none', // Remove the focus box shadow
-          },
-          '&:active': {
-            backgroundColor: '#36bd78', // Prevent the color change when the button is clicked
-            boxShadow: 'none', // Remove any active state styles
-          },
-          '&:hover': {
-            backgroundColor: '#45c485', // Set custom hover color (change as needed)
-          },
-        }}
-      >
-        Save
-      </Button>
+        <Button
+          id="saveButton"
+          variant="contained"
+          sx={{
+            backgroundColor: "#36bd78",
+            color: "white",
+            width: "80px",
+            position: "absolute",
+            bottom: 10,
+            right: 10,
+            boxShadow: 'none',
+            "&:hover": {
+              backgroundColor: "#45c485",
+              boxShadow: 'none',
+            },
+          }}
+        >
+          Save
+        </Button>
       </Box>
-
-      {/* Autosave Toggle Button */}
-      
-
-      {/* <FormControlLabel
-        control={
-          <Switch
-            checked={isAutosaveEnabled}
-            onChange={handleToggleAutosave}
-          />
-        }
-        label={isAutosaveEnabled ? "Autosave On" : "Autosave Off"}
-        sx={{ position: "absolute", bottom: 10, left: 10, color: "#b89d24a8",
-          "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
-          backgroundColor: "#b89d24a8", // Track color when ON
-        },
-        "& .MuiSwitch-track": {
-          backgroundColor: "#b89d24a8", // Track color when OFF
-        },
-        "& .MuiSwitch-switchBase.Mui-checked": {
-          color: "white", // Thumb (circle) color when ON
-        },
-
-         }}
-      /> */}
-
 
       {/* Resizer Handle */}
       <Box
@@ -223,5 +191,4 @@ function DraggableNotes({ onClose, sessionId }) {
     </Box>
   );
 }
-
 export default DraggableNotes;
