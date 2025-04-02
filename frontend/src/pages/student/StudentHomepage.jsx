@@ -173,7 +173,7 @@ export const StudentHomepage = () => {
                       width: "100%",
                     }}
                   >
-                    <l-ring size="50" stroke="4" speed="2" color="black"></l-ring>
+                    <l-ring size="50" stroke="4" speed="2" color="var(--text)"></l-ring>
                   </Box>
                 ) : error ? (
                   <Box sx={{ textAlign: "center", mt: 2}}>
