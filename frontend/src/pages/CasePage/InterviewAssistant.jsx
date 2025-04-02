@@ -277,41 +277,71 @@ const InterviewAssistant = () => {
 
           {isAItyping && <TypingIndicator />}
 
-          <Box sx={{ display: "flex", alignItems: "center" }}>
-            <TextField
-              label="Type here..."
-              variant="outlined"
-              fullWidth
-              multiline
-              value={userInput}
-              onChange={(e) => setUserInput(e.target.value)}
-              sx={{
-                marginRight: 2,
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#808080', // Default border color (gray)
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#808080', // Hover border color (gray)
-                },
-              }}
-              onKeyDown={handleKeyPress}
-              InputLabelProps={{
-                style: {
-                  backgroundColor: "transparent",
-                  color: "#808080" // Label color (gray)
-                },
-              }}
-              InputProps={{
-                style: {
-                  backgroundColor: "transparent",
-                  color: "var(--text)", // Text color
-                },
-              }}
-            />
-            <Button variant="contained" sx={{ color: "#ffffff", backgroundColor: "var(--secondary)" }} onClick={handleSendMessage}>
-              Send
-            </Button>
-          </Box>
+          <Box 
+  sx={{ 
+    position: "fixed", 
+    bottom: 0, 
+    left: 0, 
+    width: "100%", 
+    display: "flex", 
+    justifyContent: "center", 
+    backgroundColor: "var(--background)", 
+    boxShadow: "0 -2px 5px rgba(0,0,0,0.1)", 
+    padding: 2 
+  }}
+>
+<Box 
+  sx={{ 
+    position: "fixed", 
+    bottom: 0, 
+    right: 0,
+    height: "65px",
+    width: "calc(100% - 250px)",  // Exclude sidebar
+    minWidth: "70vw", // Ensure it doesn't get too small
+    display: "flex", 
+    justifyContent: "center",
+    backgroundColor: "var(--background)", 
+    boxShadow: "0 -2px 5px rgba(0,0,0,0.1)", 
+    padding: 2 
+  }}
+>
+  <Box 
+    sx={{ 
+      width: "100%", 
+      maxWidth: "90vw",  // Keep it readable
+      display: "flex", 
+      alignItems: "center" 
+    }}
+  >
+    <TextField
+      label="Type here..."
+      variant="outlined"
+      fullWidth
+      multiline
+      value={userInput}
+      onChange={(e) => setUserInput(e.target.value)}
+      sx={{
+        marginRight: 2,
+        '& .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--border)' },
+        '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--border)' },
+      }}
+      onKeyDown={handleKeyPress}
+      InputLabelProps={{ style: { backgroundColor: "transparent", color: "var(--text)" } }}
+      InputProps={{ style: { backgroundColor: "transparent", color: "var(--text)" } }}
+    />
+    <Button 
+      variant="contained" 
+      sx={{ color: "#ffffff", backgroundColor: "var(--secondary)" }} 
+      onClick={handleSendMessage}
+    >
+      Send
+    </Button>
+  </Box>
+</Box>
+
+</Box>
+
+
         </Box>
       </Box>
     </Box>
