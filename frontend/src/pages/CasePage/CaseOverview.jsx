@@ -119,12 +119,15 @@ const CaseOverview = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            ...caseData, // Preserve existing fields
+            case_type: caseData.case_type,
+            jurisdiction: caseData.jurisdiction,
             case_title: editedCase.case_title,
             case_description: editedCase.case_description,
           }),
         }
       );
+
+      console.log(editedCase);
   
       if (!response.ok) throw new Error("Failed to save changes");
   
