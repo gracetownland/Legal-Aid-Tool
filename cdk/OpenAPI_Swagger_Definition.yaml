@@ -1577,10 +1577,6 @@ paths:
           description: id of the student updating case
           schema:
             type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
       responses:
         "200":
           description: Case updated successfully
