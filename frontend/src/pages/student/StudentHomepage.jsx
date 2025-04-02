@@ -219,8 +219,10 @@ export const StudentHomepage = () => {
                                 mt: 2,
                                 transition: "transform 0.3s ease",
                                 "&:hover": { transform: "scale(1.01)" },
-                                backgroundColor: "var(--background3)",
+                                backgroundColor: "var(--background)",
                                 color: "var(--text)",
+                                boxShadow: "none",
+                                border: "1px solid var(--border)",
                               }}
                             >
                               <CardContent
