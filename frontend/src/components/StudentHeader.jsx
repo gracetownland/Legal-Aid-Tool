@@ -89,7 +89,7 @@ const StudentHeader = () => {
              fixed top-0 left-0 w-full z-50 shadow-md">
       <img src={logo} alt="Logo" className="h-12 w-12 mr-4" />
       <div className="flex-grow text-[white] text-3xl font-roboto font-semibold p-4 text-left">
-        {showDashboard && name && `${name}'s Dashboard`}
+        {showDashboard && name && (`${name}'s Dashboard`)}
       </div>
       <div className="flex items-center space-x-4">
       <button 
