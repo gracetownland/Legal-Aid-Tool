@@ -18,6 +18,10 @@ import {
   Box,
   Grid,
   Stack,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
 } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
@@ -53,6 +57,21 @@ export const StudentHomepage = () => {
   const [cases, setCases] = useState([]);
   const [error, setError] = useState(null); // For handling any errors during fetch
 
+  const [openDialog, setOpenDialog] = useState(false); // Track if a dialog is open
+  const [caseToDelete, setCaseToDelete] = useState(null); // Track which case to delete
+
+  // Handle opening the dialog
+  const handleOpenDialog = (caseId) => {
+    setCaseToDelete(caseId); // Set the caseId to delete
+    setOpenDialog(true); // Open the dialog
+  };
+
+  // Handle closing the dialog (Cancel)
+  const handleCloseDialog = () => {
+    setOpenDialog(false); // Close the dialog
+    setCaseToDelete(null); // Clear the case to delete
+  };
+
   useEffect(() => {
     const fetchCases = () => {
       fetchAuthSession()
@@ -87,23 +106,24 @@ export const StudentHomepage = () => {
           setError("Failed to load cases.");
         });
     };
-  
+
     fetchCases();
   }, []);
-  
 
   const handleViewCase = (caseId) => {
     navigate(`/case/${caseId}/overview`);
   };
 
-  const handleDeleteCase = async (caseId) => {
+  const handleDeleteCase = async () => {
+    if (!caseToDelete) return; // Ensure there's a case to delete
+
     try {
       const session = await fetchAuthSession();
       const token = session.tokens.idToken;
       const cognito_id = session.tokens.idToken.payload.sub
-  
+
       const response = await fetch(
-        `${import.meta.env.VITE_API_ENDPOINT}student/delete_case?case_id=${caseId}&cognito_id=${cognito_id}`,
+        `${import.meta.env.VITE_API_ENDPOINT}student/delete_case?case_id=${caseToDelete}&cognito_id=${cognito_id}`,
         {
           method: "DELETE",
           headers: {
@@ -112,18 +132,20 @@ export const StudentHomepage = () => {
           },
         }
       );
-  
+
       if (!response.ok) {
         throw new Error("Failed to delete the case");
       }
-  
+
+      setOpenDialog(false);
+      setCaseToDelete(null); // Clear the case to delete
+
       // Remove deleted case from state
-      setCases((prevCases) => prevCases.filter((caseItem) => caseItem.case_id !== caseId));
+      setCases((prevCases) => prevCases.filter((caseItem) => caseItem.case_id !== caseToDelete));
     } catch (error) {
       console.error("Error deleting case:", error);
     }
   };
-  
 
   return (
     <ThemeProvider theme={theme}>
@@ -132,7 +154,7 @@ export const StudentHomepage = () => {
         <AppBar position="fixed" color="primary">
           <StudentHeader />
         </AppBar>
-  
+
         {/* Main Content */}
         <Box sx={{ marginTop: 8, padding: 2, flexGrow: 1 }}>
           <Container
@@ -160,7 +182,7 @@ export const StudentHomepage = () => {
               }}
             >
               {cases.length > 0 && (
-              <Typography variant="h5" sx={{textAlign: "left", fontWeight: 600, marginLeft: 3, marginTop: 2}}>Latest Cases</Typography>
+                <Typography variant="h5" sx={{ textAlign: "left", fontWeight: 600, marginLeft: 3, marginTop: 2 }}>Latest Cases</Typography>
               )}
               <Stack sx={{ flex: 1, width: "100%" }}>
                 {loading ? (
@@ -176,13 +198,12 @@ export const StudentHomepage = () => {
                     <l-ring size="50" stroke="4" speed="2" color="var(--text)"></l-ring>
                   </Box>
                 ) : error ? (
-                  <Box sx={{ textAlign: "center", mt: 2}}>
+                  <Box sx={{ textAlign: "center", mt: 2 }}>
                     <Typography variant="h6" sx={{ color: "red" }}>
                       {error}
                     </Typography>
                   </Box>
                 ) : (
-
                   <Box
                     paddingLeft={3}
                     paddingRight={3}
@@ -242,7 +263,7 @@ export const StudentHomepage = () => {
                                 >
                                   Case #{caseItem.case_hash}
                                 </Typography>
-  
+
                                 <Box
                                   sx={{
                                     mb: 2,
@@ -262,7 +283,7 @@ export const StudentHomepage = () => {
                                     {caseItem.case_title}
                                   </Typography>
                                 </Box>
-  
+
                                 {/* Status Section */}
                                 <Typography
                                   variant="body1"
@@ -278,7 +299,7 @@ export const StudentHomepage = () => {
                                 >
                                   {caseItem.status}
                                 </Typography>
-  
+
                                 {/* Case Type & Last Updated */}
                                 <Typography
                                   variant="body2"
@@ -287,7 +308,7 @@ export const StudentHomepage = () => {
                                   <strong>Jurisdiction:</strong>{" "}
                                   {caseItem.jurisdiction}
                                 </Typography>
-  
+
                                 <Typography
                                   variant="body2"
                                   sx={{ textAlign: "left", fontWeight: 400 }}
@@ -298,7 +319,7 @@ export const StudentHomepage = () => {
                                   ).toLocaleString()}
                                 </Typography>
                               </CardContent>
-  
+
                               {/* View & Delete Buttons */}
                               <CardActions sx={{ justifyContent: "space-between", mt: 2 }}>
                                 <Button
@@ -313,7 +334,7 @@ export const StudentHomepage = () => {
                                 >
                                   View Case
                                 </Button>
-  
+
                                 <Button
                                   size="small"
                                   sx={{
@@ -322,7 +343,7 @@ export const StudentHomepage = () => {
                                     fontWeight: "bold",
                                     ":hover": { bgcolor: "darkred" },
                                   }}
-                                  onClick={() => handleDeleteCase(caseItem.case_id)}
+                                  onClick={() => handleOpenDialog(caseItem.case_id)}
                                 >
                                   Delete
                                 </Button>
@@ -330,7 +351,6 @@ export const StudentHomepage = () => {
                             </Card>
                           </Grid>
                         ))}
-
                       </Grid>
                     )}
                   </Box>
@@ -339,12 +359,32 @@ export const StudentHomepage = () => {
             </Box>
           </Container>
         </Box>
-  
+
         <ToastContainer />
       </Box>
+
+      {/* Dialog for confirmation */}
+      <Dialog
+        open={openDialog}
+        onClose={handleCloseDialog}
+      >
+        <DialogTitle>Are you sure?</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete this item? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleDeleteCase} color="error">
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </ThemeProvider>
   );
-
-}
+};
 
 export default StudentHomepage;
