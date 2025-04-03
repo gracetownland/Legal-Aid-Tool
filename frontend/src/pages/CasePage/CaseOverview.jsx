@@ -198,7 +198,6 @@ const CaseOverview = () => {
               </Stack>
 
               <Card sx={{ mb: 3, textAlign: "left", color: 'var(--text)',backgroundColor: "var(--background3)", boxShadow: 'none', border: '1px solid var(--border)' }}>
-              <Card sx={{ mb: 3, textAlign: "left", color: 'var(--text)',backgroundColor: "var(--background3)", boxShadow: 'none', border: '1px solid var(--border)' }}>
   <CardContent>
     {editMode ? (
       <>
