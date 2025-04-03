@@ -1105,9 +1105,80 @@ export class ApiGatewayStack extends cdk.Stack {
       })
     );
 
+       // Grant access to SSM Parameter Store for specific parameters
+       titleGenLambdaDockerFunc.addToRolePolicy(
+        new iam.PolicyStatement({
+          effect: iam.Effect.ALLOW,
+          actions: ["ssm:GetParameter"],
+          resources: [
+            bedrockLLMParameter.parameterArn,
+            embeddingModelParameter.parameterArn,
+            tableNameParameter.parameterArn,
+          ],
+        })
+      );
 
+
+    const summaryLambdaDockerFunc = new lambda.DockerImageFunction(
+      this,
+      `${id}-SummaryLambdaDockerFunction`,
+      {
+        code: lambda.DockerImageCode.fromImageAsset("./summary_generation"),
+        memorySize: 512,
+        timeout: cdk.Duration.seconds(300),
+        vpc: vpcStack.vpc, // Pass the VPC
+        functionName: `${id}-SummaryLambdaDockerFunction`,
+        environment: {
+          SM_DB_CREDENTIALS: db.secretPathAdminName,
+          RDS_PROXY_ENDPOINT: db.rdsProxyEndpointAdmin,
+          REGION: this.region,
+          TABLE_NAME: "DynamoDB-Conversation-Table",
+          BEDROCK_LLM_PARAM: bedrockLLMParameter.parameterName,
+          TABLE_NAME_PARAM: tableNameParameter.parameterName,
+        },
+      }
+    );
+
+    // Override the Logical ID of the Lambda Function to get ARN in OpenAPI
+    const cfnSummaryDockerFunc = summaryLambdaDockerFunc.node
+      .defaultChild as lambda.CfnFunction;
+    cfnSummaryDockerFunc.overrideLogicalId("SummaryLambdaDockerFunc");
+
+    // Add the permission to the Lambda function's policy to allow API Gateway access
+    summaryLambdaDockerFunc.addPermission("AllowApiGatewayInvoke", {
+      principal: new iam.ServicePrincipal("apigateway.amazonaws.com"),
+      action: "lambda:InvokeFunction",
+      sourceArn: `arn:aws:execute-api:${this.region}:${this.account}:${this.api.restApiId}/*/*/student*`,
+    });
+
+
+    // Attach the corrected Bedrock policy to Lambda
+    summaryLambdaDockerFunc.addToRolePolicy(bedrockPolicyStatement);
+
+    // Grant access to Secret Manager
+    summaryLambdaDockerFunc.addToRolePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: [
+          //Secrets Manager
+          "secretsmanager:GetSecretValue",
+        ],
+        resources: [
+          `arn:aws:secretsmanager:${this.region}:${this.account}:secret:*`,
+        ],
+      })
+    );
+
+    summaryLambdaDockerFunc.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["dynamodb:Query"],
+        resources: [
+          `arn:aws:dynamodb:${this.region}:${this.account}:table/DynamoDB-Conversation-Table`,
+        ],
+      })
+    );
     // Grant access to SSM Parameter Store for specific parameters
-    titleGenLambdaDockerFunc.addToRolePolicy(
+    summaryLambdaDockerFunc.addToRolePolicy(
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
         actions: ["ssm:GetParameter"],
@@ -1118,6 +1189,9 @@ export class ApiGatewayStack extends cdk.Stack {
         ],
       })
     );
+
+
+
     // Create S3 Bucket to handle documents for each simulation group
     const dataIngestionBucket = new s3.Bucket(this, `${id}-DataIngestionBucket`, {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
