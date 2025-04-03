@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-// MUI
 import {
   Drawer,
   List,
@@ -17,56 +16,53 @@ const AdminSidebar = ({
   setSelectedInstructor,
   setSelectedGroup,
 }) => {
-  // State to control the drawer width
   const [drawerWidth, setDrawerWidth] = useState(220);
 
-  // Function to handle mouse drag for resizing
   const handleMouseMove = (e) => {
-    const newWidth = e.clientX; // Get the new width based on the mouse position
+    const newWidth = e.clientX;
     if (newWidth >= 85 && newWidth <= 250) {
-      setDrawerWidth(newWidth); // Limit the resizing range
+      setDrawerWidth(newWidth);
     }
   };
 
-  // Function to handle mouse release (stop resizing)
   const stopResizing = () => {
     document.removeEventListener("mousemove", handleMouseMove);
     document.removeEventListener("mouseup", stopResizing);
-    document.body.style.userSelect = ""; // Re-enable text selection
+    document.body.style.userSelect = "";
   };
 
-  // Start resizing on mousedown
   const startResizing = (e) => {
-    e.preventDefault(); // Prevent default behavior to avoid issues
+    e.preventDefault();
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", stopResizing);
-    document.body.style.userSelect = "none"; // Disable text selection
+    document.body.style.userSelect = "none";
   };
 
   return (
     <>
-      {/* Drawer */}
       <Drawer
         variant="permanent"
         sx={{
           width: drawerWidth,
           flexShrink: 0,
-          [`& .MuiDrawer-paper`]: {
+          "& .MuiDrawer-paper": {
             width: drawerWidth,
             boxSizing: "border-box",
-            backgroundColor: "#99DFB2", // Apply the primary color
-            boxShadow: "none", // Remove shadow if causing darkening
-            transition: "width 0.2s ease", // Smooth transition for resizing
-            overflowX: "hidden", // Prevent horizontal scroll bar
+            backgroundColor: "var(--background2)",
+            color: "var(--text)",
+            border: "none",
+            top: "80px",
+            height: "calc(100% - 80px)",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "flex-start",
+            paddingBottom: "16px",
+            overflowX: "hidden",
+            transition: "width 0.2s ease",
           },
         }}
       >
-        <Box
-          sx={{
-            overflow: "hidden", // Prevent horizontal scrolling
-            paddingTop: 10,
-          }}
-        >
+        <Box sx={{ flexGrow: 1 }}>
           <List>
             {[
               { text: "Instructors", icon: <ContactPageIcon />, route: "AdminInstructors" },
@@ -81,18 +77,19 @@ const AdminSidebar = ({
                     setSelectedComponent(item.route);
                   }}
                   sx={{
-                    display: "flex",
+                    px: drawerWidth > 160 ? 2 : 0,
                     justifyContent: drawerWidth <= 160 ? "center" : "flex-start",
-                    alignItems: "center",
+                    "&:hover": {
+                      backgroundColor: "var(--background3)",
+                    },
                   }}
                 >
                   <ListItemIcon
                     sx={{
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
+                      color: "inherit",
                       minWidth: 0,
-                      marginRight: drawerWidth > 160 ? 2 : 0,
+                      mr: drawerWidth > 160 ? 2 : 0,
+                      justifyContent: "center",
                       width: drawerWidth <= 160 ? "100%" : "auto",
                     }}
                   >
@@ -100,7 +97,6 @@ const AdminSidebar = ({
                   </ListItemIcon>
                   {drawerWidth > 160 && <ListItemText primary={item.text} />}
                 </ListItem>
-                <Divider />
               </React.Fragment>
             ))}
           </List>

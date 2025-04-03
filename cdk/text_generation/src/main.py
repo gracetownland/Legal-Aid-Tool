@@ -166,35 +166,41 @@ maybe even some community resources able to assist in the circumstances
 
 [this is the end of the example cases. I will provide context to the case I am currently working on now].'''
 
-def get_system_prompt():    
-    bucket_name = os.environ.get("PROMPT_BUCKET_NAME")
-    
-    if not bucket_name:
-        raise ValueError("PROMPT_BUCKET_NAME is not set in environment variables")
-
-    print(f"Bucket name: {bucket_name}")
-
-    s3 = boto3.client("s3")
-    file_key = "system_prompt.txt"
+def get_system_prompt():
+    # Connect to the database
+    connection = connect_to_db()
+    if connection is None:
+        raise ValueError("Database connection failed")
 
     try:
-        # Get prompt
-        response = s3.get_object(Bucket=bucket_name, Key=file_key)
-        retrieved_prompt = response["Body"].read().decode("utf-8")
-        return retrieved_prompt
-    except botocore.exceptions.ClientError as e:
-        # Otherwise generate default if it doesn't exist yet
-        if e.response["Error"]["Code"] == "NoSuchKey":
-            print(f"Error: {file_key} not found in {bucket_name}. Creating the file with default content.")
-            
-            
-            default_prompt = get_default_system_prompt()
-            s3.put_object(Bucket=bucket_name, Key=file_key, Body=default_prompt.encode("utf-8"))
-            print(f"Created {file_key} in {bucket_name} with default content.")
-            
-            return default_prompt
+        cur = connection.cursor()
+        logger.info("Connected to RDS instance!")
+
+        # Query to get the latest system prompt based on the time_created
+        cur.execute("""
+            SELECT prompt
+            FROM system_prompt
+            ORDER BY time_created DESC
+            LIMIT 1;
+        """)
+        
+        result = cur.fetchone()
+        cur.close()
+
+        if result:
+            # Extract the prompt from the query result
+            latest_prompt = result[0]
+            logger.info("Successfully fetched the latest system prompt.")
+            return latest_prompt
         else:
-            raise
+            logger.error("No system prompt found in the database.")
+            return None
+    except Exception as e:
+        logger.error(f"Error fetching system prompt: {e}")
+        if cur:
+            cur.close()
+        connection.rollback()
+        return None
 
 
 def get_case_details(case_id):

@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import SettingsIcon from "@mui/icons-material/Settings";
 import HomeIcon from "@mui/icons-material/Home";
 import AssignmentIcon from "@mui/icons-material/Assignment";
-import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
+import TerminalIcon from '@mui/icons-material/Terminal';
 
 // Amplify
 import { signOut } from "aws-amplify/auth";
@@ -101,19 +101,11 @@ const AdminHeader = () => {
       </button>
 
       <button 
-        onClick={() => navigate("/new-case")} 
+        onClick={() => navigate("/system-prompt")} 
         className="flex flex-col items-center bg-transparent text-white hover:text-[#dde] focus:outline-none hover:outline-none"
       >
-        <CreateNewFolderIcon fontSize="large" />
-        <span>New Case</span>
-      </button>
-
-      <button 
-        onClick={() => navigate("/cases")} 
-        className="flex flex-col items-center bg-transparent text-white hover:text-[#dde] focus:outline-none hover:outline-none"
-      >
-        <AssignmentIcon fontSize="large" />
-        <span>All Cases</span>
+        <TerminalIcon fontSize="large" />
+        <span>System Prompt</span>
       </button>
 
       <button 
