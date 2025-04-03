@@ -35,7 +35,7 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: light) {
   :root {
     --text: #ffffff;
     --text-button: #0e0e0e;

@@ -59,7 +59,8 @@ def create_dynamodb_history_table(table_name: str) -> bool:
 
 def get_bedrock_llm(
     bedrock_llm_id: str,
-    temperature: float = 0
+    temperature: float = 0,
+    max_tokens: int = 4096,
 ) -> ChatBedrock:
     """
     Retrieve a Bedrock LLM instance based on the provided model ID.
@@ -74,7 +75,7 @@ def get_bedrock_llm(
     """
     return ChatBedrock(
         model_id=bedrock_llm_id,
-        model_kwargs=dict(temperature=temperature),
+        model_kwargs=dict(temperature=temperature, max_tokens=max_tokens),
     )
 
 def get_student_query(raw_query: str) -> str:

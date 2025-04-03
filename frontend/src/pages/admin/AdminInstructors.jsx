@@ -212,7 +212,7 @@ export const AdminInstructors = () => {
             variant="contained"
             color="primary"
             onClick={() => setOpenAddDialog(true)}
-            sx={{ fontSize: 14 }}
+            sx={{ fontSize: 14, color: "white", backgroundColor: "var(--primary)" }}
           >
             Add Instructor
           </Button>
