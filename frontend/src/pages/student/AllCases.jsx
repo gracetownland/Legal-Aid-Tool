@@ -115,10 +115,25 @@ const ViewAllCases = () => {
             variant="outlined"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            sx={{ flex: 1 }}
+            sx={{
+              flex: 1,
+              '& .MuiOutlinedInput-root': {
+                color: 'var(--text)',
+                '& fieldset': {
+                  borderColor: 'var(--border)',
+                },
+                '&:hover fieldset': {
+                  borderColor: 'var(--border)',
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: 'var(--border)',
+                },
+              },
+              '& .MuiInputLabel-root': {
+                color: 'var(--text)',
+              },
+            }}
           />
-
-
         </Box>
 
         {/* Case Cards Section */}

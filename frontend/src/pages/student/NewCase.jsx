@@ -54,20 +54,27 @@ const NewCaseForm = () => {
     setError(null);
 
     const caseData = {
-      case_title: "New Case",
+      case_title: "New Case", // Temporary placeholder title
       case_type: formData.broadAreaOfLaw,
       jurisdiction: formData.jurisdiction,
       case_description: formData.legalMatterSummary,
     };
 
     try {
+      console.log("Submitting the case...");
+
       const { tokens } = await fetchAuthSession();
       if (!tokens || !tokens.idToken) throw new Error("Authentication failed. No valid token.");
+      console.log("Authentication successful, tokens obtained.");
 
       const userAttributes = await fetchUserAttributes();
       const cognito_id = tokens.idToken.payload.sub;
       const token = tokens.idToken;
 
+      console.log("User attributes fetched, cognito_id:", cognito_id);
+
+      // Step 1: Create the case in the database
+      console.log("Creating the case in the database...");
       const response = await fetch(
         `${import.meta.env.VITE_API_ENDPOINT}student/new_case?` +
           `user_id=${encodeURIComponent(cognito_id)}`,
@@ -82,10 +89,54 @@ const NewCaseForm = () => {
       );
 
       const data = await response.json();  
-      
+
+      console.log("Response from creating case:", data);
+
       if (!response.ok) throw new Error(data.error || "Failed to submit case");
 
+      // Step 2: Generate a title for the newly created case
+      console.log("Generating title for the case...");
+      const get_title = await fetch(`${import.meta.env.VITE_API_ENDPOINT}student/title_generation?case_id=${data.case_id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token
+        }
+      });
 
+      const titleData = await get_title.json();
+      console.log("Title generated:", titleData);
+
+      if (!get_title.ok) throw new Error(titleData.error || "Failed to generate title");
+
+      // Step 3: Optionally update the case with the new title
+      const updatedCaseData = {
+        case_title: titleData.generated_title, 
+        case_type: formData.broadAreaOfLaw,
+        jurisdiction: formData.jurisdiction,
+        case_description: formData.legalMatterSummary,
+      };
+
+      console.log("Updating the case with the generated title...");
+      const updateResponse = await fetch(
+        `${import.meta.env.VITE_API_ENDPOINT}student/edit_case?case_id=${data.case_id}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: token,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(updatedCaseData),
+        }
+      );
+
+      const updateData = await updateResponse;
+      console.log("Response from updating case title:", updateData);
+
+      if (!updateResponse.ok) throw new Error(updateData.error || "Failed to update case title");
+
+      // Step 4: Continue with the rest of the logic (e.g., generating the legal summary)
+      console.log("Generating legal matter summary...");
       const init_llm_response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}student/text_generation?case_id=${data.case_id}`, {
         method: 'POST',
         headers: {
@@ -93,19 +144,23 @@ const NewCaseForm = () => {
           Authorization: token
         },
         body: JSON.stringify({
-          message_content: "Please provide a brief summary of the legal matter first to show me all of the legal case facts and relevant legal resources I can refer to, using legal vocabulary. In addition to this breif summary, list some possible next steps and follow up questions for me to share with my client."
+          message_content: "Please provide a brief summary of the legal matter first to show me all of the legal case facts and relevant legal resources I can refer to, using legal vocabulary. In addition to this brief summary, list some possible next steps and follow-up questions for me to share with my client."
         })
       });
 
       if (!init_llm_response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+        throw new Error(`HTTP error! Status: ${init_llm_response.status}`);
       }
 
-
+      console.log("Legal summary generated, redirecting to interview assistant...");
+      // Step 5: Redirect to the interview-assistant page
       navigate(`/case/${data.case_id}/interview-assistant`);
+
     } catch (err) {
+      console.error("Error occurred:", err);
       setError(err.message);
     } finally {
+      console.log("Submission process completed.");
       setIsSubmitting(false);
     }
   };
@@ -173,7 +228,19 @@ const NewCaseForm = () => {
               <FormControl fullWidth sx={{ mb: 2, textAlign: "left" }}>
                 <InputLabel>Province</InputLabel>
                 <Select name="province" value={formData.province} onChange={handleChange}>
-                  {["British Columbia", "Ontario", "Quebec", "Alberta", "Nova Scotia"].map(
+                  {["Alberta",
+  "British Columbia",
+  "Manitoba",
+  "New Brunswick",
+  "Newfoundland and Labrador",
+  "Nova Scotia",
+  "Ontario",
+  "Prince Edward Island",
+  "Quebec",
+  "Saskatchewan",
+  "Northwest Territories",
+  "Nunavut",
+  "Yukon"].map(
                     (province) => (
                       <MenuItem key={province} value={province}>
                         {province}

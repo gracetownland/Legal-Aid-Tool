@@ -8,6 +8,7 @@ import { fetchAuthSession } from "aws-amplify/auth";
 import StudentHeader from "../../components/StudentHeader";
 import SideMenu from "./SideMenu";
 import TypingIndicator from "./TypingIndicator";
+import { useRef } from "react"; // Import useRef at the top
 
 const InterviewAssistant = () => {
   const { caseId } = useParams();
@@ -15,6 +16,8 @@ const InterviewAssistant = () => {
 
   const [caseData, setCaseData] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const messagesEndRef = useRef(null);
 
   useEffect(() => {
     const fetchCaseData = async () => {
@@ -44,6 +47,8 @@ const InterviewAssistant = () => {
         setLoading(false);
       }
     };
+
+    
 
     const fetchMessages = async () => {
       setLoading(true);
@@ -125,7 +130,8 @@ const InterviewAssistant = () => {
   };
 
   const handleKeyPress = (event) => {
-    if (event.key === 'Enter') {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault(); // Prevent default behavior of Enter key
       handleSendMessage();
     }
   };
@@ -192,7 +198,6 @@ const InterviewAssistant = () => {
         padding: 2,
         backgroundColor: "transparent",
         color: "var(--text)",
-
         marginTop: '75px'
       }}
     >
@@ -205,112 +210,143 @@ const InterviewAssistant = () => {
 
           {/* Case Title and Information */}
           <Box>
-          <Typography variant="h6" sx={{ fontWeight: 600, marginBottom: 2, textAlign: "left"}}>
-            Case #{caseData?.case_hash || "Case Title Not Available"}
-          </Typography>
-          <Typography variant="body2" sx={{ marginBottom: 2, textAlign: "left" }}>
-            <strong>Case Overview:</strong> {caseData?.case_description || "Overview information not available."}
-          </Typography>
-          <Divider sx={{  borderColor: "var(--text)" }} />
+            <Typography variant="h6" sx={{ fontWeight: 600, marginBottom: 2, textAlign: "left"}}>
+              Case #{caseData?.case_hash || "Case Title Not Available"}
+            </Typography>
+            <Typography variant="body2" sx={{ marginBottom: 2, textAlign: "left" }}>
+              <strong>Case Overview:</strong> {caseData?.case_description || "Overview information not available."}
+            </Typography>
+            <Divider sx={{ borderColor: "var(--text)" }} />
           </Box>
-
-          
 
           {/* Loading screen */}
           {loading ? (
-  <Box 
-    sx={{
-      display: "flex", 
-      justifyContent: "center", 
-      alignItems: "center", 
-      height: "500px", 
-      backgroundColor: "rgba(255, 255, 255, 0.3)", // White translucent background
-      borderRadius: 2, // Optional: Adds rounded corners for a smoother look
-      padding: 2, // Optional: Adds padding around the progress circle
-      position: "absolute", // Optional: Makes sure it overlays the content if needed
-      top: 0, 
-      left: 0, 
-      width: "100%", 
-      zIndex: 999, // Ensure it's on top of other elements
-    }}
-  >
-    <CircularProgress sx={{ width: '150px' }} /> {/* Increased size for the circular progress */}
-  </Box>
-) : (
-  <Box sx={{ overflowY: "auto", marginBottom: 2 }}>
-    {messages.map((message, index) => (
-      <Box
-        key={index}
-        sx={{
-          display: "flex",
-          flexDirection: message.sender === "bot" ? "row" : "row-reverse",
-          marginTop: 3,
-          marginBottom: 2,
-          fontFamily: "'Roboto', sans-serif",
-          boxShadow: 'none'
-        }}
-      >
-        <Paper
-          sx={{
-            maxWidth: "60%",
-            padding: "0 1em",
-            backgroundColor: message.sender === "bot" ? "var(--bot-text)" : "var(--sender-text)",
-            borderRadius: 2,
-            boxShadow: 'none',
-            marginLeft: message.sender === "bot" ? 0 : "auto",
-            marginRight: message.sender === "bot" ? "auto" : 0,
-            color: "var(--text)",
-            fontFamily: "'Roboto', sans-serif"
-          }}
-        >
-          <Typography variant="body1" sx={{ textAlign: "left" }}>
-            <div className="markdown">
-              <ReactMarkdown>{message.text}</ReactMarkdown>
-            </div>
-          </Typography>
-        </Paper>
-      </Box>
-    ))}
-  </Box>
-)}
-
-
-          {isAItyping && <TypingIndicator />}
-
-          <Box sx={{ display: "flex", alignItems: "center" }}>
-            <TextField
-              label="Type here..."
-              variant="outlined"
-              fullWidth
-              multiline
-              value={userInput}
-              onChange={(e) => setUserInput(e.target.value)}
+            <Box 
               sx={{
-                marginRight: 2,
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#808080', // Default border color (gray)
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#808080', // Hover border color (gray)
-                },
+                display: "flex", 
+                justifyContent: "center", 
+                alignItems: "center", 
+                height: "500px", 
+                backgroundColor: "rgba(255, 255, 255, 0.3)", // White translucent background
+                borderRadius: 2, // Optional: Adds rounded corners for a smoother look
+                padding: 2, // Optional: Adds padding around the progress circle
+                position: "absolute", // Optional: Makes sure it overlays the content if needed
+                top: 0, 
+                left: 0, 
+                width: "100%", 
+                zIndex: 999, // Ensure it's on top of other elements
               }}
-              onKeyDown={handleKeyPress}
-              InputLabelProps={{
-                style: {
-                  backgroundColor: "transparent",
-                  color: "#808080" // Label color (gray)
-                },
+            >
+              <CircularProgress sx={{ width: '150px', color: 'var(--text)' }} /> {/* Increased size for the circular progress */}
+            </Box>
+          ) : (
+            <Box sx={{ overflowY: "auto", marginBottom: 2 }}>
+              {messages.map((message, index) => (
+                <Box
+                  key={index}
+                  sx={{
+                    display: "flex",
+                    flexDirection: message.sender === "bot" ? "row" : "row-reverse",
+                    marginTop: 3,
+                    marginBottom: 10,
+                    fontFamily: "'Roboto', sans-serif",
+                    boxShadow: 'none'
+                  }}
+                >
+                  <Paper
+                    sx={{
+                      maxWidth: "60%",
+                      padding: "0 1em",
+                      backgroundColor: message.sender === "bot" ? "var(--bot-text)" : "var(--sender-text)",
+                      borderRadius: 2,
+                      boxShadow: 'none',
+                      marginLeft: message.sender === "bot" ? 0 : "auto",
+                      marginRight: message.sender === "bot" ? "auto" : 0,
+                      color: "var(--text)",
+                      fontFamily: "'Roboto', sans-serif"
+                    }}
+                  >
+                    <Typography variant="body1" sx={{ textAlign: "left" }}>
+                      <div className="markdown">
+                        <ReactMarkdown>{message.text}</ReactMarkdown>
+                      </div>
+                    </Typography>
+                  </Paper>
+                </Box>
+              ))}
+            </Box>
+          )}
+
+          {isAItyping && (
+            <Box sx={{ display: "flex", justifyContent: "flex-start", marginBottom: 6, marginTop: 0 }}>
+              <TypingIndicator />
+            </Box>
+          )}
+
+          <Box 
+            sx={{ 
+              position: "fixed", 
+              bottom: 0, 
+              left: 0, 
+              width: "100%", 
+              display: "flex", 
+              justifyContent: "center", 
+              backgroundColor: "var(--background)", 
+              boxShadow: "0 -2px 5px rgba(0,0,0,0.1)", 
+              padding: 2 
+            }}
+          >
+            <Box 
+              sx={{ 
+                position: "fixed", 
+                bottom: 0, 
+                right: 0,
+                minHeight: "65px",
+                width: "calc(100% - 250px)",  // Exclude sidebar
+                minWidth: "70vw", // Ensure it doesn't get too small
+                display: "flex", 
+                justifyContent: "center",
+                backgroundColor: "var(--background)", 
+                boxShadow: "none", 
+                padding: 2 
               }}
-              InputProps={{
-                style: {
-                  backgroundColor: "transparent",
-                  color: "var(--text)", // Text color
-                },
-              }}
-            />
-            <Button variant="contained" sx={{ color: "#ffffff", backgroundColor: "var(--secondary)" }} onClick={handleSendMessage}>
-              Send
-            </Button>
+            >
+              <Box 
+                sx={{ 
+                  width: "100%", 
+                  maxWidth: "90vw",  // Keep it readable
+                  maxHeight: "650px", // Limit height for better UX
+                  display: "flex", 
+                  alignItems: "center" 
+                }}
+              >
+                <TextField
+                  label="Type here..."
+                  variant="outlined"
+                  fullWidth
+                  multiline
+                  value={userInput}
+                  onChange={(e) => setUserInput(e.target.value)}
+                  sx={{
+                    maxHeight: "300px",
+                    overflowY: "auto",
+                    marginRight: 2,
+                    '& .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--border)' },
+                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--border)' },
+                  }}
+                  onKeyDown={handleKeyPress}
+                  InputLabelProps={{ style: { backgroundColor: "transparent", color: "var(--text)" } }}
+                  InputProps={{ style: { backgroundColor: "transparent", color: "var(--text)" } }}
+                />
+                <Button 
+                  variant="contained" 
+                  sx={{ color: "#ffffff", backgroundColor: "var(--secondary)", minHeight: "50px" }} 
+                  onClick={handleSendMessage}
+                >
+                  Send
+                </Button>
+              </Box>
+            </Box>
           </Box>
         </Box>
       </Box>

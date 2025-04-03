@@ -49,7 +49,7 @@
     --sender-text: #424141;
     --input: #5c5c5c;
     --placeholder-text: #8e8e8e;
-    --border: #464646;
+    --border: #5c5c5c;
 
     color: var(--text);
     background-color: var(--background);
