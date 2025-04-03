@@ -168,6 +168,7 @@ export default function EditSystemPrompts() {
         <Card sx={{ 
           background: "transparent", 
           color: "var(--text)", 
+          marginTop: '20px',
           border: "1px solid var(--border)", 
           boxShadow: 'none',
           alignItems: 'center',          
@@ -239,7 +240,7 @@ export default function EditSystemPrompts() {
         </Card>
         
       ) : (
-        <Typography variant="body1" sx={{ color: "var(--text-light)", textAlign: "center" }}>
+        <Typography variant="body1" sx={{ color: "#808080", textAlign: "center", marginTop: "20px" }}>
           No previous prompts available.
         </Typography>
         
