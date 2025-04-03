@@ -1,60 +1,106 @@
 import { useEffect, useState } from "react";
 import { fetchAuthSession } from "aws-amplify/auth";
 import { Button, TextField, Card, CardContent, Typography, IconButton } from "@mui/material";
-import StudentHeader from "../../components/StudentHeader";
+import AdminHeader from "../../components/AdminHeader";
 import HistoryIcon from '@mui/icons-material/History';
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import { use } from "react";
 
 export default function EditSystemPrompts() {
-  const [currentPrompt, setCurrentPrompt] = useState("This is the current prompt...");
-  const [previousPrompts, setPreviousPrompts] = useState([
-    { text: "Previous prompt 1", timestamp: "March 30, 2025 14:23" },
-    { text: "Previous prompt 2", timestamp: "March 29, 2025 10:15" },
-    { text: "Previous prompt 3", timestamp: "March 28, 2025 18:42" }
-  ]);
+  const [currentPrompt, setCurrentPrompt] = useState("");
+  const [previousPrompts, setPreviousPrompts] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [restoring, setRestoring] = useState(false);
+
+  const fetchCurrentPrompts = async () => {
+    const session = await fetchAuthSession();
+    var token = session.tokens.idToken
+    const prompt = await fetch(
+      `${import.meta.env.VITE_API_ENDPOINT}admin/prompt`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: token,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    const data = await prompt.json();
+    return data;
+  };
+
+  const fetchAndSetPrompts = async () => {
+    setLoading(true);
+    const allprompts = await fetchCurrentPrompts();
+    console.log("All prompts:", allprompts);
+    
+    if (allprompts.length > 0) {
+      setCurrentPrompt(allprompts[0].prompt);
+      setPreviousPrompts(allprompts.slice(1));
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
-    const fetchCurrentPrompt = async () => {
-      const token = tokens.idToken;
-      const prompt = await fetch(
-        `${import.meta.env.VITE_API_ENDPOINT}admin/get_prompt`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: token,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(caseData),
-        }
-      );
-    };
-
-    setLoading(true);
-    fetchCurrentPrompt();
-    setLoading(false);
+    fetchAndSetPrompts();
   }, []);
 
   const savePrompt = async () => {
     setSaving(true);
 
-    setTimeout(() => {
-      const newHistory = { text: currentPrompt, timestamp: new Date().toLocaleString() };
-      setPreviousPrompts([newHistory, ...previousPrompts]); 
-      setCurrentIndex(0); // Reset to most recent
-      console.log("Prompt updated successfully");
-      setSaving(false);
-    }, 1000);
+    const session = await fetchAuthSession();
+    var token = session.tokens.idToken
+    const response = await fetch(
+      `${import.meta.env.VITE_API_ENDPOINT}admin/prompt`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: token,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          system_prompt: currentPrompt,
+        }),
+      }
+    );
+
+    fetchAndSetPrompts();
+    
+    setSaving(false);
   };
 
-  if (loading) return <LoadingScreen />;
+  const restorePrompt = async () => {
+    setRestoring(true);
+
+    const session = await fetchAuthSession();
+    var token = session.tokens.idToken
+    const response = await fetch(
+      `${import.meta.env.VITE_API_ENDPOINT}admin/prompt`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: token,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          system_prompt: previousPrompts[currentIndex].prompt,
+        }),
+      }
+    );
+
+    fetchAndSetPrompts();
+    
+    setRestoring(false);
+  };
+
+  if (loading) return <div>Loading...</div>;
 
   return (
     <div className="max-w-4xl mx-auto p-4">
-      <StudentHeader />
+      <AdminHeader />
 
       {/* Current Prompt */}
       <Card sx={{ 
@@ -114,24 +160,6 @@ export default function EditSystemPrompts() {
             >
               {saving ? "Saving..." : "Save Prompt"}
             </Button>
-
-            <Button
-              disabled={saving}
-              sx={{
-                width: "50px",
-                height: "40px",
-                backgroundColor: "var(--background3)",
-                color: "var(--text)",
-                marginLeft: "10px",
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                "&:hover": { backgroundColor: "var(--background3)", opacity: 0.8 },
-                "&:disabled": { backgroundColor: "var(--border)" }
-              }}
-            >
-              <HistoryIcon sx={{ fontSize: "20px" }} />
-            </Button>
           </div>
         </CardContent>
       </Card>
@@ -140,6 +168,7 @@ export default function EditSystemPrompts() {
         <Card sx={{ 
           background: "transparent", 
           color: "var(--text)", 
+          marginTop: '20px',
           border: "1px solid var(--border)", 
           boxShadow: 'none',
           alignItems: 'center',          
@@ -170,11 +199,11 @@ export default function EditSystemPrompts() {
 
           <CardContent sx={{ flexGrow: 1, textAlign: 'center' }}>
           <Typography variant="caption" sx={{ color: "var(--text-light)", marginTop: "5px", display: "block" }}>
-              {previousPrompts[currentIndex].timestamp}
+              {previousPrompts[currentIndex].time_created}
             </Typography>
 
             <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}>
-              {previousPrompts[currentIndex].text}
+              {previousPrompts[currentIndex].prompt}
             </Typography>
             
           </CardContent>
@@ -193,7 +222,7 @@ export default function EditSystemPrompts() {
         </Card>
         <div>       
         <Button
-              onClick={savePrompt}
+              onClick={restorePrompt}
               disabled={saving}
               sx={{
                 backgroundColor: "var(--secondary)",
@@ -205,13 +234,13 @@ export default function EditSystemPrompts() {
           
               }}
             >
-              {saving ? "Restoring..." : "Restore Prompt"}
+              {restoring ? "Restoring..." : "Restore Prompt"}
             </Button>
             </div>
         </Card>
         
       ) : (
-        <Typography variant="body1" sx={{ color: "var(--text-light)", textAlign: "center" }}>
+        <Typography variant="body1" sx={{ color: "#808080", textAlign: "center", marginTop: "20px" }}>
           No previous prompts available.
         </Typography>
         

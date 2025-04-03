@@ -36,7 +36,7 @@ def get_bedrock_llm(
     return ChatBedrockConverse(
         model=bedrock_llm_id,
         temperature=temperature,
-        max_tokens=4000
+        max_tokens=2048
     )
 
 def retrieve_dynamodb_history(table_name: str, session_id: str) -> list:
@@ -45,7 +45,7 @@ def retrieve_dynamodb_history(table_name: str, session_id: str) -> list:
     
     Args:
         table_name (str): Name of the DynamoDB table storing chat history.
-        session_id (str): Unique identifier for the conversation session.
+        case_id (str): Unique identifier for the conversation session.
     
     Returns:
         list: List of message dictionaries from the conversation history.

@@ -117,20 +117,19 @@ exports.handler = async (event) => {
           response.body = JSON.stringify({ error: "Invalid value" });
         }
         break;
-      case "GET /instructor/groups":
+      case "GET /instructor/cases_to_review":
         if (
           event.queryStringParameters != null &&
-          event.queryStringParameters.email
+          event.queryStringParameters.cognito_id
         ) {
-          const instructorEmail = event.queryStringParameters.email;
+          const cognito_id = event.queryStringParameters.cognito_id;
 
           try {
             // First, get the user ID using the email
             const userIdResult = await sqlConnection`
                 SELECT user_id
                 FROM "users"
-                WHERE user_email = ${instructorEmail}
-                LIMIT 1;
+                WHERE cognito_id = ${cognito_id};
               `;
 
             const userId = userIdResult[0]?.user_id;
@@ -141,14 +140,11 @@ exports.handler = async (event) => {
               break;
             }
 
-            // Query to get all simulation groups where the instructor is enrolled
+            // Query to get all cases sent for review
             const data = await sqlConnection`
-                SELECT g.*
-                FROM "enrolments" e
-                JOIN "simulation_groups" g ON e.simulation_group_id = g.simulation_group_id
-                WHERE e.user_id = ${userId}
-                AND e.enrolment_type = 'instructor'
-                ORDER BY g.group_name, g.simulation_group_id;
+                SELECT *
+                FROM cases
+                WHERE sent_to_review = true;
               `;
 
             response.statusCode = 200;

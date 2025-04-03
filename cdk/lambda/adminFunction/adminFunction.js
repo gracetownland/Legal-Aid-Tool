@@ -53,20 +53,6 @@ exports.handler = async (event) => {
           response.body = "instructor_email is required";
         }
         break;
-      case "GET /admin/simulation_groups":
-        try {
-          // Query all simulation groups from simulation_groups table
-          const simulationGroups = await sqlConnectionTableCreator`
-                    SELECT *
-                    FROM "simulation_groups";
-                `;
-
-          response.body = JSON.stringify(simulationGroups);
-        } catch (err) {
-          response.statusCode = 500;
-          response.body = JSON.stringify({ error: "Internal server error" });
-        }
-        break;
         case "POST /admin/enroll_instructor":
           if (
             event.queryStringParameters != null &&
@@ -146,78 +132,40 @@ exports.handler = async (event) => {
             response.body = "simulation_group_id and instructor_email are required";
           }
           break;
-      case "POST /admin/create_simulation_group":
-        if (
-          event.queryStringParameters != null &&
-          event.queryStringParameters.group_name &&
-          event.queryStringParameters.group_access_code &&
-          event.queryStringParameters.group_description &&
-          event.queryStringParameters.group_student_access &&
-          event.body
-        ) {
-          try {
-            console.log("simulation group creation start");
-            const {
-              group_name,
-              group_access_code,
-              group_description,
-              group_student_access,
-            } = event.queryStringParameters;
-      
+      case "POST /admin/prompt": // Change to POST if inserting a new record
+        try {
+            console.log("System prompt update initiated");
+    
+            // Ensure event.body exists and is valid JSON
+            if (!event.body) throw new Error("Request body is missing");
+    
             const { system_prompt } = JSON.parse(event.body);
-      
-            // Insert new simulation group into simulation_groups table
-            const newSimulationGroup = await sqlConnectionTableCreator`
-                  INSERT INTO "simulation_groups" (
-                      simulation_group_id,
-                      group_name,
-                      group_description,
-                      group_access_code,
-                      group_student_access,
-                      system_prompt
-                  )
-                  VALUES (
-                      uuid_generate_v4(),
-                      ${group_name},
-                      ${group_description}, -- optional, can be null if not provided
-                      ${group_access_code},
-                      ${group_student_access.toLowerCase() === "true"},
-                      ${system_prompt}
-                  )
-                  RETURNING *;
-              `;
-      
-            response.body = JSON.stringify(newSimulationGroup[0]);
-          } catch (err) {
+    
+            if (!system_prompt) throw new Error("Missing 'system_prompt' in request body");
+    
+            // Insert new prompt into system_prompt table
+            const insertPrompt = await sqlConnectionTableCreator`
+                INSERT INTO "system_prompt" (prompt)
+                VALUES (${system_prompt})
+                RETURNING *;
+            `;
+    
+            response.body = JSON.stringify(insertPrompt[0]); // Return inserted record
+        } catch (err) {
             response.statusCode = 500;
-            console.log(err);
-            response.body = JSON.stringify({ error: "Internal server error" });
-          }
-        } else {
-          response.statusCode = 400;
-          response.body = "Missing required parameters";
+            console.error("Error inserting system prompt:", err);
+            response.body = JSON.stringify({ error: err.message || "Internal server error" });
         }
         break;
-      case "GET /admin/groupInstructors":
-        if (
-          event.queryStringParameters != null &&
-          event.queryStringParameters.simulation_group_id
-        ) {
-          const { simulation_group_id } = event.queryStringParameters;
+      case "GET /admin/prompt":
+        // SQL query to fetch ALL past prompts
+        const system_prompts = await sqlConnectionTableCreator`
+            SELECT prompt, time_created
+            FROM "system_prompt"
+            ORDER BY time_created DESC;
+          `;
 
-          // SQL query to fetch all instructors for a given group
-          const instructors = await sqlConnectionTableCreator`
-              SELECT u.user_email, u.first_name, u.last_name
-              FROM "enrolments" e
-              JOIN "users" u ON e.user_id = u.user_id
-              WHERE e.simulation_group_id = ${simulation_group_id} AND e.enrolment_type = 'instructor';
-            `;
-
-          response.body = JSON.stringify(instructors);
-        } else {
-          response.statusCode = 400;
-          response.body = JSON.stringify({ error: "simulation_group_id is required" });
-        }
+        response.body = JSON.stringify(system_prompts);
         break;
       case "GET /admin/instructorGroups":
         if (

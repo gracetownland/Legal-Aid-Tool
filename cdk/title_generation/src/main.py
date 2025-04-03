@@ -131,7 +131,7 @@ def get_case_details(case_id):
         cur = connection.cursor()
         logger.info("Connected to RDS instance!")
         cur.execute("""
-            SELECT case_title, case_type, jurisdiction, case_description
+            SELECT case_type, jurisdiction, case_description
             FROM "cases"
             WHERE case_id = %s;
         """, (case_id,))
@@ -142,24 +142,24 @@ def get_case_details(case_id):
         cur.close()
 
         if result:
-            case_title, case_type, jurisdiction, case_description = result
+            case_type, jurisdiction, case_description = result
             logger.info(f"client details found for case_id {case_id}: "
-                        f"Title: {case_title} \n Case type: {case_type} \n Jurisdiction: {jurisdiction} \n Case description: {case_description}")
+                        f"Case type: {case_type} \n Jurisdiction: {jurisdiction} \n Case description: {case_description}")
             return case_type, jurisdiction, case_description
         else:
             logger.warning(f"No details found for case_id {case_id}")
-            return None, None, None, None
+            return None, None, None
 
     except Exception as e:
         logger.error(f"Error fetching case details: {e}")
         if cur:
             cur.close()
         connection.rollback()
-        return None, None, None, None
+        return None, None, None
 
 
 def handler(event, context):
-    logger.info("Text Generation Lambda function is called!")
+    logger.info("Title Generation Lambda function is called!")
     initialize_constants()
 
     query_params = event.get("queryStringParameters", {})
