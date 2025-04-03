@@ -228,7 +228,19 @@ const NewCaseForm = () => {
               <FormControl fullWidth sx={{ mb: 2, textAlign: "left" }}>
                 <InputLabel>Province</InputLabel>
                 <Select name="province" value={formData.province} onChange={handleChange}>
-                  {["British Columbia", "Ontario", "Quebec", "Alberta", "Nova Scotia"].map(
+                  {["Alberta",
+  "British Columbia",
+  "Manitoba",
+  "New Brunswick",
+  "Newfoundland and Labrador",
+  "Nova Scotia",
+  "Ontario",
+  "Prince Edward Island",
+  "Quebec",
+  "Saskatchewan",
+  "Northwest Territories",
+  "Nunavut",
+  "Yukon"].map(
                     (province) => (
                       <MenuItem key={province} value={province}>
                         {province}
