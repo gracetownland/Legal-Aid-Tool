@@ -156,9 +156,12 @@ export const StudentHomepage = () => {
                 gap: 2,
                 paddingLeft: 3,
                 paddingRight: 3,
+                backgroundColor: 'var(--background)',
               }}
             >
+              {cases.length > 0 && (
               <Typography variant="h5" sx={{textAlign: "left", fontWeight: 600, marginLeft: 3, marginTop: 2}}>Latest Cases</Typography>
+              )}
               <Stack sx={{ flex: 1, width: "100%" }}>
                 {loading ? (
                   <Box
@@ -170,10 +173,10 @@ export const StudentHomepage = () => {
                       width: "100%",
                     }}
                   >
-                    <l-ring size="50" stroke="4" speed="2" color="black"></l-ring>
+                    <l-ring size="50" stroke="4" speed="2" color="var(--text)"></l-ring>
                   </Box>
                 ) : error ? (
-                  <Box sx={{ textAlign: "center", mt: 2 }}>
+                  <Box sx={{ textAlign: "center", mt: 2}}>
                     <Typography variant="h6" sx={{ color: "red" }}>
                       {error}
                     </Typography>
@@ -198,7 +201,7 @@ export const StudentHomepage = () => {
                       <Typography
                         variant="body1"
                         sx={{
-                          color: theme.palette.text.primary,
+                          color: '#808080',
                           textAlign: "center",
                           mt: 2,
                           fontSize: "1.5rem",
@@ -215,7 +218,11 @@ export const StudentHomepage = () => {
                                 mb: 2,
                                 mt: 2,
                                 transition: "transform 0.3s ease",
-                                "&:hover": { transform: "scale(1.05)" },
+                                "&:hover": { transform: "scale(1.01)" },
+                                backgroundColor: "var(--background)",
+                                color: "var(--text)",
+                                boxShadow: "none",
+                                border: "1px solid var(--border)",
                               }}
                             >
                               <CardContent

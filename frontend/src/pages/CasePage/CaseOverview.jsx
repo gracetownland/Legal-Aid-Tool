@@ -197,35 +197,36 @@ const CaseOverview = () => {
                 </Button>
               </Stack>
 
-              <Card sx={{ mb: 3, textAlign: "left" }}>
-                <CardContent>
-                  {editMode ? (
-                    <>
-                      <TextField
-                        label="Case Title"
-                        fullWidth
-                        value={editedCase.case_title}
-                        onChange={(e) => setEditedCase({ ...editedCase, case_title: e.target.value })}
-                        sx={{ mb: 2 }}
-                      />
-                      <TextField
-                        label="Case Description"
-                        fullWidth
-                        multiline
-                        rows={4}
-                        value={editedCase.case_description}
-                        onChange={(e) => setEditedCase({ ...editedCase, case_description: e.target.value })}
-                        sx={{ mb: 2 }}
-                      />
-                    </>
-                  ) : (
-                    <>
-                      <Typography variant="h6">{caseData.case_title}</Typography>
-                      <Typography variant="body2">{caseData.case_description}</Typography>
-                    </>
-                  )}
-                </CardContent>
-              </Card>
+              <Card sx={{ mb: 3, textAlign: "left", color: 'var(--text)',backgroundColor: "var(--background3)", boxShadow: 'none', border: '1px solid var(--border)' }}>
+              <Card sx={{ mb: 3, textAlign: "left", color: 'var(--text)',backgroundColor: "var(--background3)", boxShadow: 'none', border: '1px solid var(--border)' }}>
+  <CardContent>
+    {editMode ? (
+      <>
+        <TextField
+          label="Case Title"
+          fullWidth
+          value={editedCase.case_title}
+          onChange={(e) => setEditedCase({ ...editedCase, case_title: e.target.value })}
+          sx={{ mb: 2 }}
+        />
+        <TextField
+          label="Case Description"
+          fullWidth
+          multiline
+          rows={4}
+          value={editedCase.case_description}
+          onChange={(e) => setEditedCase({ ...editedCase, case_description: e.target.value })}
+          sx={{ mb: 2 }}
+        />
+      </>
+    ) : (
+      <>
+        <Typography variant="h6">{caseData.case_title}</Typography>
+        <Typography variant="body2">{caseData.case_description}</Typography>
+      </>
+    )}
+  </CardContent>
+</Card>
 
               <CardContent>
                 <Grid container spacing={3} sx={{ textAlign: "left"}}>
