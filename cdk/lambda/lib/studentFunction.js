@@ -492,44 +492,6 @@ exports.handler = async (event) => {
          
         break;
 
-
-        case "PUT /student/update_notes":
-          if (
-            event.queryStringParameters != null &&
-            event.queryStringParameters.case_id 
-        ) {
-            const { case_id } = event.queryStringParameters;
-            
-            const {notes} = JSON.parse(event.body || "{}");
-
-            try {
-              // Update the patient details in the patients table
-              await sqlConnection`
-                  UPDATE "cases"
-                  SET 
-                      case_title = ${case_title},
-                      case_type = ${case_type},
-                      case_description = ${case_description},
-                      status = ${status},
-                      jurisdiction = ${jurisdiction} 
-                  WHERE case_id = ${case_id}; 
-              `;
-              response.statusCode = 200;
-              response.body = JSON.stringify({
-                  message: "Case Updated Successfully",
-              });
-          } catch (err) {
-              response.statusCode = 500;
-              console.error(err);
-              response.body = JSON.stringify({
-                  error: "Internal server error",
-              });
-          }
-      }
-
-        break;
-
-
         case "POST /student/create_ai_message":
          
         break;
