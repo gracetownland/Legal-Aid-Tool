@@ -241,7 +241,7 @@ const CaseOverview = () => {
                       onChange={(e) => setFeedback(e.target.value)}
                       sx={{ mb: 2 }}
                     />
-                    <Button variant="contained" color="primary" onClick={handleInstructorFeedbackSubmit}>
+                    <Button variant="contained" color="secondary" onClick={handleInstructorFeedbackSubmit}>
                       Submit Feedback
                     </Button>
                   </CardContent>
@@ -284,7 +284,7 @@ const CaseOverview = () => {
     variant="contained"
     color="success"
     sx={{ mt: 2 }}
-    onClick={handleSaveEdit} // You’ll define this function
+    onClick={handleSaveEdit} 
   >
     Save Changes
   </Button>

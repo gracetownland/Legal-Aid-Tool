@@ -80,11 +80,20 @@ const InstructorHomepage = () => {
                 <Grid item xs={12} sm={6} md={4} key={index}>
                   <Card sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
                     <CardContent sx={{ flex: 1 }}>
+                    <Typography
+                                  sx={{
+                                    color: "grey",
+                                    fontSize: "0.85rem",
+                                    fontWeight: 500,
+                                  }}
+                                >
+                                  Case #{caseItem.case_hash}
+                                </Typography>
                       <Typography variant="h6" component="div">
                         {caseItem.case_title}
                       </Typography>
                       <Typography variant="body2" color="text.secondary" sx={{ marginTop: 1 }}>
-                        <strong>Submitted By:</strong> {caseItem.user_id}
+                        <strong>Submitted By:</strong> Zayan
                       </Typography>
                       <Typography variant="body2" color="text.secondary" sx={{ marginTop: 1 }}>
                         <strong>Last Updated:</strong> {new Date(caseItem.last_updated).toLocaleDateString()}
@@ -103,9 +112,6 @@ const InstructorHomepage = () => {
                                                       >
                                                         View Case
                                                       </Button>
-                      <Button size="small" color="secondary">
-                        Review
-                      </Button>
                     </CardActions>
                   </Card>
                 </Grid>

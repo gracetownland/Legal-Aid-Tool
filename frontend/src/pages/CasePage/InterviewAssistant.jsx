@@ -6,6 +6,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { fetchAuthSession } from "aws-amplify/auth";
 
 import StudentHeader from "../../components/StudentHeader";
+import InstructorHeader from "../../components/InstructorHeader";
 import SideMenu from "./SideMenu";
 import TypingIndicator from "./TypingIndicator";
 import { useRef } from "react"; // Import useRef at the top
@@ -13,6 +14,8 @@ import { useRef } from "react"; // Import useRef at the top
 const InterviewAssistant = () => {
   const { caseId } = useParams();
   const navigate = useNavigate();
+  
+  const [userRole, setUserRole] = useState("student"); // Default role is "student"
 
   const [caseData, setCaseData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -40,6 +43,9 @@ const InterviewAssistant = () => {
         const data = await response.json();
         console.log("Case data: ", data);
         setCaseData(data.caseData);
+
+        const userRole = session.tokens.idToken.payload["cognito:groups"]?.[0] || "student"; // Assuming the role is stored in the Cognito groups claim
+        setUserRole(userRole);
       } catch (error) {
         console.error("Error fetching case data:", error);
         setCaseData(null);
@@ -201,7 +207,10 @@ const InterviewAssistant = () => {
         marginTop: '75px'
       }}
     >
-      <StudentHeader /> {/* StudentHeader added at the top */}
+      <Box position="fixed" top={0} left={0} width="100%" zIndex={1000} bgcolor="white">
+        {/* Conditionally render the header based on user role */}
+        {userRole === "instructor" ? <InstructorHeader /> : <StudentHeader />}
+      </Box>
 
       <Box sx={{ display: "flex"}}>
         <SideMenu />
