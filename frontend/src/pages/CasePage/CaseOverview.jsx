@@ -110,14 +110,14 @@ const CaseOverview = () => {
             Authorization: token,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(editedCase), // <--- This is what was missing
+          body: JSON.stringify(editedCase), 
         }
       );
   
       if (!response.ok) throw new Error("Failed to update case");
   
       alert("Case edited successfully!");
-      setCaseData({ ...caseData, ...editedCase }); // update local state
+      setCaseData({ ...caseData, ...editedCase }); 
       setEditMode(false);
     } catch (error) {
       console.error("Error editing case:", error);
