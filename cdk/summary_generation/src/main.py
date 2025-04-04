@@ -200,6 +200,7 @@ def handler(event, context):
     try:
         logger.info("Retrieving dynamo history")
         messages = retrieve_dynamodb_history(TABLE_NAME, case_id)
+        print("messages: ", messages)
     except Exception as e:
         logger.error(f"Error retrieving dynamo history: {e}")
         return {
