@@ -8,6 +8,8 @@ import {
   CardContent,
   CardActions,
   Button,
+  Box,
+  Menu, 
 } from "@mui/material";
 import InstructorHeader from "../../components/InstructorHeader";
 import theme from "../../Theme"; 
@@ -77,44 +79,109 @@ const InstructorHomepage = () => {
           {submittedCases.length > 0 ? (
             <Grid container spacing={2} sx={{ padding: 2 }}>
               {submittedCases.map((caseItem, index) => (
-                <Grid item xs={12} sm={6} md={4} key={index}>
-                  <Card sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
-                    <CardContent sx={{ flex: 1 }}>
-                    <Typography
-                                  sx={{
-                                    color: "grey",
-                                    fontSize: "0.85rem",
-                                    fontWeight: 500,
-                                  }}
-                                >
-                                  Case #{caseItem.case_hash}
-                                </Typography>
-                      <Typography variant="h6" component="div">
-                        {caseItem.case_title}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ marginTop: 1 }}>
-                        <strong>Submitted By:</strong> Zayan
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ marginTop: 1 }}>
-                        <strong>Last Updated:</strong> {new Date(caseItem.last_updated).toLocaleDateString()}
-                      </Typography>
-                    </CardContent>
-                    <CardActions sx={{ justifyContent: "space-between" }}>
-                      <Button
-                                                        size="small"
-                                                        sx={{
-                                                          bgcolor: theme.palette.primary.main,
-                                                          color: "white",
-                                                          fontWeight: "bold",
-                                                          ":hover": { bgcolor: theme.palette.primary.dark },
-                                                        }}
-                                                        onClick={() => handleViewCase(caseItem.case_id)}
-                                                      >
-                                                        View Case
-                                                      </Button>
-                    </CardActions>
-                  </Card>
-                </Grid>
+                <Grid item xs={12} sm={7.5} md={4} key={index}>
+                                            <Card
+                                              onClick={(event) => {
+                                                  handleViewCase(caseItem.case_id); 
+                                              }} // Ensure it doesn't trigger for the button or when the menu is open
+                                              sx={{
+                                                cursor: "pointer",
+                                                mb: 2,
+                                                mt: 2,
+                                                transition: "transform 0.3s ease",
+                                                "&:hover": { transform: "scale(1.01)" },
+                                                backgroundColor: "var(--background)",
+                                                color: "var(--text)",
+                                                boxShadow: "none",
+                                                border: "1px solid var(--border)",
+                                                display: "flex",
+                                                flexDirection: "column",
+                                                height: "90%",
+                                              }}
+                                            >
+                                              <CardContent
+                                                sx={{
+                                                  display: "flex",
+                                                  flexDirection: "column",
+                                                  height: "100%",
+                                                  textAlign: "left",
+                                                }}
+                                              >
+                                                <Typography
+                                                  sx={{
+                                                    color: "grey",
+                                                    fontSize: "0.85rem",
+                                                    fontWeight: 500,
+                                                  }}
+                                                >
+                                                  Case #{caseItem.case_hash}
+                                                </Typography>
+                
+                                                <Box
+                                                  sx={{
+                                                    mb: 2,
+                                                    display: "flex",
+                                                    justifyContent: "flex-start",
+                                                    alignItems: "left",
+                                                  }}
+                                                >
+                                                  <Typography
+                                                    variant="h6"
+                                                    sx={{
+                                                      fontWeight: 600,
+                                                      fontSize: "1.25rem",
+                                                      textAlign: "left",
+                                                    }}
+                                                  >
+                                                    {caseItem.case_title}
+                                                  </Typography>
+                                                </Box>
+                
+                                                {/* Status Section */}
+                                                <Typography
+                                                  variant="body1"
+                                                  sx={{
+                                                    textAlign: "left",
+                                                    fontWeight: 500,
+                                                    mb: 1,
+                                                    color:
+                                                      caseItem.status === "Review Feedback"
+                                                        ? "green"
+                                                        : "grey",
+                                                  }}
+                                                >
+                                                  {caseItem.status}
+                                                </Typography>
+                
+                                                {/* Case Type & Last Updated */}
+                                                <Typography
+                                                  variant="body2"
+                                                  sx={{ textAlign: "left", fontWeight: 400 }}
+                                                >
+                                                  <strong>Jurisdiction:</strong>{" "}
+                                                  {Array.isArray(caseItem.jurisdiction)
+                                                  ? caseItem.jurisdiction.join(", ")
+                                                  : caseItem.jurisdiction}
+                                                </Typography>
+                
+                                                <Typography
+                                                  variant="body2"
+                                                  sx={{ textAlign: "left", fontWeight: 400 }}
+                                                >
+                                                  <strong>Date Added:</strong>{" "}
+                                                  {new Date(caseItem.last_updated).toLocaleString('en-US', {
+                                                    month: 'long',
+                                                    day: 'numeric', 
+                                                    year: 'numeric', 
+                                                    hour: 'numeric', 
+                                                    minute: 'numeric', 
+                                                    hour12: true, // Use 12-hour clock (e.g., 'AM')
+                                                  })}
+                                                </Typography>
+                                              </CardContent>
+                
+                                            </Card>
+                                          </Grid>
               ))}
             </Grid>
           ) : (
