@@ -10,6 +10,7 @@ const CaseOverview = () => {
   const { caseId } = useParams();
   const navigate = useNavigate();
   const [caseData, setCaseData] = useState(null);
+  const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [generatedSummary, setGeneratedSummary] = useState("");
   const [editMode, setEditMode] = useState(false);
@@ -59,7 +60,9 @@ const CaseOverview = () => {
 
         if (!response.ok) throw new Error("Case not found");
         const data = await response.json();
-        setCaseData(data);
+        setCaseData(data.caseData);
+        setMessages(data.messages);
+        console.log(data);
       } catch (error) {
         console.error("Error fetching case data:", error);
         setCaseData(null);
@@ -140,6 +143,25 @@ const CaseOverview = () => {
       <Box display="flex" pt="80px">
         <SideMenu />
         <Container sx={{ flexGrow: 1, p: 4, maxWidth: "900px", mx: "auto" }}>
+        {userRole === "student" && (
+          <Box sx={{ mb: 2, textAlign: "left" }}>
+            <Typography variant="h6" fontWeight={600}>
+              Messages
+            </Typography>
+            {/* Map through the messages array */}
+            {messages.length > 0 ? (
+              messages.map((message) => (
+                <Typography variant="body2" key={message.id} sx={{ mt: 1 }}>
+                  {message.message_content}
+                </Typography>
+              ))
+            ) : (
+              <Typography variant="body2" color="gray">
+                No messages available.
+              </Typography>
+            )}
+          </Box>
+        )}
           {!caseData ? (
             <Box display="flex" justifyContent="center" alignItems="center" minHeight="70vh">
               <Typography variant="h5" color="gray">
