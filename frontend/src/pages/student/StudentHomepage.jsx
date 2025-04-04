@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import StudentHeader from "../../components/StudentHeader";
 import Container from "../Container";
 import { ToastContainer } from "react-toastify";
-import { Add, ArrowForward } from '@mui/icons-material';
+import { Add, ArrowForward, MoreHoriz } from '@mui/icons-material';
 import "react-toastify/dist/ReactToastify.css";
-import { ring } from 'ldrs'
+import { ring } from 'ldrs';
 import { fetchAuthSession, fetchUserAttributes } from 'aws-amplify/auth'; 
-import {AppBar} from "@mui/material";
-ring.register()
+import { AppBar } from "@mui/material";
+ring.register();
 
 import {
   Card,
@@ -22,6 +22,8 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Menu,
+  MenuItem,
 } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
@@ -56,9 +58,10 @@ export const StudentHomepage = () => {
   const [loading, setLoading] = useState(true);
   const [cases, setCases] = useState([]);
   const [error, setError] = useState(null); // For handling any errors during fetch
-
   const [openDialog, setOpenDialog] = useState(false); // Track if a dialog is open
   const [caseToDelete, setCaseToDelete] = useState(null); // Track which case to delete
+  const [anchorEl, setAnchorEl] = useState(null); // For controlling the menu's anchor
+  const [selectedCaseId, setSelectedCaseId] = useState(null); // For tracking the selected case id
 
   // Handle opening the dialog
   const handleOpenDialog = (caseId) => {
@@ -70,6 +73,53 @@ export const StudentHomepage = () => {
   const handleCloseDialog = () => {
     setOpenDialog(false); // Close the dialog
     setCaseToDelete(null); // Clear the case to delete
+  };
+
+  // Handle opening the menu for more options
+  const handleMenuClick = (event, caseId) => {
+    setAnchorEl(event.currentTarget); // Open the menu at the button's position
+    setSelectedCaseId(caseId); // Store the selected case id
+  };
+
+  // Handle closing the menu
+  const handleMenuClose = () => {
+    setAnchorEl(null); // Close the menu
+  };
+
+  // Handle delete action from the menu
+  const handleDeleteFromMenu = async () => {
+    if (!selectedCaseId) return;
+
+    try {
+      const session = await fetchAuthSession();
+      const token = session.tokens.idToken;
+      const cognito_id = session.tokens.idToken.payload.sub;
+
+      const response = await fetch(
+        `${import.meta.env.VITE_API_ENDPOINT}student/delete_case?case_id=${selectedCaseId}&cognito_id=${cognito_id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: token,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to delete the case");
+      }
+
+      // Close the menu
+      handleMenuClose();
+      handleCloseDialog(); // Close the dialog
+      setOpenDialog(false); // Close the dialog
+
+      // Remove deleted case from state
+      setCases((prevCases) => prevCases.filter((caseItem) => caseItem.case_id !== selectedCaseId));
+    } catch (error) {
+      console.error("Error deleting case:", error);
+    }
   };
 
   useEffect(() => {
@@ -114,39 +164,6 @@ export const StudentHomepage = () => {
     navigate(`/case/${caseId}/overview`);
   };
 
-  const handleDeleteCase = async () => {
-    if (!caseToDelete) return; // Ensure there's a case to delete
-
-    try {
-      const session = await fetchAuthSession();
-      const token = session.tokens.idToken;
-      const cognito_id = session.tokens.idToken.payload.sub
-
-      const response = await fetch(
-        `${import.meta.env.VITE_API_ENDPOINT}student/delete_case?case_id=${caseToDelete}&cognito_id=${cognito_id}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: token,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to delete the case");
-      }
-
-      setOpenDialog(false);
-      setCaseToDelete(null); // Clear the case to delete
-
-      // Remove deleted case from state
-      setCases((prevCases) => prevCases.filter((caseItem) => caseItem.case_id !== caseToDelete));
-    } catch (error) {
-      console.error("Error deleting case:", error);
-    }
-  };
-
   return (
     <ThemeProvider theme={theme}>
       <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
@@ -182,7 +199,9 @@ export const StudentHomepage = () => {
               }}
             >
               {cases.length > 0 && (
-                <Typography variant="h5" sx={{ textAlign: "left", fontWeight: 600, marginLeft: 3, marginTop: 2 }}>Latest Cases</Typography>
+                <Typography variant="h5" sx={{ textAlign: "left", fontWeight: 600, marginLeft: 3, marginTop: 5, color: "#808080", fontSize: "1.8rem" }}>
+                  Latest Cases
+                </Typography>
               )}
               <Stack sx={{ flex: 1, width: "100%" }}>
                 {loading ? (
@@ -210,8 +229,8 @@ export const StudentHomepage = () => {
                     sx={{
                       display: "flex",
                       flexDirection: "column",
-                      alignItems: cases.length === 0 ? "center" : "flex-start",
-                      justifyContent: cases.length === 0 ? "center" : "flex-start",
+                      alignItems: "flex-start",
+                      justifyContent: "flex-start",
                       width: "100%",
                       height: "calc(90vh - 100px)",
                       overflowY: "auto",
@@ -235,7 +254,14 @@ export const StudentHomepage = () => {
                         {cases.map((caseItem, index) => (
                           <Grid item xs={12} sm={7.5} md={4} key={index}>
                             <Card
+                              onClick={(event) => {
+                                // Only trigger if the click was not on the button or menu
+                                if (event.target.tagName !== "BUTTON" && !anchorEl) {
+                                  handleViewCase(caseItem.case_id); // Trigger the redirection
+                                }
+                              }} // Ensure it doesn't trigger for the button or when the menu is open
                               sx={{
+                                cursor: "pointer",
                                 mb: 2,
                                 mt: 2,
                                 transition: "transform 0.3s ease",
@@ -244,6 +270,9 @@ export const StudentHomepage = () => {
                                 color: "var(--text)",
                                 boxShadow: "none",
                                 border: "1px solid var(--border)",
+                                display: "flex",
+                                flexDirection: "column",
+                                height: "90%",
                               }}
                             >
                               <CardContent
@@ -306,7 +335,9 @@ export const StudentHomepage = () => {
                                   sx={{ textAlign: "left", fontWeight: 400 }}
                                 >
                                   <strong>Jurisdiction:</strong>{" "}
-                                  {caseItem.jurisdiction}
+                                  {Array.isArray(caseItem.jurisdiction)
+                                  ? caseItem.jurisdiction.join(", ")
+                                  : caseItem.jurisdiction}
                                 </Typography>
 
                                 <Typography
@@ -314,39 +345,42 @@ export const StudentHomepage = () => {
                                   sx={{ textAlign: "left", fontWeight: 400 }}
                                 >
                                   <strong>Date Added:</strong>{" "}
-                                  {new Date(
-                                    caseItem.last_updated
-                                  ).toLocaleString()}
+                                  {new Date(caseItem.last_updated).toLocaleString('en-US', {
+                                    month: 'long',
+                                    day: 'numeric', 
+                                    year: 'numeric', 
+                                    hour: 'numeric', 
+                                    minute: 'numeric', 
+                                    hour12: true, // Use 12-hour clock (e.g., 'AM')
+                                  })}
                                 </Typography>
                               </CardContent>
 
-                              {/* View & Delete Buttons */}
-                              <CardActions sx={{ justifyContent: "space-between", mt: 2 }}>
+                              {/* 3-Dot Button and Menu */}
+                              <CardActions sx={{ justifyContent: "flex-end", mt: 2 }}>
                                 <Button
                                   size="small"
-                                  sx={{
-                                    bgcolor: theme.palette.primary.main,
-                                    color: "white",
-                                    fontWeight: "bold",
-                                    ":hover": { bgcolor: theme.palette.primary.dark },
+                                  onClick={(event) => {
+                                    event.stopPropagation(); // Prevent the click from propagating to the Card's onClick handler
+                                    event.preventDefault(); // Prevent any default behavior
+                                    handleMenuClick(event, caseItem.case_id); // Trigger menu opening
                                   }}
-                                  onClick={() => handleViewCase(caseItem.case_id)}
+                                  sx={{
+                                    color: "gray",
+                                    zIndex: 1000,
+                                    ":hover": { background: "none" },
+                                  }}
                                 >
-                                  View Case
+                                  <MoreHoriz /> {/* Ellipsis Icon */}
                                 </Button>
 
-                                <Button
-                                  size="small"
-                                  sx={{
-                                    bgcolor: "red",
-                                    color: "white",
-                                    fontWeight: "bold",
-                                    ":hover": { bgcolor: "darkred" },
-                                  }}
-                                  onClick={() => handleOpenDialog(caseItem.case_id)}
+                                <Menu
+                                  anchorEl={anchorEl}
+                                  open={Boolean(anchorEl)}
+                                  onClose={handleMenuClose}
                                 >
-                                  Delete
-                                </Button>
+                                  <MenuItem onClick={() => handleOpenDialog(caseItem.case_id)}>Delete</MenuItem>
+                                </Menu>
                               </CardActions>
                             </Card>
                           </Grid>
@@ -378,7 +412,7 @@ export const StudentHomepage = () => {
           <Button onClick={handleCloseDialog} color="primary">
             Cancel
           </Button>
-          <Button onClick={handleDeleteCase} color="error">
+          <Button onClick={handleDeleteFromMenu} color="error">
             Delete
           </Button>
         </DialogActions>

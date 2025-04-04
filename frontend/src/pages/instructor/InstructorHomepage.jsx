@@ -1,19 +1,21 @@
 import React, { useEffect, useState } from "react";
-import { fetchAuthSession, fetchUserAttributes } from "aws-amplify/auth";
+import { fetchAuthSession } from "aws-amplify/auth";
 import {
   Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Typography,
+  Grid,
+  Card,
+  CardContent,
+  CardActions,
+  Button,
 } from "@mui/material";
 import InstructorHeader from "../../components/InstructorHeader";
+import theme from "../../theme"; 
+import { Navigate, useNavigate } from "react-router-dom";
 
 const InstructorHomepage = () => {
   const [submittedCases, setSubmittedCases] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchSubmittedCases = async () => {
@@ -23,7 +25,7 @@ const InstructorHomepage = () => {
         const cognito_id = session.tokens.idToken.payload.sub;
 
         const response = await fetch(
-          `${import.meta.env.VITE_API_ENDPOINT}instructor/submitted-cases?cognito_id=${encodeURIComponent(cognito_id)}`,
+          `${import.meta.env.VITE_API_ENDPOINT}instructor/view_students?cognito_id=${encodeURIComponent(cognito_id)}`,
           {
             method: "GET",
             headers: {
@@ -35,6 +37,7 @@ const InstructorHomepage = () => {
 
         if (response.ok) {
           const data = await response.json();
+          console.log(data);  // Log the data to see if it's in the expected format
           setSubmittedCases(data);
         } else {
           console.error("Failed to fetch submitted cases:", response.statusText);
@@ -47,51 +50,72 @@ const InstructorHomepage = () => {
     fetchSubmittedCases();
   }, []);
 
+  const handleViewCase = (caseId) => {
+    navigate(`/case/${caseId}/overview`);
+  };
   return (
-    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh" , textAlign: "left"}}>
       {/* Fixed Header */}
-      <div style={{ position: "fixed", top: 0, width: "100%", zIndex: 1000, backgroundColor: "white", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}>
+      <div
+        style={{
+          position: "fixed",
+          top: 0,
+          width: "100%",
+          zIndex: 1000,
+          backgroundColor: "white",
+          boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+        }}
+      >
         <InstructorHeader />
       </div>
 
       {/* Main Content */}
-      <div style={{ marginTop: "80px", padding: "20px" }}> {/* Adjust marginTop as needed */}
+      <div style={{ marginTop: "80px", padding: "20px" }}>
         <Typography color="black" fontWeight="bold" textAlign="left" variant="h6">
           Cases Submitted for Review
         </Typography>
-        <Paper sx={{ width: "80%", margin: "0 auto", padding: 2 }}>
           {submittedCases.length > 0 ? (
-            <TableContainer>
-              <Table aria-label="submitted cases table">
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ width: "40%", padding: "16px" }}>Case Name</TableCell>
-                    <TableCell sx={{ width: "40%", padding: "16px" }}>Submitted By</TableCell>
-                    <TableCell sx={{ width: "20%", padding: "16px" }}>Date Submitted</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {submittedCases.map((caseItem, index) => (
-                    <TableRow
-                      key={index}
-                      style={{ cursor: "pointer", transition: "background-color 0.3s" }}
-                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f5f5f5")}
-                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "white")}
-                    >
-                      <TableCell sx={{ padding: "16px" }}>{caseItem.case_name}</TableCell>
-                      <TableCell sx={{ padding: "16px" }}>{caseItem.submitted_by}</TableCell>
-                      <TableCell sx={{ padding: "16px" }}>{new Date(caseItem.date_submitted).toLocaleDateString()}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+            <Grid container spacing={2} sx={{ padding: 2 }}>
+              {submittedCases.map((caseItem, index) => (
+                <Grid item xs={12} sm={6} md={4} key={index}>
+                  <Card sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
+                    <CardContent sx={{ flex: 1 }}>
+                      <Typography variant="h6" component="div">
+                        {caseItem.case_title}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ marginTop: 1 }}>
+                        <strong>Submitted By:</strong> {caseItem.user_id}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ marginTop: 1 }}>
+                        <strong>Last Updated:</strong> {new Date(caseItem.last_updated).toLocaleDateString()}
+                      </Typography>
+                    </CardContent>
+                    <CardActions sx={{ justifyContent: "space-between" }}>
+                      <Button
+                                                        size="small"
+                                                        sx={{
+                                                          bgcolor: theme.palette.primary.main,
+                                                          color: "white",
+                                                          fontWeight: "bold",
+                                                          ":hover": { bgcolor: theme.palette.primary.dark },
+                                                        }}
+                                                        onClick={() => handleViewCase(caseItem.case_id)}
+                                                      >
+                                                        View Case
+                                                      </Button>
+                      <Button size="small" color="secondary">
+                        Review
+                      </Button>
+                    </CardActions>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
           ) : (
             <Typography variant="body1" sx={{ textAlign: "center", marginTop: 2 }}>
               No cases submitted for review.
             </Typography>
           )}
-        </Paper>
       </div>
     </div>
   );

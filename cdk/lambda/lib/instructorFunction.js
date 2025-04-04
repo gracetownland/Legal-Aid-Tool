@@ -78,6 +78,12 @@ exports.handler = async (event) => {
   let data;
   try {
     const pathData = event.httpMethod + " " + event.resource;
+    console.log("🌟 Lambda triggered");
+console.log("RouteKey:", event.routeKey);
+console.log("Path:", event.path);
+console.log("Method:", event.httpMethod);
+console.log("Query Params:", event.queryStringParameters);
+
     switch (pathData) {
       case "GET /instructor/students":
         if (
@@ -505,85 +511,66 @@ exports.handler = async (event) => {
         break;
       case "PUT /instructor/edit_patient":
         if (
-            event.queryStringParameters != null &&
-            event.queryStringParameters.patient_id &&
-            event.queryStringParameters.instructor_email
-        ) {
-            const { patient_id, instructor_email } = event.queryStringParameters;
-            const { patient_name, patient_age, patient_gender, patient_prompt } = JSON.parse(event.body || "{}");
-    
-            if (patient_name != null && patient_age != null && patient_gender != null  && patient_prompt != null) {
-                try {
-                    // Check if another patient with the same name exists under the same simulation group
-                    const existingPatient = await sqlConnection`
-                        SELECT * FROM "patients"
-                        WHERE patient_name = ${patient_name}
-                        AND patient_id != ${patient_id};
-                    `;
-    
-                    if (existingPatient.length > 0) {
-                        response.statusCode = 400;
-                        response.body = JSON.stringify({
-                            error: "A patient with this name already exists.",
-                        });
-                        break;
-                    }
-    
-                    // Update the patient details in the patients table
-                    await sqlConnection`
-                        UPDATE "patients"
-                        SET 
-                            patient_name = ${patient_name}, 
-                            patient_age = ${patient_age}, 
-                            patient_gender = ${patient_gender}, 
-                            patient_prompt = ${patient_prompt}
-                        WHERE patient_id = ${patient_id};
-                    `;
-    
-                    // Insert into User Engagement Log
-                    await sqlConnection`
-                        INSERT INTO "user_engagement_log" (
-                            log_id, 
-                            user_id, 
-                            simulation_group_id, 
-                            patient_id, 
-                            enrolment_id, 
-                            timestamp, 
-                            engagement_type
-                        ) VALUES (
-                            uuid_generate_v4(), 
-                            (SELECT user_id FROM "users" WHERE user_email = ${instructor_email}),
-                            (SELECT simulation_group_id FROM "patients" WHERE patient_id = ${patient_id}),
-                            ${patient_id}, 
-                            NULL, 
-                            CURRENT_TIMESTAMP, 
-                            'instructor_edited_patient'
-                        );
-                    `;
-    
-                    response.statusCode = 200;
-                    response.body = JSON.stringify({
-                        message: "Patient updated successfully",
-                    });
-                } catch (err) {
-                    response.statusCode = 500;
-                    console.error(err);
-                    response.body = JSON.stringify({
-                        error: "Internal server error",
-                    });
-                }
-            } else {
-                response.statusCode = 400;
-                response.body = JSON.stringify({
-                    error: "patient_name, patient_age, patient_gender, and patient_prompt are required in the body",
-                });
-            }
-        } else {
-            response.statusCode = 400;
-            response.body = JSON.stringify({
-                error: "patient_id or instructor_email is missing in query string parameters",
-            });
-        }
+          event.queryStringParameters != null &&
+          event.queryStringParameters.case_id && 
+          event.queryStringParameters.instructor_id && 
+          event.body
+      ) {
+          const { case_id, instructor_id } = event.queryStringParameters;
+          const { message_content } = JSON.parse(event.body);  // Assuming message_content is passed in the body as JSON
+
+          // Retrieve the user ID using the user_id
+          const user = await sqlConnection`
+          SELECT * FROM "users" where cognito_id = ${instructor_id};
+          `;
+
+          console.log(user);
+          const user_id = user[0]?.user_id;
+  
+          try {
+              // Insert the message into the "messages" table
+              await sqlConnection`
+                  INSERT INTO "messages" (
+                      message_id, 
+                      instructor_id, 
+                      message_content, 
+                      case_id, 
+                      time_sent
+                  ) VALUES (
+                      uuid_generate_v4(), 
+                      ${user_id},
+                      ${message_content}, 
+                      ${case_id}, 
+                      CURRENT_TIMESTAMP
+                  );
+              `;
+
+              // Insert the message into the "messages" table
+              await sqlConnection`
+              UPDATE "cases"
+              SET 
+                sent_to_review = false,
+                status = 'Review Feedback'
+              WHERE case_id = ${case_id};
+              `;
+  
+              response.statusCode = 200;
+              response.body = JSON.stringify({
+                  message: "Message sent successfully",
+              });
+          } catch (err) {
+              response.statusCode = 500;
+              console.error(err);
+              response.body = JSON.stringify({
+                  error: "Internal server error",
+              });
+          }
+      } else {
+          response.statusCode = 400;
+          response.body = JSON.stringify({
+              error: "case_id, instructor_id, and message_content are required",
+          });
+      }
         break;
       case "PUT /instructor/prompt":
         if (
@@ -660,22 +647,22 @@ exports.handler = async (event) => {
       case "GET /instructor/view_students":
         if (
           event.queryStringParameters != null &&
-          event.queryStringParameters.simulation_group_id
+          event.queryStringParameters.cognito_id
         ) {
-          const { simulation_group_id } = event.queryStringParameters;
-    
+          const cognito_id = event.queryStringParameters.cognito_id;
+
           try {
-            // Query to get all students enrolled in the given simulation group
-            const enrolledStudents = await sqlConnection`
-              SELECT u.user_email, u.username, u.first_name, u.last_name
-              FROM "enrolments" e
-              JOIN "users" u ON e.user_id = u.user_id
-              WHERE e.simulation_group_id = ${simulation_group_id}
-                AND e.enrolment_type = 'student';
-            `;
-    
+            // First, get the user ID using the email
+            //const userIdResult = await sqlConnection`
+            // Query to get all cases sent for review
+            const data = await sqlConnection`
+                SELECT *
+                FROM cases
+                WHERE sent_to_review = true;
+              `;
+
             response.statusCode = 200;
-            response.body = JSON.stringify(enrolledStudents);
+            response.body = JSON.stringify(data);
           } catch (err) {
             response.statusCode = 500;
             console.error(err);
@@ -683,9 +670,7 @@ exports.handler = async (event) => {
           }
         } else {
           response.statusCode = 400;
-          response.body = JSON.stringify({
-            error: "simulation_group_id is required",
-          });
+          response.body = JSON.stringify({ error: "email is required" });
         }
         break;
       case "DELETE /instructor/delete_student":
