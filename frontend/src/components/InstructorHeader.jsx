@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 // amplify
 import { signOut } from "aws-amplify/auth";
 import { UserContext } from "../App";
+import HomeIcon from '@mui/icons-material/Home';
 
 const InstructorHeader = () => {
   const navigate = useNavigate();
@@ -34,6 +35,14 @@ const InstructorHeader = () => {
       <div className="flex-grow text-[white] text-3xl font-inter font-normal p-4 text-left">Instructor</div>
       </div>
       <div className="flex items-center space-x-4">
+
+        <button 
+                  onClick={() => navigate("/home/*")} 
+                  className="flex flex-col items-center bg-transparent text-white hover:text-[#dde] focus:outline-none hover:outline-none"
+                >
+                  <HomeIcon fontSize="large" />
+                  <span>Home</span>
+                </button>
         
         <button
           type="button"

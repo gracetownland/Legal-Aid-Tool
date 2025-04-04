@@ -2021,7 +2021,7 @@ paths:
         - instructorAuthorizer: []
       x-amazon-apigateway-integration:
         uri:
-          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetProfilePictures.Arn}/invocations"
+          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${instructorFunction.Arn}/invocations"
         passthroughBehavior: "when_no_match"
         httpMethod: "GET"
         type: "aws_proxy"
@@ -2534,136 +2534,7 @@ paths:
         passthroughBehavior: "when_no_match"
         httpMethod: "POST"
         type: "aws_proxy"
-  /instructor/update_metadata:
-    options:
-      summary: CORS support
-      description: |
-        Enable CORS by returning correct headers
-      responses:
-        200:
-          $ref: "#/components/responses/Success"
-      x-amazon-apigateway-integration:
-        type: mock
-        requestTemplates:
-          application/json: |
-            {
-              "statusCode" : 200
-            }
-        responses:
-          default:
-            statusCode: "200"
-            responseParameters:
-              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key'"
-              method.response.header.Access-Control-Allow-Methods: "'*'"
-              method.response.header.Access-Control-Allow-Origin: "'*'"
-            responseTemplates:
-              application/json: |
-                {}
-    put:
-      tags:
-        - Instructor
-      summary: Update the metadata of a file in a patient
-      operationId: instructor_update_metadata_PUT
-      parameters:
-        - in: query
-          name: patient_id
-          required: true
-          description: ID of the patient containing the file
-          schema:
-            type: string
-        - in: query
-          name: filename
-          required: true
-          description: Name of the file to update
-          schema:
-            type: string
-        - in: query
-          name: filetype
-          required: true
-          description: Type of the file to update
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                metadata:
-                  type: string
-                  description: New metadata content for the file
-      responses:
-        "200":
-          description: Metadata updated successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  file_id:
-                    type: string
-                    description: UUID of the file
-                  patient_id:
-                    type: string
-                    description: UUID of the patient
-                  filetype:
-                    type: string
-                    description: Type of the file
-                  s3_bucket_reference:
-                    type: string
-                    description: Reference to the S3 bucket
-                  filepath:
-                    type: string
-                    description: File path
-                  filename:
-                    type: string
-                    description: Name of the file
-                  time_uploaded:
-                    type: string
-                    format: date-time
-                    description: Time when the file was uploaded
-                  metadata:
-                    type: string
-                    description: Updated metadata content
-        "400":
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    description: Error message
-        "404":
-          description: File not found
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    description: Error message
-        "500":
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    description: Error message
-      security:
-        - instructorAuthorizer: []
-      x-amazon-apigateway-integration:
-        uri:
-          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${instructorFunction.Arn}/invocations"
-        passthroughBehavior: "when_no_match"
-        httpMethod: "POST"
-        type: "aws_proxy"
+  
   /instructor/view_patients:
     options:
       summary: CORS support
@@ -2950,7 +2821,7 @@ paths:
         passthroughBehavior: "when_no_match"
         httpMethod: "POST"
         type: "aws_proxy"
-  /instructor/edit_patient:
+  /instructor/send_feedback:
     options:
       summary: CORS support
       description: |
@@ -2978,13 +2849,13 @@ paths:
     put:
       tags:
         - Instructor
-      summary: Update details of a patient within a group
-      operationId: instructor_edit_patient_PUT
+      summary: Send Feedback to the student on the case
+      operationId: instructor_send_feedback_PUT
       parameters:
         - in: query
-          name: patient_id
+          name: case_id
           required: true
-          description: ID of the patient to be updated
+          description: ID of the case to be reviewed
           schema:
             type: string
         - in: query
@@ -2993,26 +2864,6 @@ paths:
           description: Email of the instructor updating the patient
           schema:
             type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                patient_name:
-                  type: string
-                patient_age:
-                  type: integer
-                patient_gender:
-                  type: string
-                patient_prompt:
-                  type: string
-              required:
-                - patient_name
-                - patient_age
-                - patient_gender
-                - patient_prompt
       responses:
         "200":
           description: Patient updated successfully
@@ -4095,7 +3946,7 @@ paths:
         passthroughBehavior: "when_no_match"
         httpMethod: "POST"
         type: "aws_proxy"
-  /admin/enroll_instructor:
+  /admin/assign_instructor_to_student:
     options:
       summary: CORS support
       description: |
@@ -4123,8 +3974,8 @@ paths:
     post:
       tags:
         - Admin
-      summary: Enroll an instructor in a group
-      operationId: admin_enroll_instructor_POST
+      summary: Assign an instructor to a student
+      operationId: admin_assign_instructor_POST
       requestBody:
         required: true
         content:
@@ -4132,12 +3983,12 @@ paths:
             schema:
               type: object
               properties:
-                simulation_group_id:
+                instructor_id:
                   type: string
-                  description: ID of the group to enroll the instructor in
-                instructor_email:
+                  description: ID of the instructor to assign
+                student_id:
                   type: string
-                  description: Email of the instructor to enroll
+                  description: ID of student to assign
       responses:
         "200":
           description: Enrollment created successfully
@@ -4153,7 +4004,7 @@ paths:
         passthroughBehavior: "when_no_match"
         httpMethod: "POST"
         type: "aws_proxy"
-  /admin/instructorGroups:
+  /admin/students:
     options:
       summary: CORS support
       description: |
@@ -4182,7 +4033,7 @@ paths:
       tags:
         - Admin
       summary: Get all groups for a given instructor where enrolment type is instructor
-      operationId: admin_get_instructor_groups_GET
+      operationId: admin_get_students_GET
       parameters:
         - name: instructor_email
           in: query
