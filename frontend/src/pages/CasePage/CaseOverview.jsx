@@ -5,6 +5,8 @@ import SideMenu from "./SideMenu";
 import StudentHeader from "../../components/StudentHeader";
 import InstructorHeader from "../../components/InstructorHeader";
 import { fetchAuthSession } from "aws-amplify/auth";
+import EditIcon from '@mui/icons-material/Edit';
+import EditOffIcon from '@mui/icons-material/EditOff';
 
 const CaseOverview = () => {
   const { caseId } = useParams();
@@ -187,9 +189,14 @@ const CaseOverview = () => {
                 <Typography variant="h6" fontWeight={600}>Feedback</Typography>
                 {messages.length > 0 ? (
                   messages.map((message) => (
-                    <Typography variant="body2" key={message.id} sx={{ mt: 1 }}>
-                      {message.message_content} - Sent By Prajna
+                    <div>
+                    <Typography variant="body2" key={message.id} sx={{ mt: 1, border: "1px solid var(--border)", padding: 1, borderRadius: 2 }}>
+                      {message.message_content}
                     </Typography>
+                    <Typography variant="body2" key={message.id} sx={{ mt: 1 }}>
+                    Sent By: Prajna Nayak
+                  </Typography>
+                  </div>
                   ))
                 ) : (
                   <Typography variant="body2" color="gray">No feedback available.</Typography>
@@ -207,25 +214,62 @@ const CaseOverview = () => {
 
                 <Stack direction="row" spacing={2} mb={3}>
                   {userRole === "instructor" ? (
-                    <Button variant="contained" color="secondary" onClick={() => setIsFeedbackVisible(!isFeedbackVisible)}>
-                      Send Feedback
+                    <Button
+                      variant="contained"
+                      color="secondary"
+                      onClick={() => setIsFeedbackVisible(!isFeedbackVisible)}
+                    >
+                      {messages.length !== 0 ? "Update Feedback" : "Send Feedback"}
                     </Button>
                   ) : (
-                    <Button variant="outlined" color="primary" onClick={handleSendForReview}>
-                      Send For Review
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      onClick={handleSendForReview}
+                    >
+                      {messages.length !== 0 ? "Send Case For Additional Review" : "Send Case For Review"}
                     </Button>
                   )}
-
-                  <Button variant="outlined" color="primary" onClick={() => setEditMode(!editMode)}>
-                    {editMode ? "Cancel Edit" : "Edit Case"}
-                  </Button>
                 </Stack>
 
                 <Divider sx={{ mb: 3, borderColor: "var(--border)"}} />
 
-                <Typography variant="h4" fontWeight={600} mb={3} textAlign="left">
+                <div style={{ display: "flex", alignItems: "center", marginBottom: "1em", gap: "1em" }}>
+                <Typography variant="h4" fontWeight={600} mb={0} textAlign="left">
                   Case #{caseData.case_hash}
                 </Typography>
+
+                <div
+                  onClick={() => setEditMode(!editMode)}
+                  style={{
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'transform 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+                >
+                  {editMode ? (
+                    <EditOffIcon
+                      style={{
+                        fontSize: '32px',
+                        transform: 'scaleX(1)',
+                      }}
+                    />
+                  ) : (
+                    <EditIcon
+                      style={{
+                        fontSize: '32px',
+                        transform: 'scaleX(1)',
+                      }}
+                    />
+                  )}
+                </div>
+
+                </div>
+                
 
                 {isFeedbackVisible && userRole === "instructor" && (
                   <Card sx={{ mb: 3, padding: 2 }}>
