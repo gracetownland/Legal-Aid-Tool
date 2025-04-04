@@ -62,6 +62,21 @@ def connect_to_db():
             raise
     return connection
 
+def hash_uuid(uuid_str: str) -> int:
+    """
+    Generate a 4-digit numeric hash from a UUID string.
+    
+    Steps:
+      1. Compute the SHA-256 hash of the input string.
+      2. Extract the first 8 hexadecimal characters.
+      3. Convert them to an integer.
+      4. Return the result modulo 10000 to ensure a 4-digit number.
+    """
+    hash_hex = hashlib.sha256(uuid_str.encode('utf-8')).hexdigest()
+    numeric_hash = int(hash_hex[:8], 16)
+    return numeric_hash % 10000
+
+
 ##########################################
 # Guardrail Setup Function
 ##########################################
@@ -145,7 +160,7 @@ def setup_guardrail(guardrail_name: str) -> tuple[str, str]:
 # New Case Handler Function
 ##########################################
 
-def handler(event) -> dict:
+def handler(event, context) -> dict:
     """
     Processes a POST /student/new_case event:
       - Validates user input with Bedrock guardrails.
@@ -167,7 +182,13 @@ def handler(event) -> dict:
         cognito_id = event.get("queryStringParameters", {}).get("user_id")
         if not cognito_id:
             return {
-                "statusCode": 400,
+                'statusCode': 400,
+                "headers": {
+                    "Content-Type": "application/json",
+                    "Access-Control-Allow-Headers": "*",
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Methods": "*",
+                },
                 "body": json.dumps({"error": "Missing user_id in query parameters"})
             }
         
@@ -223,7 +244,13 @@ def handler(event) -> dict:
                                  "Kindly remove the relevant content and try again.")
             
             return {
-                "statusCode": 400,
+                'statusCode': 400,
+                "headers": {
+                    "Content-Type": "application/json",
+                    "Access-Control-Allow-Headers": "*",
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Methods": "*",
+                },
                 "body": json.dumps({"error": error_message})
             }
         
@@ -237,7 +264,13 @@ def handler(event) -> dict:
         if not user:
             cur.close()
             return {
-                "statusCode": 404,
+                'statusCode': 404,
+                "headers": {
+                    "Content-Type": "application/json",
+                    "Access-Control-Allow-Headers": "*",
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Methods": "*",
+                },
                 "body": json.dumps({"error": "User not found"})
             }
         user_id = user[0]
@@ -255,13 +288,19 @@ def handler(event) -> dict:
             cur.close()
             conn.rollback()
             return {
-                "statusCode": 500,
+                'statusCode': 500,
+                "headers": {
+                    "Content-Type": "application/json",
+                    "Access-Control-Allow-Headers": "*",
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Methods": "*",
+                },
                 "body": json.dumps({"error": "Failed to create new case"})
             }
         case_id = new_case[0]
         
         # Generate a SHA-256 hash of the case_id
-        case_hash = hashlib.sha256(str(case_id).encode()).hexdigest()
+        case_hash = hash_uuid(str(case_id))
         
         # Update the case with the generated case_hash
         update_query = 'UPDATE "cases" SET case_hash = %s WHERE case_id = %s'
@@ -272,15 +311,25 @@ def handler(event) -> dict:
         cur.close()
         
         return {
-            "statusCode": 200,
-            "body": json.dumps({"case_id": case_id, "case_hash": case_hash})
-        }
+        "statusCode": 200,
+        "headers": {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "*",
+        },
+        "body": json.dumps({"case_id": case_id, "case_hash": case_hash})
+    }
     
     except Exception as err:
         logger.error("Error in post_student_new_case: %s", err)
-        if conn:
-            conn.rollback()
         return {
-            "statusCode": 500,
-            "body": json.dumps({"error": "Internal server error"})
+            'statusCode': 500,
+            "headers": {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Headers": "*",
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "*",
+            },
+            'body': json.dumps('Error getting response')
         }
