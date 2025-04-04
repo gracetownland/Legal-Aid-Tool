@@ -6,13 +6,17 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { fetchAuthSession } from "aws-amplify/auth";
 
 import StudentHeader from "../../components/StudentHeader";
+import InstructorHeader from "../../components/InstructorHeader";
 import SideMenu from "./SideMenu";
 import TypingIndicator from "./TypingIndicator";
 import { useRef } from "react"; // Import useRef at the top
+import MicIcon from '@mui/icons-material/Mic';
 
 const InterviewAssistant = () => {
   const { caseId } = useParams();
   const navigate = useNavigate();
+  
+  const [userRole, setUserRole] = useState("student"); // Default role is "student"
 
   const [caseData, setCaseData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -40,6 +44,9 @@ const InterviewAssistant = () => {
         const data = await response.json();
         console.log("Case data: ", data);
         setCaseData(data.caseData);
+
+        const userRole = session.tokens.idToken.payload["cognito:groups"]?.[0] || "student"; // Assuming the role is stored in the Cognito groups claim
+        setUserRole(userRole);
       } catch (error) {
         console.error("Error fetching case data:", error);
         setCaseData(null);
@@ -152,6 +159,13 @@ const InterviewAssistant = () => {
     }
   }, [messages]);
 
+  const handleAudioUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      console.log("Uploaded audio file:", file);
+    }
+  };
+
   async function getAIResponse(userInput) {
     const session = await fetchAuthSession();
     const token = session.tokens.idToken;
@@ -201,7 +215,10 @@ const InterviewAssistant = () => {
         marginTop: '75px'
       }}
     >
-      <StudentHeader /> {/* StudentHeader added at the top */}
+      <Box position="fixed" top={0} left={0} width="100%" zIndex={1000} bgcolor="white">
+        {/* Conditionally render the header based on user role */}
+        {userRole === "instructor" ? <InstructorHeader /> : <StudentHeader />}
+      </Box>
 
       <Box sx={{ display: "flex"}}>
         <SideMenu />
@@ -331,7 +348,7 @@ const InterviewAssistant = () => {
                   sx={{
                     maxHeight: "300px",
                     overflowY: "auto",
-                    marginRight: 2,
+                    marginRight: '0.5em',
                     '& .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--border)' },
                     '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--border)' },
                   }}
@@ -339,13 +356,45 @@ const InterviewAssistant = () => {
                   InputLabelProps={{ style: { backgroundColor: "transparent", color: "var(--text)" } }}
                   InputProps={{ style: { backgroundColor: "transparent", color: "var(--text)" } }}
                 />
+                
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginRight: '0.5em',
+                    width: '55px',          // slightly larger than icon
+                    height: '50px',
+                    borderRadius: '10%',   // optional: makes it look button-like
+                    backgroundColor: 'var(--secondary)', // optional
+                    cursor: 'pointer',
+                    transition: 'transform 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+                >
+                  <label htmlFor="audio-upload" style={{ cursor: 'pointer' }}>
+                    <MicIcon sx={{ width: '30px', height: '30px', color: 'white' }} />
+                    <input
+                      type="file"
+                      id="audio-upload"
+                      accept="audio/*"
+                      style={{ display: 'none' }}
+                      onChange={handleAudioUpload}
+                    />
+                  </label>
+                </div>
+
                 <Button 
                   variant="contained" 
-                  sx={{ color: "#ffffff", backgroundColor: "var(--secondary)", minHeight: "50px" }} 
+                  sx={{ color: "#ffffff", backgroundColor: "var(--secondary)", minHeight: "50px",  }} 
+                  style={{boxShadow: 'none'}}
                   onClick={handleSendMessage}
                 >
                   Send
                 </Button>
+
+                
               </Box>
             </Box>
           </Box>

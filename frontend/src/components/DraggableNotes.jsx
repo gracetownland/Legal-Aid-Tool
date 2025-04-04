@@ -102,7 +102,7 @@ function DraggableNotes({ onClose, sessionId }) {
           color: "white",
         }}
       >
-        <Typography variant="h6">Case Notes</Typography>
+        <Typography variant="h7" sx={{ fontFamily: 'Inter, sans-serif' }}>Case Notes</Typography>
         <HighlightOffIcon
           onClick={onClose}
           sx={{ cursor: "pointer", color: "white" }}
