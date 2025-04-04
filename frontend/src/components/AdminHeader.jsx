@@ -109,7 +109,7 @@ const AdminHeader = () => {
       </button>
 
       <button 
-        className="bg-[white] text-[#7c8cb9] hover:bg-[#dde] px-4 py-2 rounded focus:outline-none hover:outline-none" 
+        className="bg-[white] text-[var(--primary)] hover:bg-[#dde] px-4 py-2 rounded focus:outline-none hover:outline-none" 
         onClick={handleSignOut}
       >
         Sign Out
