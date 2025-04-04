@@ -1286,48 +1286,30 @@ export class ApiGatewayStack extends cdk.Stack {
       "DataIngestLambdaDockerFunc"
     );
 
-    dataIngestionBucket.grantRead(dataIngestLambdaDockerFunc);
-
-    // Add ListBucket permission explicitly
-    dataIngestLambdaDockerFunc.addToRolePolicy(
-      new iam.PolicyStatement({
-        effect: iam.Effect.ALLOW,
-        actions: ["s3:ListBucket"],
-        resources: [dataIngestionBucket.bucketArn], // Access to the specific bucket
-      })
-    );
+    // Add the permission to the Lambda function's policy to allow API Gateway access
+    dataIngestLambdaDockerFunc.addPermission("AllowApiGatewayInvoke", {
+      principal: new iam.ServicePrincipal("apigateway.amazonaws.com"),
+      action: "lambda:InvokeFunction",
+      sourceArn: `arn:aws:execute-api:${this.region}:${this.account}:${this.api.restApiId}/*/*/student*`,
+    });
 
     dataIngestLambdaDockerFunc.addToRolePolicy(
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
-        actions: ["s3:ListBucket"],
-        resources: [promptStorageBucket.bucketArn], // Access to the specific bucket
-      })
-    );
-
-    dataIngestLambdaDockerFunc.addToRolePolicy(
-      new iam.PolicyStatement({
-        effect: iam.Effect.ALLOW,
-        actions: ["s3:PutObject", "s3:GetObject", "s3:DeleteObject", "s3:HeadObject"],
-        resources: [
-          `arn:aws:s3:::${promptStorageBucket.bucketName}/*`,  // Grant access to all objects within this bucket
+        actions: [
+          "bedrock:CreateGuardrail",
+          "bedrock:CreateGuardrailVersion",
+          "bedrock:DeleteGuardrail", // Permission to create guardrails
+          "bedrock:ListGuardrails",  // (Optional) To list existing guardrails
+          "bedrock:InvokeGuardrail",
+          "bedrock:ApplyGuardrail"  // (Optional) To invoke the guardrail for filtering
         ],
+        resources: ["*"], // Replace with specific resource ARNs if available
       })
     );
 
     // Attach the custom Bedrock policy to Lambda function
     dataIngestLambdaDockerFunc.addToRolePolicy(bedrockPolicyStatement);
-
-    // Add the S3 event source trigger to the Lambda function
-    dataIngestLambdaDockerFunc.addEventSource(
-      new lambdaEventSources.S3EventSource(dataIngestionBucket, {
-        events: [
-          s3.EventType.OBJECT_CREATED,
-          s3.EventType.OBJECT_REMOVED,
-          s3.EventType.OBJECT_RESTORE_COMPLETED,
-        ],
-      })
-    );
 
     // Grant access to Secret Manager
     dataIngestLambdaDockerFunc.addToRolePolicy(
