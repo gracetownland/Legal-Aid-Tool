@@ -9,6 +9,8 @@ import DraggableNotes from "../../components/DraggableNotes";
 import SaveIcon from "@mui/icons-material/Save";
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import IconButton from "@mui/material/IconButton";
+import { useLocation } from "react-router-dom";
+
 
 const drawerWidth = 240; // Sidebar width
 
@@ -17,8 +19,12 @@ const drawerWidth = 240; // Sidebar width
 const SideMenu = () => {
   const { caseId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+
   const [isNotesOpen, setIsNotesOpen] = useState(false);
-  const [isPrelimSummaryGenerated, setIsPrelimSummaryGenerated] = useState(false); // Track if the summary is ready
+  const [isPrelimSummaryGenerated, setIsPrelimSummaryGenerated] = useState(false); 
+  const isActive = (route) => location.pathname.includes(route.toLowerCase().replace(" ", "-"));
+
 
   const toggleNotes = () => {
     setIsNotesOpen(!isNotesOpen);
@@ -90,21 +96,36 @@ const SideMenu = () => {
           anchor="left"
         >
           <List sx={{ flexGrow: 1 }}>
-            <ListItem button onClick={() => handleNavigation("Overview")}>
-              <ListItemText primary="Case Overview" />
-            </ListItem>
-            
-            {/* Conditionally Render Preliminary Summary */}
-            {isPrelimSummaryGenerated && (
-              <ListItem button onClick={() => handleNavigation("Prelim Summary")}>
-                <ListItemText primary="Preliminary Summary" />
-              </ListItem>
-            )}
+  <ListItem
+    button
+    onClick={() => handleNavigation("Overview")}
+    selected={isActive("Overview")}
+    sx={isActive("Overview") ? { backgroundColor: "var(--background3)" } : {}}
+  >
+    <ListItemText primary="Case Overview" />
+  </ListItem>
 
-            <ListItem button onClick={() => handleNavigation("Interview Assistant")}>
-              <ListItemText primary="Interview Assistant" />
-            </ListItem>
-          </List>
+  {isPrelimSummaryGenerated && (
+    <ListItem
+      button
+      onClick={() => handleNavigation("Prelim Summary")}
+      selected={isActive("Prelim Summary")}
+      sx={isActive("Prelim Summary") ? { backgroundColor: "var(--background3)" } : {}}
+    >
+      <ListItemText primary="Preliminary Summary" />
+    </ListItem>
+  )}
+
+  <ListItem
+    button
+    onClick={() => handleNavigation("Interview Assistant")}
+    selected={isActive("Interview Assistant")}
+    sx={isActive("Interview Assistant") ? { backgroundColor: "var(--background3)" } : {}}
+  >
+    <ListItemText primary="Interview Assistant" />
+  </ListItem>
+</List>
+
 
           {/* Notepad Icon Button in Bottom-Left Corner */}
           <IconButton
