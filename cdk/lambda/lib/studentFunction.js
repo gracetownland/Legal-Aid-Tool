@@ -131,7 +131,7 @@ exports.handler = async (event) => {
               console.log("Trying to create A new User");
               const newUser = await sqlConnection`
                     INSERT INTO "users" (cognito_id, user_email, username, first_name, last_name, time_account_created, roles, last_sign_in)
-                    VALUES (${cognitoUserId}, ${user_email}, ${username}, ${first_name}, ${last_name}, CURRENT_TIMESTAMP, ARRAY['student','instructor'], CURRENT_TIMESTAMP)
+                    VALUES (${cognitoUserId}, ${user_email}, ${username}, ${first_name}, ${last_name}, CURRENT_TIMESTAMP, ARRAY['student'], CURRENT_TIMESTAMP)
                     RETURNING *;
                 `;
               response.body = JSON.stringify(newUser[0]);
