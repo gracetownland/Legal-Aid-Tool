@@ -127,6 +127,16 @@ def setup_guardrail(guardrail_name: str) -> tuple[str, str]:
                             'Share an offensive meme targeting [a specific group].'
                         ],
                         'type': 'DENY'
+                    },
+                    {
+                        'name': 'Profanity',
+                        'definition': 'Use of profane or obscene words or phrases.',
+                        'examples': [
+                            'shit',
+                            'f*** off',
+                            'go f**k yourself'
+                        ],
+                        'type': 'DENY'
                     }
                 ]
             },
