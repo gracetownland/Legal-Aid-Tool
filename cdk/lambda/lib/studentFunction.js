@@ -131,7 +131,7 @@ exports.handler = async (event) => {
               console.log("Trying to create A new User");
               const newUser = await sqlConnection`
                     INSERT INTO "users" (cognito_id, user_email, username, first_name, last_name, time_account_created, roles, last_sign_in)
-                    VALUES (${cognitoUserId}, ${user_email}, ${username}, ${first_name}, ${last_name}, CURRENT_TIMESTAMP, ARRAY['student'], CURRENT_TIMESTAMP)
+                    VALUES (${cognitoUserId}, ${user_email}, ${username}, ${first_name}, ${last_name}, CURRENT_TIMESTAMP, ARRAY['student','instructor'], CURRENT_TIMESTAMP)
                     RETURNING *;
                 `;
               response.body = JSON.stringify(newUser[0]);
@@ -221,35 +221,46 @@ exports.handler = async (event) => {
       break;
 
       case "GET /student/get_cases":
-        if (
-          event.queryStringParameters &&
-          event.queryStringParameters.user_id
-        ) {
-          const cognito_id = event.queryStringParameters.user_id;
+  if (event.queryStringParameters && event.queryStringParameters.user_id) {
+    const cognito_id = event.queryStringParameters.user_id;
 
-          try {
-            // Retrieve the user ID using the user_id
-            const user = await sqlConnection`
-              SELECT user_id FROM "users" where cognito_id = ${cognito_id};
-              `;
-            
-            const user_id = user[0]?.user_id;
+    try {
+      // Retrieve the user ID using the cognito_id
+      const user = await sqlConnection`
+        SELECT user_id FROM "users" where cognito_id = ${cognito_id};
+      `;
 
-            const data = await sqlConnection`
-              SELECT * 
-              FROM "cases" WHERE user_id = ${user_id};
-              `;
-            response.body = JSON.stringify(data);
-          } catch (err) {
-            response.statusCode = 500;
-            console.error(err);
-            response.body = JSON.stringify({ error: "Internal server error" });
-          }
+      const user_id = user[0]?.user_id;
+
+      if (user_id) {
+        const data = await sqlConnection`
+          SELECT * 
+          FROM "cases" WHERE user_id = ${user_id};
+        `;
+
+        // Check if data is empty and handle the case
+        if (data.length === 0) {
+          response.statusCode = 404; // Not Found
+          response.body = JSON.stringify({ message: "No cases found" });
         } else {
-          response.statusCode = 400;
-          response.body = "Invalid value";
+          response.statusCode = 200; // OK
+          response.body = JSON.stringify(data); // Ensure the data is always valid JSON
         }
-        break;
+      } else {
+        response.statusCode = 404; // Not Found
+        response.body = JSON.stringify({ error: "User not found" });
+      }
+    } catch (err) {
+      response.statusCode = 500; // Internal server error
+      console.error(err);
+      response.body = JSON.stringify({ error: "Internal server error" });
+    }
+  } else {
+    response.statusCode = 400; // Bad Request
+    response.body = JSON.stringify({ error: "Invalid value" });
+  }
+  break;
+
 
       case "GET /student/case_page":
         if (event.queryStringParameters && event.queryStringParameters.case_id) {
@@ -260,7 +271,17 @@ exports.handler = async (event) => {
             `;
       
             if (caseData.length > 0) {
-              response.body = JSON.stringify(caseData[0]);
+              // Retrieve messages for the case_id
+              const messages = await sqlConnection`
+                SELECT * FROM "messages" WHERE case_id = ${case_id};
+              `;
+
+              // Combine case data and messages
+              const combinedData = {
+                caseData: caseData[0],
+                messages: messages
+              };
+              response.body = JSON.stringify(combinedData);
             } else {
               response.statusCode = 404;
               response.body = JSON.stringify({ error: "Case not found" });
