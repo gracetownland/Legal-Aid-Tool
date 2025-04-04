@@ -290,7 +290,7 @@ const CaseOverview = () => {
                   </Card>
                 )}
 
-                <Card sx={{ mb: 3, textAlign: "left", color: 'var(--text)', backgroundColor: "var(--background3)", boxShadow: 'none', border: '1px solid var(--border)' }}>
+                <Card sx={{ mb: 3, textAlign: "left", color: 'var(--text)', backgroundColor: "var(--background)", boxShadow: 'none', border: '1px solid var(--border)' }}>
                   <CardContent>
                     {editMode ? (
                       <>
@@ -299,8 +299,26 @@ const CaseOverview = () => {
                           fullWidth
                           value={editedCase.case_title}
                           onChange={(e) => setEditedCase({ ...editedCase, case_title: e.target.value })}
-                          sx={{ mb: 2 }}
+                          sx={{
+                            mb: 2,
+                            '& .MuiInputBase-input': {
+                              color: 'var(--text)', // input text
+                            },
+                            '& .MuiInputLabel-root': {
+                              color: 'var(--text)', // label text
+                            },
+                            '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': {
+                              borderColor: 'var(--text)', // outline border
+                            },
+                            '&:hover .MuiOutlinedInput-notchedOutline': {
+                              borderColor: 'var(--text)', // hover border
+                            },
+                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                              borderColor: 'var(--text)', // focused border
+                            }
+                          }}
                         />
+
                         <TextField
                           label="Case Description"
                           fullWidth
@@ -308,6 +326,23 @@ const CaseOverview = () => {
                           rows={4}
                           value={editedCase.case_description}
                           onChange={(e) => setEditedCase({ ...editedCase, case_description: e.target.value })}
+                          sx={{
+                            '& .MuiInputBase-input': {
+                              color: 'var(--text)',
+                            },
+                            '& .MuiInputLabel-root': {
+                              color: 'var(--text)',
+                            },
+                            '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': {
+                              borderColor: 'var(--text)',
+                            },
+                            '&:hover .MuiOutlinedInput-notchedOutline': {
+                              borderColor: 'var(--text)',
+                            },
+                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                              borderColor: 'var(--text)',
+                            }
+                          }}
                         />
                         <Button variant="contained" color="success" sx={{ mt: 2 }} onClick={handleSaveEdit}>
                           Save Changes
