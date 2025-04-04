@@ -39,7 +39,7 @@ const InterviewAssistant = () => {
         if (!response.ok) throw new Error("Case not found");
         const data = await response.json();
         console.log("Case data: ", data);
-        setCaseData(data);
+        setCaseData(data.caseData);
       } catch (error) {
         console.error("Error fetching case data:", error);
         setCaseData(null);
