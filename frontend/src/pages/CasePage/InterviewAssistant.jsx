@@ -10,6 +10,7 @@ import InstructorHeader from "../../components/InstructorHeader";
 import SideMenu from "./SideMenu";
 import TypingIndicator from "./TypingIndicator";
 import { useRef } from "react"; // Import useRef at the top
+import MicIcon from '@mui/icons-material/Mic';
 
 const InterviewAssistant = () => {
   const { caseId } = useParams();
@@ -157,6 +158,13 @@ const InterviewAssistant = () => {
       promptPreliminarySummary();
     }
   }, [messages]);
+
+  const handleAudioUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      console.log("Uploaded audio file:", file);
+    }
+  };
 
   async function getAIResponse(userInput) {
     const session = await fetchAuthSession();
@@ -340,7 +348,7 @@ const InterviewAssistant = () => {
                   sx={{
                     maxHeight: "300px",
                     overflowY: "auto",
-                    marginRight: 2,
+                    marginRight: '0.5em',
                     '& .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--border)' },
                     '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--border)' },
                   }}
@@ -348,13 +356,45 @@ const InterviewAssistant = () => {
                   InputLabelProps={{ style: { backgroundColor: "transparent", color: "var(--text)" } }}
                   InputProps={{ style: { backgroundColor: "transparent", color: "var(--text)" } }}
                 />
+                
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginRight: '0.5em',
+                    width: '55px',          // slightly larger than icon
+                    height: '50px',
+                    borderRadius: '10%',   // optional: makes it look button-like
+                    backgroundColor: 'var(--secondary)', // optional
+                    cursor: 'pointer',
+                    transition: 'transform 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+                >
+                  <label htmlFor="audio-upload" style={{ cursor: 'pointer' }}>
+                    <MicIcon sx={{ width: '30px', height: '30px', color: 'white' }} />
+                    <input
+                      type="file"
+                      id="audio-upload"
+                      accept="audio/*"
+                      style={{ display: 'none' }}
+                      onChange={handleAudioUpload}
+                    />
+                  </label>
+                </div>
+
                 <Button 
                   variant="contained" 
-                  sx={{ color: "#ffffff", backgroundColor: "var(--secondary)", minHeight: "50px" }} 
+                  sx={{ color: "#ffffff", backgroundColor: "var(--secondary)", minHeight: "50px",  }} 
+                  style={{boxShadow: 'none'}}
                   onClick={handleSendMessage}
                 >
                   Send
                 </Button>
+
+                
               </Box>
             </Box>
           </Box>
