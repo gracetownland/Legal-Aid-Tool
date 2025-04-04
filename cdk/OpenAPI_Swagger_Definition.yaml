@@ -646,38 +646,49 @@ paths:
       operationId: student_create_case_POST
       parameters:
         - in: query
-          name: case_title
-          required: true
-          description: title of the case
-          schema:
-            type: string
-        - in: query
-          name: case_type
-          required: true
-          description: type of the case
-          schema:
-            type: string
-        - in: query
-          name: case_description
-          required: true
-          description: description of the case
-          schema:
-            type: string
-        - in: query
-          name: system_prompt
-          required: true
-          description: prompt to send the LLM
-          schema:
-            type: string
-        - in: query
           name: user_id
           required: true
-          description: id of the student
+          description: id of the student (cognito_id)
           schema:
             type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - case_title
+                - case_type
+                - jurisdiction
+                - case_description
+              properties:
+                case_title:
+                  type: string
+                  description: Title of the case
+                case_type:
+                  type: string
+                  description: Type of the case
+                jurisdiction:
+                  type: string
+                  description: Jurisdiction for the case
+                case_description:
+                  type: string
+                  description: Detailed description of the case
       responses:
         "200":
-          description: Session created
+          description: Case created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  case_id:
+                    type: string
+                    description: The ID of the created case
+                  case_hash:
+                    type: string
+                    description: The hash generated for the case
         "400":
           description: Invalid value
         "401":
@@ -690,11 +701,10 @@ paths:
         - studentAuthorizer: []
       x-amazon-apigateway-integration:
         uri:
-          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${studentFunction.Arn}/invocations"
+          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${DataIngestLambdaDockerFunc.Arn}/invocations"
         passthroughBehavior: "when_no_match"
         httpMethod: "POST"
         type: "aws_proxy"
-
 
   /student/delete_session:
     options:

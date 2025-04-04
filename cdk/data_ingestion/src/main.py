@@ -1,74 +1,49 @@
 import os
 import json
 import boto3
-import psycopg2
 import logging
-from datetime import datetime, timezone
-from typing import NamedTuple
+import hashlib
+import uuid
+import time
+import psycopg2
+from botocore.exceptions import ClientError
 
-from helpers.vectorstore import update_vectorstore
-from langchain_aws import BedrockEmbeddings
-
-# Set up basic logging
+# Setup logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
-# Environment variables
+# Environment variables (assumed to be set in your environment)
 DB_SECRET_NAME = os.environ["SM_DB_CREDENTIALS"]
 REGION = os.environ["REGION"]
-DATA_INGESTION_BUCKET = os.environ["BUCKET"]
-EMBEDDING_BUCKET_NAME = os.environ["EMBEDDING_BUCKET_NAME"]
 RDS_PROXY_ENDPOINT = os.environ["RDS_PROXY_ENDPOINT"]
-EMBEDDING_MODEL_PARAM = os.environ["EMBEDDING_MODEL_PARAM"]
 
 # AWS Clients
 secrets_manager_client = boto3.client("secretsmanager")
-ssm_client = boto3.client("ssm")
+ssm_client = boto3.client("ssm", region_name=REGION)
 bedrock_runtime = boto3.client("bedrock-runtime", region_name=REGION)
 
 # Cached resources
 connection = None
-db_secret = None
-EMBEDDING_MODEL_ID = None
 
-# Set up class to represent parsed file path
-class ParsedFilePath(NamedTuple):
-    simulation_group_id: str
-    patient_id: str 
-    file_category: str
-    file_name: str
-    file_type: str
+##########################################
+# Utility Functions for Secrets & DB
+##########################################
 
-def get_secret():
-    global db_secret
-    if db_secret is None:
-        try:
-            response = secrets_manager_client.get_secret_value(SecretId=DB_SECRET_NAME)["SecretString"]
-            db_secret = json.loads(response)
-        except Exception as e:
-            logger.error(f"Error fetching secret {DB_SECRET_NAME}: {e}")
-            raise
-    return db_secret
-
-def get_parameter():
-    """
-    Fetch a parameter value from Systems Manager Parameter Store.
-    """
-    global EMBEDDING_MODEL_ID
-    if EMBEDDING_MODEL_ID is None:
-        try:
-            response = ssm_client.get_parameter(Name=EMBEDDING_MODEL_PARAM, WithDecryption=True)
-            EMBEDDING_MODEL_ID = response["Parameter"]["Value"]
-        except Exception as e:
-            logger.error(f"Error fetching parameter {EMBEDDING_MODEL_PARAM}: {e}")
-            raise
-    return EMBEDDING_MODEL_ID
+def get_secret(secret_name, expect_json=True):
+    global connection
+    try:
+        response = secrets_manager_client.get_secret_value(SecretId=secret_name)["SecretString"]
+        secret = json.loads(response) if expect_json else response
+    except Exception as e:
+        logger.error(f"Error fetching secret {secret_name}: {e}")
+        raise
+    return secret
 
 def connect_to_db():
     global connection
     if connection is None or connection.closed:
         try:
-            secret = get_secret()
+            secret = get_secret(DB_SECRET_NAME)
             connection_params = {
                 'dbname': secret["dbname"],
                 'user': secret["username"],
@@ -87,198 +62,274 @@ def connect_to_db():
             raise
     return connection
 
-def parse_s3_file_path(file_key):
-    # Assuming the file path is of the format: {simulation_group_id}/{patient_id}/{documents or info}/{file_name}.{file_type}
+def hash_uuid(uuid_str: str) -> int:
+    """
+    Generate a 4-digit numeric hash from a UUID string.
+    
+    Steps:
+      1. Compute the SHA-256 hash of the input string.
+      2. Extract the first 8 hexadecimal characters.
+      3. Convert them to an integer.
+      4. Return the result modulo 10000 to ensure a 4-digit number.
+    """
+    hash_hex = hashlib.sha256(uuid_str.encode('utf-8')).hexdigest()
+    numeric_hash = int(hash_hex[:8], 16)
+    return numeric_hash % 10000
+
+
+##########################################
+# Guardrail Setup Function
+##########################################
+
+def setup_guardrail(guardrail_name: str) -> tuple[str, str]:
+    """
+    Ensure a guardrail with a given name is created and published if it doesn't exist.
+    Returns a tuple (guardrail_id, guardrail_version).
+    """
+    bedrock_client = boto3.client("bedrock", region_name=REGION)
+    guardrail_id = None
+    guardrail_version = None
+    guardrail_name_exists = False
+
+    paginator = bedrock_client.get_paginator('list_guardrails')
+    for page in paginator.paginate():
+        for guardrail in page.get('guardrails', []):
+            if guardrail['name'] == guardrail_name:
+                logger.info(f"Found guardrail: {guardrail_name}")
+                guardrail_id = guardrail['id']
+                guardrail_version = guardrail.get('version')
+                guardrail_name_exists = True
+                break
+        if guardrail_name_exists:
+            break
+
+    if not guardrail_name_exists:
+        logger.info(f"Creating new guardrail: {guardrail_name}")
+        response = bedrock_client.create_guardrail(
+            name=guardrail_name,
+            description='Block financial advice, offensive content, and PII',
+            topicPolicyConfig={
+                'topicsConfig': [
+                    {
+                        'name': 'FinancialAdvice',
+                        'definition': 'Providing personalized advice on managing financial assets or investments.',
+                        'examples': [
+                            'Which mutual fund should I invest in for retirement?',
+                            'Can you advise on the best way to reduce my debt?'
+                        ],
+                        'type': 'DENY'
+                    },
+                    {
+                        'name': 'OffensiveContent',
+                        'definition': 'Content that includes hate speech, discriminatory remarks, or explicit material.',
+                        'examples': [
+                            'Tell me a joke about [a specific race or religion].',
+                            'Share an offensive meme targeting [a specific group].'
+                        ],
+                        'type': 'DENY'
+                    }
+                ]
+            },
+            sensitiveInformationPolicyConfig={
+                'piiEntitiesConfig': [
+                    {'type': 'EMAIL', 'action': 'BLOCK'},
+                    {'type': 'PHONE', 'action': 'BLOCK'},
+                    {'type': 'NAME', 'action': 'BLOCK'}
+                ]
+            },
+            blockedInputMessaging='Sorry, I cannot respond to that.',
+            blockedOutputsMessaging='Sorry, I cannot respond to that.'
+        )
+
+        logger.info("Waiting 5 seconds for guardrail status to become READY...")
+        time.sleep(5)
+        guardrail_id = response['guardrailId']
+        logger.info(f"Guardrail ID: {guardrail_id}")
+
+        version_response = bedrock_client.create_guardrail_version(
+            guardrailIdentifier=guardrail_id,
+            description='Published version',
+            clientRequestToken=str(uuid.uuid4())
+        )
+        guardrail_version = version_response['version']
+        logger.info(f"Guardrail Version: {guardrail_version}")
+
+    return guardrail_id, guardrail_version
+
+##########################################
+# New Case Handler Function
+##########################################
+
+def handler(event, context) -> dict:
+    """
+    Processes a POST /student/new_case event:
+      - Validates user input with Bedrock guardrails.
+      - Retrieves the user from the DB using cognito_id.
+      - Inserts a new case and generates a SHA-256 hash for the case ID.
+      - Returns a JSON response with case_id and case_hash.
+      
+    Args:
+        event (dict): The incoming event containing query parameters and JSON body.
+    
+    Returns:
+        dict: A response dictionary with statusCode and a JSON-formatted body.
+    """
+    conn = None
     try:
-        # Split the path into components
-        parts = file_key.split('/')
+        logger.info("Received event: %s", json.dumps(event, indent=2))
         
-        # Validate that the path has the correct number of components
-        if len(parts) != 4:
-            raise ValueError(f"Unexpected file path format: {file_key}")
-
-        simulation_group_id, patient_id, file_category, filename_with_ext = parts
-
-        # Split filename and extension
-        if '.' not in filename_with_ext:
-            raise ValueError(f"Invalid filename format: {filename_with_ext}")
-
-        file_name, file_type = filename_with_ext.rsplit('.', 1)
-
-        return ParsedFilePath(
-            simulation_group_id=simulation_group_id,
-            patient_id=patient_id,
-            file_category=file_category,
-            file_name=file_name,
-            file_type=file_type
-        )
-    except ValueError as e:
-        logger.error(f"Error parsing S3 file path: {e}")
-        return {
-            "statusCode": 400,
-            "body": json.dumps("Error parsing S3 file path.")
-        }
-
-def insert_file_into_db(patient_id, file_name, file_type, file_path, bucket_name):    
-    connection = connect_to_db()
-    if connection is None:
-        logger.error("No database connection available.")
-        return {
-            "statusCode": 500,
-            "body": json.dumps("Database connection failed.")
-        }
-
-    try:
-        cur = connection.cursor()
-
-        select_query = """
-        SELECT * FROM "patient_data"
-        WHERE patient_id = %s
-        AND filename = %s
-        AND filetype = %s;
-        """
-        cur.execute(select_query, (patient_id, file_name, file_type))
-        existing_file = cur.fetchone()
-
-        if existing_file:
-            # Update the existing record
-            update_query = """
-                UPDATE "patient_data"
-                SET s3_bucket_reference = %s,
-                    filepath = %s,
-                    time_uploaded = %s
-                WHERE patient_id = %s
-                AND filename = %s
-                AND filetype = %s;
-            """
-            timestamp = datetime.now(timezone.utc)
-            cur.execute(update_query, (
-                bucket_name, file_path, timestamp, patient_id, file_name, file_type
-            ))
-            logger.info(f"Successfully updated file {file_name}.{file_type} in database for patient {patient_id}.")
-        else:
-            # Insert a new record
-            insert_query = """
-                INSERT INTO "patient_data" 
-                (patient_id, filetype, s3_bucket_reference, filepath, filename, time_uploaded, metadata)
-                VALUES (%s, %s, %s, %s, %s, %s, %s);
-            """
-            timestamp = datetime.now(timezone.utc)
-            cur.execute(insert_query, (
-                patient_id, file_type, bucket_name, file_path, file_name, timestamp, ""
-            ))
-            logger.info(f"Successfully inserted file {file_name}.{file_type} for patient {patient_id}.")
-
-        connection.commit()
-        cur.close()
-    except Exception as e:
-        if cur:
-            cur.close()
-        connection.rollback()
-        logger.error(f"Error inserting file {file_name}.{file_type} into database: {e}")
-        raise
-
-def update_vectorstore_from_s3(bucket, patient_id):
-    embeddings = BedrockEmbeddings(
-        model_id=get_parameter(), 
-        client=bedrock_runtime,
-        region_name=REGION
-    )
-
-    secret = get_secret()
-
-    vectorstore_config_dict = {
-        'collection_name': f'{patient_id}',
-        'dbname': secret["dbname"],
-        'user': secret["username"],
-        'password': secret["password"],
-        'host': RDS_PROXY_ENDPOINT,
-        'port': secret["port"]
-    }
-
-    try:
-        update_vectorstore(
-            bucket=bucket,
-            group=patient_id,
-            vectorstore_config_dict=vectorstore_config_dict,
-            embeddings=embeddings
-        )
-    except Exception as e:
-        logger.error(f"Error updating vectorstore for patient {patient_id}: {e}")
-        raise
-
-def handler(event, context):
-    records = event.get('Records', [])
-    if not records:
-        return {
-            "statusCode": 400,
-            "body": json.dumps("No valid S3 event found.")
-        }
-
-    for record in records:
-        event_name = record['eventName']
-        bucket_name = record['s3']['bucket']['name']
-
-        if bucket_name != DATA_INGESTION_BUCKET:
-            logger.info(f"Ignoring event from non-target bucket: {bucket_name}")
-            continue
-
-        file_key = record['s3']['object']['key']
-        parsed = parse_s3_file_path(file_key)
-        simulation_group_id = parsed.simulation_group_id
-        patient_id = parsed.patient_id
-        file_category = parsed.file_category
-        file_name = parsed.file_name
-        file_type = parsed.file_type
-
-        if not simulation_group_id or not patient_id or not file_name or not file_type:
+        # Extract the user id from query parameters
+        cognito_id = event.get("queryStringParameters", {}).get("user_id")
+        if not cognito_id:
             return {
-                "statusCode": 400,
-                "body": json.dumps("Error parsing S3 file path.")
+                'statusCode': 400,
+                "headers": {
+                    "Content-Type": "application/json",
+                    "Access-Control-Allow-Headers": "*",
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Methods": "*",
+                },
+                "body": json.dumps({"error": "Missing user_id in query parameters"})
             }
-
-        if event_name.startswith('ObjectCreated:'):
-            try:
-                insert_file_into_db(
-                    patient_id=patient_id,
-                    file_name=file_name,
-                    file_type=file_type,
-                    file_path=file_key,
-                    bucket_name=bucket_name
-                )
-                logger.info(f"File {file_name}.{file_type} inserted successfully.")
-            except Exception as e:
-                logger.error(f"Error inserting file {file_name}.{file_type} into database: {e}")
-                return {
-                    "statusCode": 500,
-                    "body": json.dumps(f"Error inserting file {file_name}.{file_type}: {e}")
-                }
-        else:
-            logger.info(f"File {file_name}.{file_type} is being deleted. Deleting files from database does not occur here.")
         
-        # Update embeddings for patient after the file is successfully inserted into the database. Only if document file
-        if file_category == "documents":
-            try:
-                update_vectorstore_from_s3(bucket_name, patient_id)
-                logger.info(f"Vectorstore updated successfully for patient {patient_id}.")
-            except Exception as e:
-                logger.error(f"Error updating vectorstore for patient {patient_id}: {e}")
-                return {
-                    "statusCode": 500,
-                    "body": json.dumps(f"File inserted, but error updating vectorstore: {e}")
-                }
-        else:            
-            logger.info(f"{file_name}.{file_type} in {file_category} folder is not ingested")
-
+        # Parse the JSON body
+        body = json.loads(event.get("body", "{}"))
+        case_title = body.get("case_title")
+        case_type = body.get("case_type")
+        jurisdiction = body.get("jurisdiction")
+        case_description = body.get("case_description")
+        
+        # Combine the inputs for guardrail validation
+        user_input = f"{case_title} {case_type} {jurisdiction} {case_description}"
+        
+        # Setup or retrieve guardrail
+        guardrail_id, guardrail_version = setup_guardrail('comprehensive-guardrails')
+        
+        # Apply guardrail check using the Bedrock runtime client
+        guard_response = bedrock_runtime.apply_guardrail(
+            guardrailIdentifier=guardrail_id,
+            guardrailVersion=guardrail_version,
+            source="INPUT",
+            content=[{"text": {"text": user_input, "qualifiers": ["guard_content"]}}]
+        )
+        
+        # Check if guardrail intervention occurred
+        if guard_response.get("action") == "GUARDRAIL_INTERVENED":
+            error_message = None
+            for assessment in guard_response.get("assessments", []):
+                # Topic policy checks
+                if "topicPolicy" in assessment:
+                    for topic in assessment["topicPolicy"].get("topics", []):
+                        if topic.get("name") == "FinancialAdvice" and topic.get("action") == "BLOCKED":
+                            error_message = ("Sorry, I cannot process your case because it contains financial content. "
+                                             "Kindly remove the relevant content and try again.")
+                            break
+                        elif topic.get("name") == "OffensiveContent" and topic.get("action") == "BLOCKED":
+                            error_message = ("Sorry, I cannot process your case because it contains offensive content. "
+                                             "Kindly remove the relevant content and try again.")
+                            break
+                    if error_message:
+                        break
+                # Sensitive information policy checks
+                if not error_message and "sensitiveInformationPolicy" in assessment:
+                    for pii in assessment["sensitiveInformationPolicy"].get("piiEntities", []):
+                        if pii.get("action") == "BLOCKED":
+                            error_message = ("Sorry, I cannot process your case because it contains sensitive information. "
+                                             "Kindly remove the relevant content and try again.")
+                            break
+                    if error_message:
+                        break
+            if not error_message:
+                error_message = ("Sorry, I cannot process your case because it contains restricted content. "
+                                 "Kindly remove the relevant content and try again.")
+            
+            return {
+                'statusCode': 400,
+                "headers": {
+                    "Content-Type": "application/json",
+                    "Access-Control-Allow-Headers": "*",
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Methods": "*",
+                },
+                "body": json.dumps({"error": error_message})
+            }
+        
+        # Proceed with database operations
+        conn = connect_to_db()
+        cur = conn.cursor()
+        
+        # Retrieve the user record using cognito_id
+        cur.execute('SELECT user_id FROM "users" WHERE cognito_id = %s', (cognito_id,))
+        user = cur.fetchone()
+        if not user:
+            cur.close()
+            return {
+                'statusCode': 404,
+                "headers": {
+                    "Content-Type": "application/json",
+                    "Access-Control-Allow-Headers": "*",
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Methods": "*",
+                },
+                "body": json.dumps({"error": "User not found"})
+            }
+        user_id = user[0]
+        logger.info("Retrieved user_id: %s", user_id)
+        
+        # Insert the new case into the database
+        insert_query = """
+            INSERT INTO "cases" (user_id, case_title, case_type, jurisdiction, case_description, status, last_updated)
+            VALUES (%s, %s, %s, %s, %s, 'In Progress', CURRENT_TIMESTAMP)
+            RETURNING case_id
+        """
+        cur.execute(insert_query, (user_id, case_title, case_type, jurisdiction, case_description))
+        new_case = cur.fetchone()
+        if not new_case:
+            cur.close()
+            conn.rollback()
+            return {
+                'statusCode': 500,
+                "headers": {
+                    "Content-Type": "application/json",
+                    "Access-Control-Allow-Headers": "*",
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Methods": "*",
+                },
+                "body": json.dumps({"error": "Failed to create new case"})
+            }
+        case_id = new_case[0]
+        
+        # Generate a SHA-256 hash of the case_id
+        case_hash = hash_uuid(str(case_id))
+        
+        # Update the case with the generated case_hash
+        update_query = 'UPDATE "cases" SET case_hash = %s WHERE case_id = %s'
+        cur.execute(update_query, (case_hash, case_id))
+        
+        # Commit the transaction
+        conn.commit()
+        cur.close()
+        
         return {
-            "statusCode": 200,
-            "body": json.dumps({
-                "message": "New file inserted into database.",
-                "location": f"s3://{bucket_name}/{file_key}"
-            })
-        }
-
-    return {
-        "statusCode": 400,
-        "body": json.dumps("No new file upload or deletion event found.")
+        "statusCode": 200,
+        "headers": {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "*",
+        },
+        "body": json.dumps({"case_id": case_id, "case_hash": case_hash})
     }
+    
+    except Exception as err:
+        logger.error("Error in post_student_new_case: %s", err)
+        return {
+            'statusCode': 500,
+            "headers": {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Headers": "*",
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "*",
+            },
+            'body': json.dumps('Error getting response')
+        }
