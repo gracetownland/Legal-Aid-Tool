@@ -316,6 +316,7 @@ const CaseOverview = () => {
                     ) : (
                       <>
                         <Typography variant="h6">{caseData.case_title}</Typography>
+                        <Divider sx={{ my: 2, borderColor: "var(--border)" }} />
                         <Typography variant="body2">{caseData.case_description}</Typography>
                       </>
                     )}
