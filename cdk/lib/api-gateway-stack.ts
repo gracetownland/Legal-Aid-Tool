@@ -1171,7 +1171,7 @@ export class ApiGatewayStack extends cdk.Stack {
 
     summaryLambdaDockerFunc.addToRolePolicy(
       new iam.PolicyStatement({
-        actions: ["dynamodb:Query"],
+        actions: ["dynamodb:Query", "dynamodb:GetItem"],
         resources: [
           `arn:aws:dynamodb:${this.region}:${this.account}:table/DynamoDB-Conversation-Table`,
         ],
