@@ -203,7 +203,7 @@ const InterviewAssistant = () => {
     >
       <StudentHeader /> {/* StudentHeader added at the top */}
 
-      <Box sx={{ display: "flex" }}>
+      <Box sx={{ display: "flex"}}>
         <SideMenu />
 
         <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 2, width: "100%" }}>
@@ -308,7 +308,8 @@ const InterviewAssistant = () => {
                 justifyContent: "center",
                 backgroundColor: "var(--background)", 
                 boxShadow: "none", 
-                padding: 2 
+                padding: 2 ,
+                backgroundColor: "white"
               }}
             >
               <Box 

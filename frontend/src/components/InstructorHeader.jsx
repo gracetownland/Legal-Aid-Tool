@@ -31,7 +31,7 @@ const InstructorHeader = () => {
              fixed top-0 left-0 w-full z-50 shadow-md">
               <div className="flex row">
       <img src={logo} alt="Logo" className="h-12 w-12 mr-4" />
-      <div className="text-white text-3xl font-semibold p-4">Instructor</div>
+      <div className="flex-grow text-[white] text-3xl font-inter font-normal p-4 text-left">Instructor</div>
       </div>
       <div className="flex items-center space-x-4">
         

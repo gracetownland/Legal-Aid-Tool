@@ -10,7 +10,7 @@ import {
   Button,
 } from "@mui/material";
 import InstructorHeader from "../../components/InstructorHeader";
-import theme from "../../theme"; 
+import theme from "../../Theme"; 
 import { Navigate, useNavigate } from "react-router-dom";
 
 const InstructorHomepage = () => {

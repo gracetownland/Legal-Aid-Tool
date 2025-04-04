@@ -88,7 +88,7 @@ const AdminHeader = () => {
     <header className="bg-[var(--secondary)] p-4 flex justify-between items-center h-20 
              fixed top-0 left-0 w-full z-50 shadow-md">
       <img src={logo} alt="Logo" className="h-12 w-12 mr-4" />
-      <div className="flex-grow text-[white] text-3xl font-roboto font-semibold p-4 text-left">
+      <div className="flex-grow text-[white] text-3xl font-inter font-normal p-4 text-left">
         Admin Control Panel
       </div>
       <div className="flex items-center space-x-4">
@@ -109,7 +109,7 @@ const AdminHeader = () => {
       </button>
 
       <button 
-        className="bg-[white] text-[#7c8cb9] hover:bg-[#dde] px-4 py-2 rounded focus:outline-none hover:outline-none" 
+        className="bg-[white] text-[var(--primary)] hover:bg-[#dde] px-4 py-2 rounded focus:outline-none hover:outline-none" 
         onClick={handleSignOut}
       >
         Sign Out

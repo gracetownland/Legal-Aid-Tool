@@ -66,7 +66,6 @@ const AdminSidebar = ({
           <List>
             {[
               { text: "Instructors", icon: <ContactPageIcon />, route: "AdminInstructors" },
-              { text: "Simulation Groups", icon: <GroupsIcon />, route: "AdminSimulationGroups" },
             ].map((item, index) => (
               <React.Fragment key={index}>
                 <ListItem

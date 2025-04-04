@@ -496,25 +496,26 @@ console.log(import.meta.env.VITE_COGNITO_USER_POOL_ID);
           >
 
 
-            <div style={{ textAlign: 'center', marginTop: '20px' }}>
-              <Typography
-                variant="h4"
-                sx={{
-                  color: 'white',
-                  fontWeight: 'bold',
-                  fontSize: 'clamp(1rem, 2.5vw, 2.5rem)', // More aggressive scaling: shrinks to 1rem on small screens
-                  lineHeight: '1.2', // Slightly tighter line spacing for smaller windows
-                  marginTop: '10px',
-                  textAlign: 'center',
-                }}
-              >
-                Welcome to
-                <br />
-                Legal Aid Tool!
-                <br />
-              </Typography>
+          <div style={{ textAlign: 'center', marginTop: '20px' }}>
+            <Typography
+              variant="h4"
+              sx={{
+                color: 'white',
+                fontWeight: 'bold',
+                fontSize: 'clamp(1rem, 2.5vw, 2.5rem)', // More aggressive scaling: shrinks to 1rem on small screens
+                lineHeight: '1.2', // Slightly tighter line spacing for smaller windows
+                marginTop: '10px',
+                textAlign: 'center',
+                fontFamily: '"Inter", sans-serif', // Add Inter font here
+              }}
+            >
+              Welcome to
+              <br />
+              Legal Aid Tool!
+              <br />
+            </Typography>
+          </div>
 
-            </div>
 
 
           </Grid>
@@ -624,7 +625,7 @@ console.log(import.meta.env.VITE_COGNITO_USER_POOL_ID);
                       color: "var(--text-button)", // Default text color
                       "&:hover": {
                         backgroundColor: "var(--secondary)",
-                        color: "#0f0f0f", // Change this to your preferred hover color
+                        color: "#fff", // Change this to your preferred hover color
                       },
                       backgroundColor: 'var(--primary)'
                     }}
