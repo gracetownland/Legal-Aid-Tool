@@ -296,14 +296,25 @@ const CaseOverview = () => {
 
               <CardContent>
                 <Grid container spacing={3} sx={{ textAlign: "left"}}>
-                  {["case_type", "jurisdiction"].map((key, index) => (
-                    <Grid item xs={12} md={6} key={index}>
-                      <Typography variant="h6" fontWeight={500}>
-                        {key.replace("_", " ").replace(/\b\w/g, (char) => char.toUpperCase())}
-                      </Typography>
-                      <Typography variant="body2">{caseData[key] || "N/A"}</Typography>
-                    </Grid>
-                  ))}
+                {["case_type", "jurisdiction"].map((key, index) => (
+                <Grid item xs={12} md={6} key={index}>
+                  <Typography variant="h6" fontWeight={500}>
+                    {key.replace("_", " ").replace(/\b\w/g, (char) => char.toUpperCase())}
+                  </Typography>
+                  <Typography variant="body2">
+                    {key === "jurisdiction" && caseData[key] ? (
+                      Array.isArray(caseData[key]) ? (
+                        caseData[key].join(", ")
+                      ) : (
+                        // If it's a string, try splitting it based on capital letters
+                        (caseData[key].match(/[A-Z][a-z\s]+/g) || [caseData[key]]).join(", ")
+                      )
+                    ) : (
+                      caseData[key] || "N/A"
+                    )}
+                  </Typography>
+                </Grid>
+              ))}
                   <Grid item xs={12} md={6}>
                     <Typography variant="h6" fontWeight={500}>
                       Status
@@ -315,7 +326,14 @@ const CaseOverview = () => {
                       Last Updated
                     </Typography>
                     <Typography variant="body2">
-                      {caseData.last_updated ? new Date(caseData.last_updated).toLocaleString() : "N/A"}
+                      {new Date(caseData.last_updated).toLocaleString('en-US', {
+                                    month: 'long',
+                                    day: 'numeric', 
+                                    year: 'numeric', 
+                                    hour: 'numeric', 
+                                    minute: 'numeric', 
+                                    hour12: true, // Use 12-hour clock (e.g., 'AM')
+                                  })}
                     </Typography>
                   </Grid>
                 </Grid>
