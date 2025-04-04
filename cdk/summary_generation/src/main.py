@@ -134,6 +134,46 @@ def get_case_details(case_id):
         connection.rollback()
         return None, None, None, None
 
+def update_summaries(case_id, summary):
+    """
+    Adds a new summary for a given case.
+    Each case can have multiple summaries differentiated by timestamps.
+    
+    Args:
+        case_id (str): The ID of the case to update.
+        summary (str): The new summary for the case.
+    
+    Returns:
+        bool: True if successful, False otherwise.
+    """
+    logger.info(f"Adding new summary for case_id {case_id}")
+    connection = connect_to_db()
+    if connection is None:
+        logger.error("No database connection available.")
+        return False
+    
+    try:
+        cur = connection.cursor()
+        logger.info("Connected to RDS instance!")
+        
+        # Always insert a new summary with current timestamp
+        cur.execute("""
+            INSERT INTO summaries (case_id, content, time_created)
+            VALUES (%s, %s, CURRENT_TIMESTAMP)
+        """, (case_id, summary))
+            
+        connection.commit()
+        cur.close()
+        logger.info(f"Successfully added new summary for case_id {case_id}")
+        return True
+
+    except Exception as e:
+        logger.error(f"Error adding summary: {e}")
+        if cur:
+            cur.close()
+        connection.rollback()
+        return False
+
 def handler(event, context):
     """
     Lambda function handler for generating conversation summaries.
@@ -200,6 +240,7 @@ def handler(event, context):
     try:
         logger.info("Retrieving dynamo history")
         messages = retrieve_dynamodb_history(TABLE_NAME, case_id)
+        print("messages: ", messages)
     except Exception as e:
         logger.error(f"Error retrieving dynamo history: {e}")
         return {
@@ -233,7 +274,21 @@ def handler(event, context):
             },
             'body': json.dumps('Error getting response')
         }
-    
+    try:
+        logger.info("Updating case summary.")
+        update_summaries(case_id, response)
+    except Exception as e:
+        logger.error(f"Error updating case summary: {e}")
+        return {
+            'statusCode': 500,
+            "headers": {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Headers": "*",
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "*",
+            },
+            'body': json.dumps('Error updating case summary')
+        }
     return {
         "statusCode": 200,
         "headers": {

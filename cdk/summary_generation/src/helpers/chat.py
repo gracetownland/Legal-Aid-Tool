@@ -45,39 +45,43 @@ def retrieve_dynamodb_history(table_name: str, session_id: str) -> list:
     
     Args:
         table_name (str): Name of the DynamoDB table storing chat history.
-        case_id (str): Unique identifier for the conversation session.
+        session_id (str): Unique identifier for the conversation session.
     
     Returns:
         list: List of message dictionaries from the conversation history.
     """
     try:
-        response = dynamodb.query(
+        response = dynamodb.get_item(
             TableName=table_name,
-            KeyConditionExpression='SessionId = :sid',
-            ExpressionAttributeValues={
-                ':sid': {'S': session_id}
+            Key={
+                'SessionId': {'S': session_id}
             }
         )
         
-        # Extract and sort messages by timestamp
-        messages = response.get('Items', [])
-        sorted_messages = sorted(
-            messages, 
-            key=lambda x: x.get('Timestamp', {}).get('N', '0')
-        )
-        
-        # Convert DynamoDB format to readable format
-        readable_messages = []
-        for msg in sorted_messages:
-            readable_messages.append({
-                'role': msg.get('Role', {}).get('S', ''),
-                'content': msg.get('Message', {}).get('S', ''),
-                'timestamp': datetime.fromtimestamp(
-                    int(msg.get('Timestamp', {}).get('N', '0'))
-                ).strftime('%Y-%m-%d %H:%M:%S')
-            })
-        
-        return readable_messages
+        # Extract history from the item if it exists
+        if 'Item' in response and 'History' in response['Item']:
+            history_list = response['Item']['History']['L']
+            readable_messages = []
+            
+            # Process each message in the history
+            for msg_wrapper in history_list:
+                msg = msg_wrapper.get('M', {})
+                data = msg.get('data', {}).get('M', {})
+                msg_type = data.get('type', {}).get('S', '')
+                content = data.get('content', {}).get('S', '')
+                
+                # Convert to the format expected by the summarization function
+                if msg_type and content:
+                    readable_messages.append({
+                        'role': 'user' if msg_type == 'human' else 'assistant',
+                        'content': content,
+                        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # Using current time as timestamp
+                    })
+            
+            return readable_messages
+        else:
+            logger.warning(f"No history found for session_id {session_id}")
+            return []
     
     except ClientError as e:
         logger.error(f"Error retrieving conversation history: {e}")
@@ -114,12 +118,15 @@ def generate_lawyer_summary(
         ("system", """
         You are a professional legal summarization assistant. 
         Create a concise, objective 1-page summary of the conversation focusing on:
-        1. Case Context
+        1. Legal Analysis
         2. Key facts and timeline of events
         3. Parties involved
         4. Critical details and potential legal implications
+        5. Essential Elements of Proving the Case and make references to the case
+        6. Relevant Legal Texts (give 3 - 4 example cases preferably more recent cases)
         5. Any actionable items or recommendations
-        
+        6. Future steps to consider for a lawayer and what other follow-up questions should be asked from the client
+        Give it in a proper readable format.
         Use a clear, professional tone. Organize the summary with clear headings.
         Avoid personal opinions and stick to the observable facts.
         

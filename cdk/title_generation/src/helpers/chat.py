@@ -83,7 +83,9 @@ def get_response(
         "- If a description is given, distill its essence\n"
         "- Keep the title under 100 characters\n"
         "- Avoid unnecessary words\n\n"
-        "- Avoid the name of the person or any personal information\n"
+        "- Avoid the name of the person or any personal information or any country or region names\n"
+        "- Do not mention any country or region name in the title, do not format it as country vs person\n"
+        "- Do not mention United States vs Defendant"
         "Do not mention anything like: Here is a professional and concise case title:, just return the title.\n"
         f"Case Type: {case_type}\n"
     )
