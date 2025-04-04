@@ -88,7 +88,7 @@ const AdminHeader = () => {
     <header className="bg-[var(--secondary)] p-4 flex justify-between items-center h-20 
              fixed top-0 left-0 w-full z-50 shadow-md">
       <img src={logo} alt="Logo" className="h-12 w-12 mr-4" />
-      <div className="flex-grow text-[white] text-3xl font-roboto font-semibold p-4 text-left">
+      <div className="flex-grow text-[white] text-3xl font-inter font-normal p-4 text-left">
         Admin Control Panel
       </div>
       <div className="flex items-center space-x-4">

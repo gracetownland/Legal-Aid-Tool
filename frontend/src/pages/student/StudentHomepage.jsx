@@ -272,7 +272,7 @@ export const StudentHomepage = () => {
                                 border: "1px solid var(--border)",
                                 display: "flex",
                                 flexDirection: "column",
-                                height: "100%",
+                                height: "90%",
                               }}
                             >
                               <CardContent
