@@ -2940,7 +2940,7 @@ paths:
         passthroughBehavior: "when_no_match"
         httpMethod: "POST"
         type: "aws_proxy"
-  /instructor/send_feedback:
+  /instructor/edit_patient:
     options:
       summary: CORS support
       description: |
