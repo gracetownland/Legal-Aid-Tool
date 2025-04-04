@@ -123,7 +123,7 @@ def generate_lawyer_summary(
         3. Parties involved
         4. Critical details and potential legal implications
         5. Essential Elements of Proving the Case and make references to the case
-        6. Relevant Legal Texts
+        6. Relevant Legal Texts (give 3 - 4 example cases preferably more recent cases)
         5. Any actionable items or recommendations
         6. Future steps to consider for a lawayer and what other follow-up questions should be asked from the client
         Give it in a proper readable format.
