@@ -199,7 +199,7 @@ export const StudentHomepage = () => {
               }}
             >
               {cases.length > 0 && (
-                <Typography variant="h5" sx={{ textAlign: "left", fontWeight: 600, marginLeft: 3, marginTop: 2 }}>
+                <Typography variant="h5" sx={{ textAlign: "left", fontWeight: 600, marginLeft: 3, marginTop: 5, color: "#808080", fontSize: "1.8rem" }}>
                   Latest Cases
                 </Typography>
               )}
