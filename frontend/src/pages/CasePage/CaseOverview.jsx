@@ -213,7 +213,7 @@ const CaseOverview = () => {
                     Send Feedback
                   </Button>
                 ) : (
-                  <Button variant="contained" color="secondary" onClick={handleSendForReview}>
+                  <Button variant="outlined" color="primary" onClick={handleSendForReview} >
                     Send For Review
                   </Button>
                 )}
