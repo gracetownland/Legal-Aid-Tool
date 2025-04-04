@@ -41,7 +41,7 @@ exports.handler = async (event) => {
 
           // SQL query to fetch all users who are instructors
           const instructors = await sqlConnectionTableCreator`
-                SELECT user_email, first_name, last_name
+                SELECT user_email, first_name, last_name, user_id
                 FROM "users"
                 WHERE role = 'instructor'
                 ORDER BY last_name ASC;
@@ -53,21 +53,27 @@ exports.handler = async (event) => {
           response.body = "instructor_email is required";
         }
         break;
-        case "POST /admin/enroll_instructor":
+        case "POST /admin/assign_instructor_to_student":
           if (
             event.queryStringParameters != null &&
-            event.queryStringParameters.simulation_group_id &&
-            event.queryStringParameters.instructor_email
+            event.queryStringParameters.instructor_cognito_id &&
+            event.queryStringParameters.student_cognito_id
           ) {
             try {
-              const { simulation_group_id, instructor_email } = event.queryStringParameters;
+              const { instructor_cognito_id, student_cognito_id } = event.queryStringParameters;
       
               // Retrieve user_id from users table based on the instructor email
-              const userResult = await sqlConnectionTableCreator`
+              const instructor = await sqlConnectionTableCreator`
                   SELECT user_id
                   FROM "users"
-                  WHERE user_email = ${instructor_email};
+                  WHERE instructor_cognito_id = ${instructor_cognito_id};
                 `;
+
+                const student = await sqlConnectionTableCreator`
+                SELECT user_id
+                FROM "users"
+                WHERE student_cognito_id = ${student_cognito_id};
+              `;
       
               const user_id = userResult[0]?.user_id;
       
@@ -81,40 +87,14 @@ exports.handler = async (event) => {
       
               // Insert enrollment into enrolments table with current timestamp for the 'instructor' role
               const enrollment = await sqlConnectionTableCreator`
-                  INSERT INTO "enrolments" (enrolment_id, simulation_group_id, user_id, enrolment_type, time_enroled)
-                  VALUES (uuid_generate_v4(), ${simulation_group_id}, ${user_id}, 'instructor', CURRENT_TIMESTAMP)
-                  ON CONFLICT (simulation_group_id, user_id) 
-                  DO UPDATE SET 
-                      enrolment_id = EXCLUDED.enrolment_id,
-                      enrolment_type = EXCLUDED.enrolment_type,
-                      time_enroled = EXCLUDED.time_enroled
-                  RETURNING enrolment_id;
+                  INSERT INTO "instructor_students" (instructor_id, student_id)
+                  VALUES ( ${instructor}, ${student}, 'instructor');
                 `;
       
-              const enrolment_id = enrollment[0]?.enrolment_id;
-      
-              if (enrolment_id) {
-                // Retrieve all patient IDs associated with the simulation group
-                const patientsResult = await sqlConnectionTableCreator`
-                    SELECT patient_id
-                    FROM "patients"
-                    WHERE simulation_group_id = ${simulation_group_id};
-                  `;
-      
-                // Insert a record into student_interactions for each patient in the simulation group
-                const studentInteractionInsertions = patientsResult.map((patient) => {
-                  return sqlConnectionTableCreator`
-                      INSERT INTO "student_interactions" (student_interaction_id, patient_id, enrolment_id, patient_score, last_accessed, patient_context_embedding, is_completed)
-                      VALUES (uuid_generate_v4(), ${patient.patient_id}, ${enrolment_id}, 0, CURRENT_TIMESTAMP, NULL, FALSE);
-                    `;
-                });
-      
-                // Execute all insertions
-                await Promise.all(studentInteractionInsertions);
-              }
+              
       
               response.body = JSON.stringify({
-                message: "Instructor enrolled and patients linked successfully.",
+                message: "Instructor enrolled and student linked successfully.",
               });
       
               // Optionally insert into User Engagement Log (uncomment if needed)
@@ -129,34 +109,30 @@ exports.handler = async (event) => {
             }
           } else {
             response.statusCode = 400;
-            response.body = "simulation_group_id and instructor_email are required";
+            response.body = "student_id and instructor_id are required";
           }
           break;
-      case "POST /admin/prompt": // Change to POST if inserting a new record
-        try {
-            console.log("System prompt update initiated");
+          case "GET /admin/students":
+            if (
+              event.queryStringParameters != null &&
+              event.queryStringParameters.instructor_email
+            ) {
+              const { instructor_email } = event.queryStringParameters;
     
-            // Ensure event.body exists and is valid JSON
-            if (!event.body) throw new Error("Request body is missing");
+              // SQL query to fetch all users who are instructors
+              const instructors = await sqlConnectionTableCreator`
+                    SELECT user_email, first_name, last_name, user_id
+                    FROM "users"
+                    WHERE role = 'student'
+                    ORDER BY last_name ASC;
+                  `;
     
-            const { system_prompt } = JSON.parse(event.body);
-    
-            if (!system_prompt) throw new Error("Missing 'system_prompt' in request body");
-    
-            // Insert new prompt into system_prompt table
-            const insertPrompt = await sqlConnectionTableCreator`
-                INSERT INTO "system_prompt" (prompt)
-                VALUES (${system_prompt})
-                RETURNING *;
-            `;
-    
-            response.body = JSON.stringify(insertPrompt[0]); // Return inserted record
-        } catch (err) {
-            response.statusCode = 500;
-            console.error("Error inserting system prompt:", err);
-            response.body = JSON.stringify({ error: err.message || "Internal server error" });
-        }
-        break;
+              response.body = JSON.stringify(instructors);
+            } else {
+              response.statusCode = 400;
+              response.body = "instructor_email is required";
+            }
+            break;
       case "GET /admin/prompt":
         // SQL query to fetch ALL past prompts
         const system_prompts = await sqlConnectionTableCreator`
@@ -189,135 +165,6 @@ exports.handler = async (event) => {
           response.body = JSON.stringify({
             error: "instructor_email is required",
           });
-        }
-        break;
-      case "POST /admin/updateGroupAccess":
-        if (
-          event.queryStringParameters != null &&
-          event.queryStringParameters.simulation_group_id &&
-          event.queryStringParameters.access
-        ) {
-          const { simulation_group_id, access } = event.queryStringParameters;
-          const accessBool = access.toLowerCase() === "true";
-
-          // SQL query to update group access
-          await sqlConnectionTableCreator`
-                    UPDATE "simulation_groups"
-                    SET group_student_access = ${accessBool}
-                    WHERE simulation_group_id = ${simulation_group_id};
-                  `;
-
-          response.body = JSON.stringify({
-            message: "Group access updated successfully.",
-          });
-        } else {
-          response.statusCode = 400;
-          response.body = JSON.stringify({
-            error: "simulation_group_id and access query parameters are required",
-          });
-        }
-        break;
-      case "DELETE /admin/delete_instructor_enrolments":
-        if (
-          event.queryStringParameters != null &&
-          event.queryStringParameters.instructor_email
-        ) {
-          try {
-            const { instructor_email } = event.queryStringParameters;
-
-            // Retrieve the user's ID
-            const userResult = await sqlConnectionTableCreator`
-                        SELECT user_id 
-                        FROM "users"
-                        WHERE user_email = ${instructor_email};
-                    `;
-
-            const userId = userResult[0]?.user_id;
-
-            if (!userId) {
-              response.statusCode = 404;
-              response.body = JSON.stringify({ error: "Instructor not found" });
-              return;
-            }
-
-            // Delete all enrolments for the instructor
-            await sqlConnectionTableCreator`
-                        DELETE FROM "enrolments"
-                        WHERE user_id = ${userId} AND enrolment_type = 'instructor';
-                    `;
-
-            response.body = JSON.stringify({
-              message: "Instructor enrolments deleted successfully.",
-            });
-          } catch (err) {
-            await sqlConnectionTableCreator.rollback();
-            response.statusCode = 500;
-            console.log(err);
-            response.body = JSON.stringify({ error: "Internal server error" });
-          }
-        } else {
-          response.statusCode = 400;
-          response.body = "instructor_email query parameter is required";
-        }
-        break;
-      case "DELETE /admin/delete_group_instructor_enrolments":
-        if (
-          event.queryStringParameters != null &&
-          event.queryStringParameters.simulation_group_id
-        ) {
-          try {
-            const { simulation_group_id } = event.queryStringParameters;
-
-            // Delete all enrolments for the group where enrolment_type is 'instructor'
-            await sqlConnectionTableCreator`
-                      DELETE FROM "enrolments"
-                      WHERE simulation_group_id = ${simulation_group_id} AND enrolment_type = 'instructor';
-                  `;
-
-            response.body = JSON.stringify({
-              message: "Group instructor enrolments deleted successfully.",
-            });
-          } catch (err) {
-            response.statusCode = 500;
-            console.log(err);
-            response.body = JSON.stringify({ error: "Internal server error" });
-          }
-        } else {
-          response.statusCode = 400;
-          response.body = "simulation_group_id query parameter is required";
-        }
-        break;
-      case "DELETE /admin/delete_group":
-        if (
-          event.queryStringParameters != null &&
-          event.queryStringParameters.simulation_group_id
-        ) {
-          try {
-            const { simulation_group_id } = event.queryStringParameters;
-
-            // // Drop the table whose name is the simulation_group_id
-            // await sqlConnectionTableCreator`
-            //   DROP TABLE IF EXISTS ${sqlConnectionTableCreator(simulation_group_id)};
-            // `;
-
-            // Delete the group, related records will be automatically deleted due to cascading
-            await sqlConnectionTableCreator`
-                      DELETE FROM "simulation_groups"
-                      WHERE simulation_group_id = ${simulation_group_id};
-                  `;
-
-            response.body = JSON.stringify({
-              message: "Group and related records deleted successfully.",
-            });
-          } catch (err) {
-            await sqlConnection.rollback();
-            response.statusCode = 500;
-            console.log(err);
-            response.body = JSON.stringify({ error: "Internal server error" });
-          }
-        } else {
-          response.statusCode = 400;
-          response.body = "simulation_group_id query parameter is required";
         }
         break;
       case "POST /admin/elevate_instructor":
