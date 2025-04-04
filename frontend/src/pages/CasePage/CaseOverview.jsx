@@ -20,7 +20,7 @@ const CaseOverview = () => {
     case_type: "",
     jurisdiction: "",
   });
-  const [userRole, setUserRole] = useState("student"); // Default role is "student"
+  const [userRole, setUserRole] = useState("student"); 
   const [feedback, setFeedback] = useState(""); // State to manage feedback
   const [isFeedbackVisible, setIsFeedbackVisible] = useState(false); // State to show/hide feedback textbox
 
@@ -97,11 +97,40 @@ const CaseOverview = () => {
     }
   };
 
+  const handleSaveEdit = async () => {
+    try {
+      const session = await fetchAuthSession();
+      const token = session.tokens.idToken;
+  
+      const response = await fetch(
+        `${import.meta.env.VITE_API_ENDPOINT}student/edit_case?case_id=${caseId}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: token,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(editedCase), // <--- This is what was missing
+        }
+      );
+  
+      if (!response.ok) throw new Error("Failed to update case");
+  
+      alert("Case edited successfully!");
+      setCaseData({ ...caseData, ...editedCase }); // update local state
+      setEditMode(false);
+    } catch (error) {
+      console.error("Error editing case:", error);
+      alert("Failed to edit case.");
+    }
+  };
+  
+
   const handleInstructorFeedbackSubmit = async () => {
     try {
       const session = await fetchAuthSession();
       const token = session.tokens.idToken;
-      const instructorId = token.payload.sub; // Assuming you get the instructor's ID from the session.
+      const instructorId = token.payload.sub; 
   
       const response = await fetch(
         `${import.meta.env.VITE_API_ENDPOINT}instructor/edit_patient?case_id=${caseId}&instructor_id=9c7db538-2001-70b6-af47-6ecfd6bf9ad1`,
@@ -146,18 +175,18 @@ const CaseOverview = () => {
         {userRole === "student" && (
           <Box sx={{ mb: 2, textAlign: "left" }}>
             <Typography variant="h6" fontWeight={600}>
-              Messages
+              Feedback
             </Typography>
             {/* Map through the messages array */}
             {messages.length > 0 ? (
               messages.map((message) => (
                 <Typography variant="body2" key={message.id} sx={{ mt: 1 }}>
-                  {message.message_content}
-                </Typography>
+                  {message.message_content} - Sent By Prajna
+              </Typography>
               ))
             ) : (
               <Typography variant="body2" color="gray">
-                No messages available.
+                No feedback available.
               </Typography>
             )}
           </Box>
@@ -188,6 +217,15 @@ const CaseOverview = () => {
                     Send For Review
                   </Button>
                 )}
+
+                {/* Edit Case Button - visible to both roles */}
+  <Button
+    variant="outlined"
+    color="primary"
+    onClick={() => setEditMode(!editMode)}
+  >
+    {editMode ? "Cancel Edit" : "Edit Case"}
+  </Button>
               </Stack>
 
               {/* Conditionally show feedback textbox for instructors */}
@@ -212,8 +250,47 @@ const CaseOverview = () => {
 
               <Card sx={{ mb: 3, textAlign: "left", color: 'var(--text)',backgroundColor: "var(--background3)", boxShadow: 'none', border: '1px solid var(--border)' }}>
                 <CardContent>
-                  <Typography variant="h6">{caseData.case_title}</Typography>
-                  <Typography variant="body2">{caseData.case_description}</Typography>
+                {editMode ? (
+  <>
+    <TextField
+      label="Case Title"
+      fullWidth
+      value={editedCase.case_title}
+      onChange={(e) =>
+        setEditedCase({ ...editedCase, case_title: e.target.value })
+      }
+      sx={{ mb: 2 }}
+    />
+    <TextField
+      label="Case Description"
+      fullWidth
+      multiline
+      rows={4}
+      value={editedCase.case_description}
+      onChange={(e) =>
+        setEditedCase({ ...editedCase, case_description: e.target.value })
+      }
+    />
+  </>
+) : (
+  <>
+    <Typography variant="h6">{caseData.case_title}</Typography>
+    <Typography variant="body2">{caseData.case_description}</Typography>
+  </>
+)}
+
+{editMode && (
+  <Button
+    variant="contained"
+    color="success"
+    sx={{ mt: 2 }}
+    onClick={handleSaveEdit} // You’ll define this function
+  >
+    Save Changes
+  </Button>
+)}
+
+
                 </CardContent>
               </Card>
 
