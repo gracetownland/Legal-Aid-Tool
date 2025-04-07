@@ -38,10 +38,10 @@ exports.handler = async (event) => {
           const instructors = await sqlConnectionTableCreator`
             SELECT user_email, first_name, last_name, user_id
             FROM "users"
-            WHERE role = 'instructor'
+            WHERE 'instructor' = ANY(roles)
             ORDER BY last_name ASC;
           `;
-      
+        
           response.body = JSON.stringify(instructors);
         } catch (err) {
           console.error("Database error:", err);
@@ -49,7 +49,7 @@ exports.handler = async (event) => {
           response.body = JSON.stringify({ error: "Failed to fetch instructors" });
         }
         break;
-        case "POST /admin/assign_instructor_to_student":
+      case "POST /admin/assign_instructor_to_student":
           if (
             event.queryStringParameters != null &&
             event.queryStringParameters.instructor_cognito_id &&
