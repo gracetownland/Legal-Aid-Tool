@@ -11,6 +11,8 @@
   --background: #ffffff;
   --background2: #ededed;
   --background3: #d4dbdf;
+  --header: #ffffff;
+  --header-text: #111835;
   --primary: #3d4f6d;
   --secondary: #4d5a79;
   --accent: #1c187a;
@@ -42,6 +44,8 @@
     --background: #2c2c2c;
     --background2: #171717;
     --background3: #444444;
+    --header: #171717;
+    --header-text: #ffffff;
     --primary: #617694;
     --secondary: #647b9c;
     --accent: #3949ff;
