@@ -33,27 +33,23 @@ exports.handler = async (event) => {
     const pathData = event.httpMethod + " " + event.resource;
     switch (pathData) {
       case "GET /admin/instructors":
-        if (
-          event.queryStringParameters != null &&
-          event.queryStringParameters.instructor_email
-        ) {
-          const { instructor_email } = event.queryStringParameters;
-
+        try {
           // SQL query to fetch all users who are instructors
           const instructors = await sqlConnectionTableCreator`
-                SELECT user_email, first_name, last_name, user_id
-                FROM "users"
-                WHERE role = 'instructor'
-                ORDER BY last_name ASC;
-              `;
-
+            SELECT user_email, first_name, last_name, user_id
+            FROM "users"
+            WHERE 'instructor' = ANY(roles)
+            ORDER BY last_name ASC;
+          `;
+        
           response.body = JSON.stringify(instructors);
-        } else {
-          response.statusCode = 400;
-          response.body = "instructor_email is required";
+        } catch (err) {
+          console.error("Database error:", err);
+          response.statusCode = 500;
+          response.body = JSON.stringify({ error: "Failed to fetch instructors" });
         }
         break;
-        case "POST /admin/assign_instructor_to_student":
+      case "POST /admin/assign_instructor_to_student":
           if (
             event.queryStringParameters != null &&
             event.queryStringParameters.instructor_cognito_id &&

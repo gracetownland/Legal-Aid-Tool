@@ -14,7 +14,7 @@ const CaseOverview = () => {
   const [caseData, setCaseData] = useState(null);
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [generatedSummary, setGeneratedSummary] = useState("");
+  const [summaries, setSummaries] = useState("");
   const [editMode, setEditMode] = useState(false);
   const [editedCase, setEditedCase] = useState({
     case_title: "",
@@ -72,16 +72,22 @@ const CaseOverview = () => {
         const data = await response.json();
         setCaseData(data.caseData);
         setMessages(data.messages);
+        setSummaries(data.summaries);
+        console.log(data);
       } catch (error) {
         console.error("Error fetching case data:", error);
         setCaseData(null);
       } finally {
         setLoading(false);
       }
+
+
     };
 
     fetchCaseData();
   }, [caseId]);
+
+  
 
   const handleSendForReview = async () => {
     try {
@@ -134,6 +140,45 @@ const CaseOverview = () => {
     }
   };
 
+  const handleGenerateSummary = async () => {
+    try {
+      const session = await fetchAuthSession();
+      const token = session.tokens.idToken;
+  
+      const response = await fetch(
+        `${import.meta.env.VITE_API_ENDPOINT}student/summary_generation?case_id=${caseId}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            message_content: feedback,
+          }),
+        }
+      );
+  
+      if (!response.ok) throw new Error("Failed to submit feedback");
+  
+      setSnackbar({
+        open: true,
+        message: "Message sent successfully!",
+        severity: "success",
+      });
+      setFeedback("");
+      setIsFeedbackVisible(false);
+    } catch (error) {
+      console.error("Error generating summaries:", error);
+      setSnackbar({
+        open: true,
+        message: "Failed to generate summaries.",
+        severity: "error",
+      });
+    }
+  };
+  
+
   const handleInstructorFeedbackSubmit = async () => {
     try {
       const session = await fetchAuthSession();
@@ -141,7 +186,7 @@ const CaseOverview = () => {
       const instructorId = token.payload.sub;
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_ENDPOINT}instructor/edit_patient?case_id=${caseId}&instructor_id=9c7db538-2001-70b6-af47-6ecfd6bf9ad1`,
+        `${import.meta.env.VITE_API_ENDPOINT}instructor/send_feedback?case_id=${caseId}&instructor_id=${instructorId}`,
         {
           method: "PUT",
           headers: {
@@ -392,14 +437,24 @@ const CaseOverview = () => {
                   </Grid>
                 </CardContent>
 
-                {generatedSummary && (
-                  <Card sx={{ mt: 4 }}>
-                    <CardContent>
-                      <Typography variant="h6" fontWeight={500} mb={2}>AI Generated Summary</Typography>
-                      <Typography variant="body2">{generatedSummary}</Typography>
-                    </CardContent>
-                  </Card>
-                )}
+                {summaries && (
+  <Card sx={{ mt: 4 }}>
+    <CardContent>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+        <Typography variant="h6" textAlign="left" fontWeight={500}>
+          Summaries
+        </Typography>
+        <Button variant="contained" size="small" onClick={handleGenerateSummary}>
+          Generate Summary
+        </Button>
+      </Box>
+      <Typography variant="body2" textAlign="left">
+        {summaries.length === 0 ? "No summaries yet" : summaries}
+      </Typography>
+    </CardContent>
+  </Card>
+)}
+
               </>
             )}
           </Container>
