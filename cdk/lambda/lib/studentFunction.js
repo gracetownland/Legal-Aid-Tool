@@ -178,6 +178,37 @@ exports.handler = async (event) => {
         }
         break;
 
+        case "GET /student/get_summaries":
+        if (
+          event.queryStringParameters &&
+          event.queryStringParameters.case_id
+        ) {
+          const case_id = event.queryStringParameters.case_id;
+          try {
+            const data = await sqlConnection`
+            SELECT * 
+            FROM "summaries" WHERE case_id = ${case_id};
+          `;
+  
+          // Check if data is empty and handle the case
+          if (data.length === 0) {
+            response.body = JSON.stringify({ message: "No summaries generated yet" });
+          } else {
+            response.statusCode = 200; // OK
+            response.body = JSON.stringify(data); // Ensure the data is always valid JSON
+          }
+          } catch (err) {
+            response.statusCode = 500;
+            console.log(err);
+            response.body = JSON.stringify({ error: "Internal server error" });
+          }
+        } else {
+          response.statusCode = 400;
+          response.body = JSON.stringify({ error: "User email is required" });
+        }
+        break;
+
+
       case "POST /student/new_case":
           console.log(event);
           console.log("Received event:", JSON.stringify(event, null, 2));
@@ -274,6 +305,10 @@ exports.handler = async (event) => {
               // Retrieve messages for the case_id
               const messages = await sqlConnection`
                 SELECT * FROM "messages" WHERE case_id = ${case_id};
+              `;
+
+              const summaries = await sqlConnection`
+                SELECT * FROM "summaries" WHERE case_id = ${case_id};
               `;
 
               // Combine case data and messages
