@@ -314,7 +314,8 @@ exports.handler = async (event) => {
               // Combine case data and messages
               const combinedData = {
                 caseData: caseData[0],
-                messages: messages
+                messages: messages,
+                summaries: summaries
               };
               response.body = JSON.stringify(combinedData);
             } else {
