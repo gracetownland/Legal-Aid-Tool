@@ -332,6 +332,57 @@ exports.handler = async (event) => {
           response.body = JSON.stringify({ error: "Case ID is required" });
         }
         break;  
+
+        case "GET /student/notifications":
+          if (event.queryStringParameters && event.queryStringParameters.user_id) {
+            const cognito_id = event.queryStringParameters.user_id;
+        
+            try {
+              // Retrieve the user ID using the cognito_id
+              const user = await sqlConnection`
+                SELECT user_id FROM "users" where cognito_id = ${cognito_id};
+              `;
+        
+              const user_id = user[0]?.user_id;
+        
+              if (user_id) {
+                const data = await sqlConnection`
+                  SELECT 
+                  c.case_id,
+                  c.case_title,
+                  m.message_content,
+                  m.time_sent,
+                  u.username AS instructor_name
+                  FROM cases c
+                  JOIN messages m ON c.case_id = m.case_id
+                  JOIN users u ON m.instructor_id = u.user_id
+                  WHERE c.user_id = ${user_id}
+                  AND m.time_sent >= NOW() - INTERVAL '1 week'
+                  ORDER BY m.time_sent DESC;
+                `;
+        
+                // Check if data is empty and handle the case
+                if (data.length === 0) {
+                  response.statusCode = 404; // Not Found
+                  response.body = JSON.stringify({ message: "No notifications found" });
+                } else {
+                  response.statusCode = 200; // OK
+                  response.body = JSON.stringify(data); // Ensure the data is always valid JSON
+                }
+              } else {
+                response.statusCode = 404; // Not Found
+                response.body = JSON.stringify({ error: "User not found" });
+              }
+            } catch (err) {
+              response.statusCode = 500; // Internal server error
+              console.error(err);
+              response.body = JSON.stringify({ error: "Internal server error" });
+            }
+          } else {
+            response.statusCode = 400; // Bad Request
+            response.body = JSON.stringify({ error: "Invalid value" });
+          }
+          break;
         
         case "GET /student/get_messages":
           if (event.queryStringParameters && event.queryStringParameters.case_id) {
