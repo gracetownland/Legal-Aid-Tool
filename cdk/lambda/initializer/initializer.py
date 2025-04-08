@@ -103,6 +103,14 @@ def handler(event, context):
                 "time_created" timestamp DEFAULT now()
             );
 
+            CREATE TABLE IF NOT EXISTS "audio_files" (
+            audio_file_id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+            case_id uuid,
+            audio_text text,
+            s3_file_path text,
+            timestamp timestamp DEFAULT now()
+            );
+
             -- Add foreign key constraints
 
             ALTER TABLE "messages" ADD FOREIGN KEY ("case_id") REFERENCES "cases" ("case_id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -115,6 +123,9 @@ def handler(event, context):
 
             ALTER TABLE "instructor_students" 
             ADD FOREIGN KEY ("student_id") REFERENCES "users" ("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+            ALTER TABLE "audio_files" 
+            ADD FOREIGN KEY ("case_id") REFERENCES "cases" ("case_id") ON DELETE CASCADE ON UPDATE CASCADE;
         """
 
         #

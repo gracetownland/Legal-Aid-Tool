@@ -6,10 +6,6 @@ const {
   AdminGetUserCommand,
 } = require("@aws-sdk/client-cognito-identity-provider");
 
-const { S3Client, GetObjectCommand, PutObjectCommand, HeadObjectCommand } = require("@aws-sdk/client-s3");
-
-const s3 = new S3Client({ region: 'ca-central-1' }); // Replace with your desired region
-
 const crypto = require("crypto");
 
 
