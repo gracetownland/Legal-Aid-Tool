@@ -33,104 +33,70 @@ exports.handler = async (event) => {
     const pathData = event.httpMethod + " " + event.resource;
     switch (pathData) {
       case "GET /admin/instructors":
-        if (
-          event.queryStringParameters != null &&
-          event.queryStringParameters.instructor_email
-        ) {
-          const { instructor_email } = event.queryStringParameters;
-
+        try {
           // SQL query to fetch all users who are instructors
           const instructors = await sqlConnectionTableCreator`
-                SELECT user_email, first_name, last_name, user_id
-                FROM "users"
-                WHERE role = 'instructor'
-                ORDER BY last_name ASC;
-              `;
-
+            SELECT user_email, first_name, last_name, user_id
+            FROM "users"
+            WHERE 'instructor' = ANY(roles)
+            ORDER BY last_name ASC;
+          `;
+        
           response.body = JSON.stringify(instructors);
-        } else {
-          response.statusCode = 400;
-          response.body = "instructor_email is required";
+        } catch (err) {
+          console.error("Database error:", err);
+          response.statusCode = 500;
+          response.body = JSON.stringify({ error: "Failed to fetch instructors" });
         }
         break;
         case "POST /admin/assign_instructor_to_student":
-          if (
-            event.queryStringParameters != null &&
-            event.queryStringParameters.instructor_cognito_id &&
-            event.queryStringParameters.student_cognito_id
-          ) {
+          // Check if the body contains the instructor and student IDs
+          if (event.body) {
             try {
-              const { instructor_cognito_id, student_cognito_id } = event.queryStringParameters;
-      
-              // Retrieve user_id from users table based on the instructor email
-              const instructor = await sqlConnectionTableCreator`
-                  SELECT user_id
-                  FROM "users"
-                  WHERE instructor_cognito_id = ${instructor_cognito_id};
-                `;
-
-                const student = await sqlConnectionTableCreator`
-                SELECT user_id
-                FROM "users"
-                WHERE student_cognito_id = ${student_cognito_id};
-              `;
-      
-              const user_id = userResult[0]?.user_id;
-      
-              if (!user_id) {
+              const { instructor_id, student_id } = JSON.parse(event.body);  // Parse the request body to access the JSON data
+              
+              if (!instructor_id || !student_id) {
                 response.statusCode = 400;
-                response.body = JSON.stringify({
-                  error: "Instructor email not found",
-                });
+                response.body = JSON.stringify({ error: "Both instructor_id and student_id are required" });
                 break;
               }
-      
-              // Insert enrollment into enrolments table with current timestamp for the 'instructor' role
-              const enrollment = await sqlConnectionTableCreator`
-                  INSERT INTO "instructor_students" (instructor_id, student_id)
-                  VALUES ( ${instructor}, ${student}, 'instructor');
-                `;
-      
+        
+              // Perform the database insertion
+              const assignment = await sqlConnectionTableCreator`
+                INSERT INTO "instructor_students" (instructor_id, student_id)
+                VALUES ( ${instructor_id}, ${student_id});
+              `;
               
-      
+              response.statusCode = 200;
               response.body = JSON.stringify({
                 message: "Instructor enrolled and student linked successfully.",
               });
-      
-              // Optionally insert into User Engagement Log (uncomment if needed)
-              // await sqlConnectionTableCreator`
-              //   INSERT INTO "user_engagement_log" (log_id, user_id, simulation_group_id, patient_id, enrolment_id, timestamp, engagement_type)
-              //   VALUES (uuid_generate_v4(), ${user_id}, ${simulation_group_id}, null, ${enrolment_id}, CURRENT_TIMESTAMP, 'enrollment_created');
-              // `;
+        
             } catch (err) {
               response.statusCode = 500;
-              console.log(err);
+              console.error(err);
               response.body = JSON.stringify({ error: "Internal server error" });
             }
           } else {
             response.statusCode = 400;
-            response.body = "student_id and instructor_id are required";
+            response.body = JSON.stringify({ error: "Request body is missing" });
           }
-          break;
+          break;        
           case "GET /admin/students":
-            if (
-              event.queryStringParameters != null &&
-              event.queryStringParameters.instructor_email
-            ) {
-              const { instructor_email } = event.queryStringParameters;
-    
+            try {
               // SQL query to fetch all users who are instructors
-              const instructors = await sqlConnectionTableCreator`
-                    SELECT user_email, first_name, last_name, user_id
-                    FROM "users"
-                    WHERE role = 'student'
-                    ORDER BY last_name ASC;
-                  `;
-    
-              response.body = JSON.stringify(instructors);
-            } else {
-              response.statusCode = 400;
-              response.body = "instructor_email is required";
+              const students = await sqlConnectionTableCreator`
+                SELECT user_email, first_name, last_name, user_id
+                FROM "users"
+                WHERE 'student' = ANY(roles)
+                ORDER BY last_name ASC;
+              `;
+            
+              response.body = JSON.stringify(students);
+            } catch (err) {
+              console.error("Database error:", err);
+              response.statusCode = 500;
+              response.body = JSON.stringify({ error: "Failed to fetch students" });
             }
             break;
       case "GET /admin/prompt":
@@ -143,23 +109,21 @@ exports.handler = async (event) => {
 
         response.body = JSON.stringify(system_prompts);
         break;
-      case "GET /admin/instructorGroups":
+      case "GET /admin/instructorStudents":
         if (
           event.queryStringParameters != null &&
-          event.queryStringParameters.instructor_email
+          event.queryStringParameters.instructor_id
         ) {
-          const { instructor_email } = event.queryStringParameters;
+          const { instructor_id } = event.queryStringParameters;
 
-          // SQL query to fetch all groups for a given instructor
-          const groups = await sqlConnectionTableCreator`
-              SELECT g.simulation_group_id, g.group_name, g.group_description
-              FROM "enrolments" e
-              JOIN "simulation_groups" g ON e.simulation_group_id = g.simulation_group_id
-              JOIN "users" u ON e.user_id = u.user_id
-              WHERE u.user_email = ${instructor_email} AND e.enrolment_type = 'instructor';
+          // SQL query to fetch all students for a given instructor
+          const student_ids = await sqlConnectionTableCreator`
+              SELECT *
+              FROM "instructor_students"
+              WHERE instructor_id = ${instructor_id};
             `;
 
-          response.body = JSON.stringify(groups);
+          response.body = JSON.stringify(student_ids);
         } else {
           response.statusCode = 400;
           response.body = JSON.stringify({

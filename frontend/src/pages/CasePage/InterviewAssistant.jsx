@@ -228,9 +228,9 @@ const InterviewAssistant = () => {
           {/* Case Title and Information */}
           <Box>
             <Typography variant="h6" sx={{ fontWeight: 600, marginBottom: 2, textAlign: "left"}}>
-              Case #{caseData?.case_hash || "Case Title Not Available"}
+              {caseData?.case_title || "Case Title Not Available"}
             </Typography>
-            <Typography variant="body2" sx={{ marginBottom: 2, textAlign: "left" }}>
+            <Typography variant="body2" sx={{ marginBottom: 2, textAlign: "left", border: "1px solid var(--border)", padding: 2, borderRadius: 1 }}>
               <strong>Case Overview:</strong> {caseData?.case_description || "Overview information not available."}
             </Typography>
             <Divider sx={{ borderColor: "var(--text)" }} />

@@ -63,8 +63,8 @@ const fetchInstructors = async () => {
   }
 };
 
-const createData = (user, last, email) => {
-  return { user, last, email };
+const createData = (user, last, email, id) => {
+  return { user, last, email, id };
 };
 
 function getInstructorInfo(groupsArray) {
@@ -72,7 +72,8 @@ function getInstructorInfo(groupsArray) {
     createData(
       instructor.first_name || "Waiting for user to sign up",
       instructor.last_name || "Waiting for user to sign up",
-      instructor.user_email
+      instructor.user_email, 
+      instructor.user_id
     )
   );
 }

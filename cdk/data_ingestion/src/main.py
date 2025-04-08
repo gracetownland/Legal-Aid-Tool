@@ -127,6 +127,17 @@ def setup_guardrail(guardrail_name: str) -> tuple[str, str]:
                             'Share an offensive meme targeting [a specific group].'
                         ],
                         'type': 'DENY'
+                    },
+                    {
+                        'name': 'Profanity',
+                        'definition': 'Use of profane or obscene words or phrases.',
+                        'examples': [
+                            'fuck',
+                            'shit',
+                            'f*** off',
+                            'go f**k yourself'
+                        ],
+                        'type': 'DENY'
                     }
                 ]
             },
@@ -216,17 +227,24 @@ def handler(event, context) -> dict:
         # Check if guardrail intervention occurred
         if guard_response.get("action") == "GUARDRAIL_INTERVENED":
             error_message = None
+            # Add debug logging to see the full guardrail response
+            logger.info(f"Guardrail response: {json.dumps(guard_response)}")
+            
             for assessment in guard_response.get("assessments", []):
                 # Topic policy checks
                 if "topicPolicy" in assessment:
                     for topic in assessment["topicPolicy"].get("topics", []):
                         if topic.get("name") == "FinancialAdvice" and topic.get("action") == "BLOCKED":
                             error_message = ("Sorry, I cannot process your case because it contains financial content. "
-                                             "Kindly remove the relevant content and try again.")
+                                            "Kindly remove the relevant content and try again.")
                             break
                         elif topic.get("name") == "OffensiveContent" and topic.get("action") == "BLOCKED":
                             error_message = ("Sorry, I cannot process your case because it contains offensive content. "
-                                             "Kindly remove the relevant content and try again.")
+                                            "Kindly remove the relevant content and try again.")
+                            break
+                        elif topic.get("name") == "Profanity" and topic.get("action") == "BLOCKED":
+                            error_message = ("Sorry, I cannot process your case because it contains profanity. "
+                                            "Kindly remove the inappropriate language and try again.")
                             break
                     if error_message:
                         break
@@ -235,14 +253,14 @@ def handler(event, context) -> dict:
                     for pii in assessment["sensitiveInformationPolicy"].get("piiEntities", []):
                         if pii.get("action") == "BLOCKED":
                             error_message = ("Sorry, I cannot process your case because it contains sensitive information. "
-                                             "Kindly remove the relevant content and try again.")
+                                            "Kindly remove the relevant content and try again.")
                             break
                     if error_message:
                         break
             if not error_message:
                 error_message = ("Sorry, I cannot process your case because it contains restricted content. "
-                                 "Kindly remove the relevant content and try again.")
-            
+                                "Kindly remove the relevant content and try again.")
+                    
             return {
                 'statusCode': 400,
                 "headers": {

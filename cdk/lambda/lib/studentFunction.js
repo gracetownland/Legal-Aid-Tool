@@ -6,21 +6,15 @@ const {
   AdminGetUserCommand,
 } = require("@aws-sdk/client-cognito-identity-provider");
 
-const { S3Client, GetObjectCommand, PutObjectCommand, HeadObjectCommand } = require("@aws-sdk/client-s3");
-
-const s3 = new S3Client({ region: 'ca-central-1' }); // Replace with your desired region
-
 const crypto = require("crypto");
 
+
 function hashUUID(uuid) {
-  // Generate a SHA-256 hash and take the first 8 hex characters
-  const hash = crypto.createHash("sha256").update(uuid).digest("hex");
-  
-  // Convert the first 8 characters of the hash into a number
-  const numericHash = parseInt(hash.substring(0, 8), 16);
-  
-  // Ensure it's a 4-digit number (0-9999)
-  return numericHash % 10000;
+  const hash = crypto.createHash("sha256").update(uuid).digest();
+  const shortHash = hash.subarray(0, 5);
+  let base64 = shortHash.toString("base64");
+  base64 = base64.replace(/[+/=]/g, "").substring(0, 6);
+  return base64;
 }
 
 // SQL conneciton from global variable at lib.js
@@ -178,6 +172,37 @@ exports.handler = async (event) => {
         }
         break;
 
+        case "GET /student/get_summaries":
+        if (
+          event.queryStringParameters &&
+          event.queryStringParameters.case_id
+        ) {
+          const case_id = event.queryStringParameters.case_id;
+          try {
+            const data = await sqlConnection`
+            SELECT * 
+            FROM "summaries" WHERE case_id = ${case_id};
+          `;
+  
+          // Check if data is empty and handle the case
+          if (data.length === 0) {
+            response.body = JSON.stringify({ message: "No summaries generated yet" });
+          } else {
+            response.statusCode = 200; // OK
+            response.body = JSON.stringify(data); // Ensure the data is always valid JSON
+          }
+          } catch (err) {
+            response.statusCode = 500;
+            console.log(err);
+            response.body = JSON.stringify({ error: "Internal server error" });
+          }
+        } else {
+          response.statusCode = 400;
+          response.body = JSON.stringify({ error: "User email is required" });
+        }
+        break;
+
+
       case "POST /student/new_case":
           console.log(event);
           console.log("Received event:", JSON.stringify(event, null, 2));
@@ -276,10 +301,15 @@ exports.handler = async (event) => {
                 SELECT * FROM "messages" WHERE case_id = ${case_id};
               `;
 
+              const summaries = await sqlConnection`
+                SELECT * FROM "summaries" WHERE case_id = ${case_id};
+              `;
+
               // Combine case data and messages
               const combinedData = {
                 caseData: caseData[0],
-                messages: messages
+                messages: messages,
+                summaries: summaries
               };
               response.body = JSON.stringify(combinedData);
             } else {
@@ -296,6 +326,57 @@ exports.handler = async (event) => {
           response.body = JSON.stringify({ error: "Case ID is required" });
         }
         break;  
+
+        case "GET /student/notifications":
+          if (event.queryStringParameters && event.queryStringParameters.user_id) {
+            const cognito_id = event.queryStringParameters.user_id;
+        
+            try {
+              // Retrieve the user ID using the cognito_id
+              const user = await sqlConnection`
+                SELECT user_id FROM "users" where cognito_id = ${cognito_id};
+              `;
+        
+              const user_id = user[0]?.user_id;
+        
+              if (user_id) {
+                const data = await sqlConnection`
+                  SELECT 
+                  c.case_id,
+                  c.case_title,
+                  m.message_content,
+                  m.time_sent,
+                  u.username AS instructor_name
+                  FROM cases c
+                  JOIN messages m ON c.case_id = m.case_id
+                  JOIN users u ON m.instructor_id = u.user_id
+                  WHERE c.user_id = ${user_id}
+                  AND m.time_sent >= NOW() - INTERVAL '1 week'
+                  ORDER BY m.time_sent DESC;
+                `;
+        
+                // Check if data is empty and handle the case
+                if (data.length === 0) {
+                  response.statusCode = 404; // Not Found
+                  response.body = JSON.stringify({ message: "No notifications found" });
+                } else {
+                  response.statusCode = 200; // OK
+                  response.body = JSON.stringify(data); // Ensure the data is always valid JSON
+                }
+              } else {
+                response.statusCode = 404; // Not Found
+                response.body = JSON.stringify({ error: "User not found" });
+              }
+            } catch (err) {
+              response.statusCode = 500; // Internal server error
+              console.error(err);
+              response.body = JSON.stringify({ error: "Internal server error" });
+            }
+          } else {
+            response.statusCode = 400; // Bad Request
+            response.body = JSON.stringify({ error: "Invalid value" });
+          }
+          break;
         
         case "GET /student/get_messages":
           if (event.queryStringParameters && event.queryStringParameters.case_id) {

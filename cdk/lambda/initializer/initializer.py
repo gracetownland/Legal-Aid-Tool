@@ -103,6 +103,14 @@ def handler(event, context):
                 "time_created" timestamp DEFAULT now()
             );
 
+            CREATE TABLE IF NOT EXISTS "audio_files" (
+            audio_file_id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+            case_id uuid,
+            audio_text text,
+            s3_file_path text,
+            timestamp timestamp DEFAULT now()
+            );
+
             -- Add foreign key constraints
 
             ALTER TABLE "messages" ADD FOREIGN KEY ("case_id") REFERENCES "cases" ("case_id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -115,6 +123,9 @@ def handler(event, context):
 
             ALTER TABLE "instructor_students" 
             ADD FOREIGN KEY ("student_id") REFERENCES "users" ("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+            ALTER TABLE "audio_files" 
+            ADD FOREIGN KEY ("case_id") REFERENCES "cases" ("case_id") ON DELETE CASCADE ON UPDATE CASCADE;
         """
 
         #
@@ -219,6 +230,38 @@ def handler(event, context):
         for query in sample_queries:
             cursor.execute(query)
             print(cursor.fetchall())
+
+        default_prompt = """
+        You are a helpful assistant for a UBC law student. Respond with kindness and clarity, but be concise and skip conversational fluff. Use second person when referring to the student. You will be given context about legal cases the student is interviewing clients for. Your task is to:
+
+        Provide structured legal analysis from a Canadian legal perspective.
+
+        Identify key legal issues, relevant defences, and strategies the student should consider.
+
+        Highlight applicable laws and cite sources or legal sections where relevant.
+
+        Mention any legal implications or concepts the student may have missed.
+
+        Suggest follow-up questions the student should ask the client to help clarify or advance the case (these are for the student, not for the client to ask a lawyer).
+
+        Do not hallucinate. If you don’t know something, say so or ask for more info (without violating privacy). Accuracy is critical.
+
+        Purpose: Your goal is to help the student think critically about what legal/factual issues to investigate or research. Don’t try to “solve” the case—just provide helpful insights, legal frameworks, and next steps.
+
+        Examples:
+
+        In an assault case, discuss elements like force, intent, consent, and harm. Include possible defences (e.g. self-defence, consent), intoxication relevance, and key facts (e.g. who started it, level of force).
+
+        In a family law case, note rights of spouses/children, emergency court applications, and relevant community resources.
+
+        [End of examples. Student will now provide case context.]
+        """.strip()
+
+        cursor.execute(
+            'INSERT INTO "system_prompt" ("prompt") VALUES (%s);',
+            (default_prompt,)
+        )
+        connection.commit()
 
         # Close cursor and connection
         cursor.close()
