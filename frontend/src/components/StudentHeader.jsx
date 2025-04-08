@@ -13,7 +13,7 @@ const StudentHeader = () => {
   const [name, setName] = useState("");
   const [showDashboard, setShowDashboard] = useState(false);
   const [logo, setLogo] = useState("/logo_dark.svg");
-  const [notifications, setNotifications] = useState(["Hello", "World"]);
+  const [notifications, setNotifications] = useState([]);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const navigate = useNavigate();
@@ -40,6 +40,33 @@ const StudentHeader = () => {
       window.matchMedia("(prefers-color-scheme: dark)").removeEventListener("change", themeChangeListener);
     };
   }, []);
+
+  useEffect(() => {
+    const getNotifications = async () => {
+      try {
+        const session = await fetchAuthSession();
+        const token = session.tokens.idToken;
+        const cognito_id = session.tokens.idToken.payload.sub;
+        const response = await fetch(
+          `${import.meta.env.VITE_API_ENDPOINT}student/notifications?user_id=${cognito_id}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: token,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        const data = await response.json();
+        console.log("NOTIFICATIONS:", data);
+        setNotifications(data.notifications);
+      }
+      catch (error) {
+        console.error("Error fetching notifications:", error);
+      }
+    };
+    getNotifications();
+  }, [notifications]);
 
   useEffect(() => {
     const fetchName = async () => {
