@@ -6,6 +6,7 @@ import AssignmentIcon from "@mui/icons-material/Assignment";
 import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import Notification from "./Notification";
 // Amplify
 import { signOut, fetchAuthSession, fetchUserAttributes } from "aws-amplify/auth";
 
@@ -59,14 +60,14 @@ const StudentHeader = () => {
         );
         const data = await response.json();
         console.log("NOTIFICATIONS:", data);
-        setNotifications(data.notifications);
+        setNotifications(data);
       }
       catch (error) {
         console.error("Error fetching notifications:", error);
       }
     };
     getNotifications();
-  }, [notifications]);
+  }, []);
 
   useEffect(() => {
     const fetchName = async () => {
@@ -193,7 +194,13 @@ const StudentHeader = () => {
               {notifications.length > 0 ? (
                 notifications.map((notif, index) => (
                   <div key={index} className="p-2 border-b">
-                    {notif}
+                    <Notification
+                      title={notif.case_title}
+                      content={notif.message_content}
+                      date={notif.time_sent}
+                      case_id={notif.case_id}
+                      />
+                      
                   </div>
                 ))
               ) : (
