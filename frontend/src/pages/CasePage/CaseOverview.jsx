@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Box, Typography, Card, CardContent, Divider, Grid, Container, Stack, Button, TextField, Snackbar, Alert } from "@mui/material";
+import { Box, Typography, Card, CardContent, Divider, Grid, Container, Stack, Button, TextField, Snackbar, Alert, IconButton } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
 import SideMenu from "./SideMenu";
 import StudentHeader from "../../components/StudentHeader";
@@ -7,11 +7,15 @@ import InstructorHeader from "../../components/InstructorHeader";
 import { fetchAuthSession } from "aws-amplify/auth";
 import EditIcon from '@mui/icons-material/Edit';
 import EditOffIcon from '@mui/icons-material/EditOff';
+import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
+import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
+import ReactMarkdown from "react-markdown";
 
 const CaseOverview = () => {
   const { caseId } = useParams();
   const navigate = useNavigate();
   const [caseData, setCaseData] = useState(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [summaries, setSummaries] = useState("");
@@ -444,13 +448,105 @@ const CaseOverview = () => {
         <Typography variant="h6" textAlign="left" fontWeight={500}>
           Summaries
         </Typography>
-        <Button variant="contained" size="small" onClick={handleGenerateSummary}>
+        <Button variant="outlined"
+                      color="primary" onClick={handleGenerateSummary}>
           Generate Summary
         </Button>
       </Box>
       <Typography variant="body2" textAlign="left">
-        {summaries.length === 0 ? "No summaries yet" : summaries}
-      </Typography>
+      {summaries.length > 0 ? (
+          <Card
+            sx={{
+              background: "transparent",
+              color: "var(--text)",
+              border: "1px solid var(--border)",
+              boxShadow: "none",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              textAlign: "left"
+            }}
+          >
+            <IconButton
+              onClick={() => setCurrentIndex((prev) => Math.max(prev - 1, 0))}
+              disabled={currentIndex === 0}
+              sx={{
+                color: "var(--text)",
+                "&:disabled": { color: "var(--border)" },
+              }}
+            >
+              <ArrowBackIosIcon />
+            </IconButton>
+
+<CardContent sx={{ flexGrow: 1, textAlign: "center" }}>
+  <Typography
+    variant="caption"
+    sx={{
+      color: "var(--text-light)",
+      marginBottom: "10px",
+      display: "block",
+      textAlign: "left",
+    }}
+  >
+
+{new Date(summaries[currentIndex].time_created).toLocaleString('en-US', {
+                          month: 'long', day: 'numeric', year: 'numeric',
+                          hour: 'numeric', minute: 'numeric', hour12: true
+                        })}
+  </Typography>
+
+  <Box sx={{ textAlign: "left" }}>
+  <ReactMarkdown
+    children={summaries[currentIndex].content}
+    components={{
+      h1: ({ node, ...props }) => (
+        <Typography variant="h5" gutterBottom {...props} />
+      ),
+      h2: ({ node, ...props }) => (
+        <Typography variant="h6" gutterBottom {...props} />
+      ),
+      p: ({ node, ...props }) => (
+        <Typography variant="body1" paragraph {...props} />
+      ),
+      li: ({ node, ...props }) => (
+        <li style={{ marginBottom: "4px" }} {...props} />
+      ),
+    }}
+  />
+</Box>
+</CardContent>
+
+
+            <IconButton
+              onClick={() =>
+                setCurrentIndex((prev) =>
+                  Math.min(prev + 1, summaries.length - 1)
+                )
+              }
+              disabled={currentIndex === summaries.length - 1}
+              sx={{
+                color: "var(--text)",
+                "&:disabled": { color: "var(--border)" },
+              }}
+            >
+              <ArrowForwardIosIcon />
+            </IconButton>
+          </Card>
+      ) : (
+        <Typography
+          variant="body1"
+          sx={{
+            color: "#808080",
+            textAlign: "center",
+            marginTop: "20px",
+            textAlign: "left"
+          }}
+        >
+          No summaries available.
+        </Typography>
+      )}
+</Typography>
+
     </CardContent>
   </Card>
 )}
