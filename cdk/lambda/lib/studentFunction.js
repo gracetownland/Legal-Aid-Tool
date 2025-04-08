@@ -12,15 +12,13 @@ const s3 = new S3Client({ region: 'ca-central-1' }); // Replace with your desire
 
 const crypto = require("crypto");
 
+
 function hashUUID(uuid) {
-  // Generate a SHA-256 hash and take the first 8 hex characters
-  const hash = crypto.createHash("sha256").update(uuid).digest("hex");
-  
-  // Convert the first 8 characters of the hash into a number
-  const numericHash = parseInt(hash.substring(0, 8), 16);
-  
-  // Ensure it's a 4-digit number (0-9999)
-  return numericHash % 10000;
+  const hash = crypto.createHash("sha256").update(uuid).digest();
+  const shortHash = hash.subarray(0, 5);
+  let base64 = shortHash.toString("base64");
+  base64 = base64.replace(/[+/=]/g, "").substring(0, 6);
+  return base64;
 }
 
 // SQL conneciton from global variable at lib.js
