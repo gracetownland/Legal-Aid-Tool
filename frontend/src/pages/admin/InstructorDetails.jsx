@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { fetchAuthSession } from "aws-amplify/auth";
-
 import {
   Typography,
   Box,
@@ -18,7 +17,6 @@ import {
   Autocomplete,
   TextField,
 } from "@mui/material";
-
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -34,18 +32,18 @@ function titleCase(str) {
 
 const InstructorDetails = ({ instructorData, onBack }) => {
   const instructor = instructorData;
-  const [activeGroups, setActiveGroups] = useState([]);
-  const [allGroups, setAllGroups] = useState([]);
-  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [students, setStudents] = useState([]);  // All students
+  const [assignedStudents, setAssignedStudents] = useState([]); // Assigned students
+  const [selectedStudent, setSelectedStudent] = useState(null);  // Track the selected student
 
   useEffect(() => {
-    // Fetch all simulation groups
-    const fetchGroups = async () => {
+    // Fetch all students
+    const fetchStudents = async () => {
       try {
         const session = await fetchAuthSession();
         const token = session.tokens.idToken;
         const response = await fetch(
-          `${import.meta.env.VITE_API_ENDPOINT}admin/simulation_groups`,
+          `${import.meta.env.VITE_API_ENDPOINT}admin/students`,
           {
             method: "GET",
             headers: {
@@ -56,73 +54,32 @@ const InstructorDetails = ({ instructorData, onBack }) => {
         );
         if (response.ok) {
           const data = await response.json();
-          setAllGroups(data);
+          setStudents(data);
         } else {
-          console.error("Failed to fetch groups:", response.statusText);
+          console.error("Failed to fetch students:", response.statusText);
         }
       } catch (error) {
-        console.error("Error fetching groups:", error);
+        console.error("Error fetching students:", error);
       }
     };
 
-    // Fetch active groups for the instructor
-    const fetchActiveGroups = async () => {
-      try {
-        const session = await fetchAuthSession();
-        const token = session.tokens.idToken;
-        const response = await fetch(
-          `${
-            import.meta.env.VITE_API_ENDPOINT
-          }admin/instructorGroups?instructor_email=${encodeURIComponent(
-            instructorData.email
-          )}`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: token,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setActiveGroups(data);
-        } else {
-          console.error("Failed to fetch active groups:", response.statusText);
-        }
-      } catch (error) {
-        console.error("Error fetching active groups:", error);
-      }
-    };
-
-    fetchGroups();
-    fetchActiveGroups();
-  }, [instructorData.email]);
+    fetchStudents();
+    fetchAssignedStudents();  // Fetch the assigned students when the component loads
+  }, [instructor.id]);
 
   if (!instructor) {
     return <Typography>No data found for this instructor.</Typography>;
   }
 
-  const handleConfirmDeleteOpen = () => setConfirmDeleteOpen(true);
-  const handleConfirmDeleteClose = () => setConfirmDeleteOpen(false);
-
-  const handleConfirmDelete = async () => {
-    handleConfirmDeleteClose();
-    handleDelete();
-  };
-
-  const handleDelete = async () => {
+  // Fetch assigned students
+  const fetchAssignedStudents = async () => {
     try {
       const session = await fetchAuthSession();
       const token = session.tokens.idToken;
       const response = await fetch(
-        `${
-          import.meta.env.VITE_API_ENDPOINT
-        }admin/lower_instructor?email=${encodeURIComponent(
-          instructorData.email
-        )}`,
+        `${import.meta.env.VITE_API_ENDPOINT}admin/instructorStudents&instructor_id=${instructor.id}`,
         {
-          method: "POST",
+          method: "GET",
           headers: {
             Authorization: token,
             "Content-Type": "application/json",
@@ -130,47 +87,55 @@ const InstructorDetails = ({ instructorData, onBack }) => {
         }
       );
       if (response.ok) {
-        toast.success("Instructor Demoted Successfully", {
-          position: "top-center",
-          autoClose: 1000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          theme: "colored",
-        });
-        setTimeout(() => onBack(), 1000);
+        const data = await response.json();
+        setAssignedStudents(data);
       } else {
-        console.error("Failed to demote instructor:", response.statusText);
+        console.error("Failed to fetch assigned students:", response.statusText);
       }
     } catch (error) {
-      console.error("Error demoting instructor:", error);
+      console.error("Error fetching assigned students:", error);
     }
   };
 
-  const handleSave = async () => {
+  const handleAssignStudent = async () => {
+    if (!selectedStudent) {
+      toast.error("Please select a student to assign.", {
+        position: "top-center",
+        autoClose: 1000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "colored",
+      });
+      return;
+    }
+
     try {
       const session = await fetchAuthSession();
       const token = session.tokens.idToken;
-  
-      // Delete existing enrollments for the instructor
-      const deleteResponse = await fetch(
-        `${import.meta.env.VITE_API_ENDPOINT}admin/delete_instructor_enrolments?instructor_email=${encodeURIComponent(
-          instructor.email
-        )}`,
+
+      const payload = {
+        instructor_id: instructor.id,
+        student_id: selectedStudent.user_id,
+      };
+
+      // Assign student to instructor
+      const response = await fetch(
+        `${import.meta.env.VITE_API_ENDPOINT}admin/assign_instructor_to_student`,
         {
-          method: "DELETE",
+          method: "POST",
           headers: {
             Authorization: token,
             "Content-Type": "application/json",
           },
+          body: JSON.stringify(payload),
         }
       );
-  
-      if (!deleteResponse.ok) {
-        console.error("Failed to update enrolment:", deleteResponse.statusText);
-        toast.error("Update enrolment Failed", {
+
+      if (response.ok) {
+        toast.success("Student assigned to instructor!", {
           position: "top-center",
           autoClose: 1000,
           hideProgressBar: false,
@@ -180,45 +145,11 @@ const InstructorDetails = ({ instructorData, onBack }) => {
           progress: undefined,
           theme: "colored",
         });
-        return;
-      }
-  
-      // Enroll instructor in selected groups
-      const enrollPromises = activeGroups.map((group) =>
-        fetch(
-          `${import.meta.env.VITE_API_ENDPOINT}admin/enroll_instructor?simulation_group_id=${encodeURIComponent(
-            group.simulation_group_id
-          )}&instructor_email=${encodeURIComponent(instructor.email)}`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: token,
-              "Content-Type": "application/json",
-            },
-          }
-        )
-      );
-  
-      const enrollResults = await Promise.all(enrollPromises);
-      const allEnrolledSuccessfully = enrollResults.every(
-        (result) => result.ok
-      );
-  
-      if (allEnrolledSuccessfully) {
-        toast.success("Enrolment Updated!", {
-          position: "top-center",
-          autoClose: 1000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          theme: "colored",
-        });
-        // Close the dialog after successful save
+        fetchAssignedStudents(); // Refresh assigned students list
         onBack();
       } else {
-        toast.error("Some enrolments failed", {
+        console.error("Failed to assign student:", response.statusText);
+        toast.error("Failed to assign student.", {
           position: "top-center",
           autoClose: 1000,
           hideProgressBar: false,
@@ -230,8 +161,8 @@ const InstructorDetails = ({ instructorData, onBack }) => {
         });
       }
     } catch (error) {
-      console.error("Error in handleSave:", error);
-      toast.error("An error occurred", {
+      console.error("Error assigning student:", error);
+      toast.error("An error occurred while assigning the student.", {
         position: "top-center",
         autoClose: 1000,
         hideProgressBar: false,
@@ -243,98 +174,66 @@ const InstructorDetails = ({ instructorData, onBack }) => {
       });
     }
   };
-  
+
   return (
     <>
       <Box component="main" sx={{ flexGrow: 1, p: 3, marginTop: 1, textAlign: "left" }}>
         <Toolbar />
         <Paper sx={{ p: 2, marginBottom: 4, textAlign: "left" }}>
           <Typography variant="h5" sx={{ marginBottom: 2, p: 1 }}>
-            Instructor: {titleCase(instructorData?.first_name)} {titleCase(instructorData?.last_name)}
+            Instructor: {titleCase(instructor?.first_name)} {titleCase(instructor?.last_name)}
           </Typography>
           <Divider sx={{ p: 1, marginBottom: 3 }} />
           <Typography variant="h7" sx={{ marginBottom: 1, p: 1 }}>
-            Email: {instructorData.email}
+            Email: {instructor.email}
           </Typography>
+
+          {/* Assigned Students Section */}
+          <Typography variant="h6" sx={{ marginTop: 2, marginBottom: 1 }}>
+            Assigned Students:
+          </Typography>
+          <Box>
+            {assignedStudents.length > 0 ? (
+              assignedStudents.map((student) => (
+                <Typography key={student.id}>
+                  {student.first_name} {student.last_name}
+                </Typography>
+              ))
+            ) : (
+              <Typography>No students assigned yet.</Typography>
+            )}
+          </Box>
+
           <FormControl sx={{ width: "100%", marginBottom: 2, marginTop: 5 }}>
             <Autocomplete
-              multiple
-              id="active-groups-autocomplete"
-              options={allGroups}
-              value={activeGroups}
-              getOptionLabel={(option) => option.group_name || ""}
-              onChange={(event, newValue) => {
-                const uniqueGroups = Array.from(
-                  new Map(
-                    newValue.map((group) => [group.simulation_group_id, group])
-                  ).values()
-                );
-                setActiveGroups(uniqueGroups);
-              }}
+              value={selectedStudent}
+              onChange={(event, newValue) => setSelectedStudent(newValue)}
+              options={students}
+              getOptionLabel={(option) => `${option.first_name} ${option.last_name}`}
               renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Active Groups"
-                  variant="outlined"
-                />
+                <TextField {...params} label="Select Student" variant="outlined" />
               )}
-              isOptionEqualToValue={(option, value) =>
-                option.simulation_group_id === value.simulation_group_id
-              }
+              isOptionEqualToValue={(option, value) => option.id === value.id}
             />
           </FormControl>
         </Paper>
         <Grid container spacing={2}>
           <Grid item xs={6}>
-            <Button
-              variant="contained"
-              onClick={onBack}
-              sx={{ width: "30%", mx: "left" }}
-            >
+            <Button variant="contained" onClick={onBack} sx={{ width: "30%", mx: "left" }}>
               Back
             </Button>
           </Grid>
           <Grid item xs={6} container justifyContent="flex-end">
             <Button
               variant="contained"
-              color="error"
-              onClick={handleConfirmDeleteOpen}
-              sx={{ width: "30%", mx: "right", mr: 2 }}
-            >
-              Delete
-            </Button>
-            <Button
-              variant="contained"
               color="primary"
-              onClick={handleSave}
+              onClick={handleAssignStudent}
               sx={{ width: "30%", mx: "right" }}
             >
-              Save
+              Assign Student
             </Button>
           </Grid>
         </Grid>
-        <Dialog
-          open={confirmDeleteOpen}
-          onClose={handleConfirmDeleteClose}
-          aria-labelledby="alert-dialog-title"
-          aria-describedby="alert-dialog-description"
-        >
-          <DialogTitle id="alert-dialog-title">{"Confirm Delete"}</DialogTitle>
-          <DialogContent>
-            <DialogContentText id="alert-dialog-description">
-              Are you sure you want to delete this instructor? This action
-              cannot be undone.
-            </DialogContentText>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleConfirmDeleteClose} color="primary">
-              Cancel
-            </Button>
-            <Button onClick={handleConfirmDelete} color="error">
-              Confirm
-            </Button>
-          </DialogActions>
-        </Dialog>
       </Box>
       <ToastContainer
         position="top-center"
