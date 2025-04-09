@@ -41,7 +41,7 @@ export default function Notification({ title, content, date, case_id, instructor
           
           {/* <span className="text-sm text-gray-500">{date}</span> */}
         </div>
-        <span className="text-xs text-gray-">
+        <span className="text-xs text-gray-400">
             <strong>Case: <span className="font-medium text-gray-400">{title}</span></strong>
           </span>
         <p className="mt-1 text-sm truncate">
