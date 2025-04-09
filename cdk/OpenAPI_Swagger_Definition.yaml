@@ -4244,7 +4244,7 @@ paths:
       tags:
         - Admin
       summary: Get all groups for a given instructor where enrolment type is instructor
-      operationId: admin_get_students_GET
+      operationId: admin_get_instructorStudents_GET
       parameters:
         - name: instructor_id
           in: query
