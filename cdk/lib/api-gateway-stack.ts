@@ -5,6 +5,7 @@ import * as lambdaEventSources from "aws-cdk-lib/aws-lambda-event-sources";
 import * as iam from "aws-cdk-lib/aws-iam";
 import { Construct } from "constructs";
 import { Duration } from "aws-cdk-lib";
+import * as sqs from "aws-cdk-lib/aws-sqs";
 import * as wafv2 from "aws-cdk-lib/aws-wafv2";
 import {
   Architecture,
@@ -82,6 +83,49 @@ export class ApiGatewayStack extends cdk.Stack {
       }
     );
 
+    const audioStorageBucket = new s3.Bucket(
+      this,
+      `${id}-audio-prompt-bucket`,
+      {
+        blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+        cors: [
+          {
+            allowedHeaders: ["*"],
+            allowedMethods: [
+              s3.HttpMethods.GET,
+              s3.HttpMethods.PUT,
+              s3.HttpMethods.HEAD,
+              s3.HttpMethods.POST,
+              s3.HttpMethods.DELETE,
+            ],
+            allowedOrigins: ["*"],
+          },
+        ],
+        // When deleting the stack, need to empty the Bucket and delete it manually
+        removalPolicy: cdk.RemovalPolicy.RETAIN,
+        enforceSSL: true,
+      }
+    );
+
+
+    // Create FIFO SQS Queue
+    const audioToTextQueue = new sqs.Queue(this, `${id}-AudioToTextQueue`, {
+      queueName: `${id}-audioToText-queue.fifo`,
+      fifo: true,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      visibilityTimeout: cdk.Duration.seconds(900),
+    });
+
+    // Create FIFO SQS Queue
+    const textToLlmQueue = new sqs.Queue(this, `${id}-TextToLlmQueue`, {
+      queueName: `${id}-textToLlm-queue.fifo`,
+      fifo: true,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      visibilityTimeout: cdk.Duration.seconds(900),
+    });
+
+
+    
     /**
      *
      * Create Integration Lambda layer for aws-jwt-verify
@@ -514,6 +558,8 @@ export class ApiGatewayStack extends cdk.Stack {
       enforceSSL: true,
     });
 
+    
+
     const lambdaStudentFunction = new lambda.Function(this, `${id}-studentFunction`, {
       runtime: lambda.Runtime.NODEJS_20_X,
       code: lambda.Code.fromAsset("lambda/lib"),
@@ -756,6 +802,80 @@ export class ApiGatewayStack extends cdk.Stack {
       layers: [postgres],
       role: coglambdaRole,
     });
+
+    const sqsFunction = new lambda.Function(this, `${id}-sqsFunction`, {
+      runtime: lambda.Runtime.NODEJS_20_X,
+      handler: "sqs.handler",
+      memorySize: 512,
+      code: lambda.Code.fromAsset("lambda/sqs"),
+      timeout: cdk.Duration.seconds(900),
+      environment: {
+        SQS_QUEUE_URL: audioToTextQueue.queueUrl,
+      },
+      vpc: vpcStack.vpc,
+      role: coglambdaRole,
+    });
+
+    sqsFunction.addEventSource(
+      new lambdaEventSources.S3EventSource(audioStorageBucket, {
+        events: [
+          s3.EventType.OBJECT_CREATED,
+          s3.EventType.OBJECT_RESTORE_COMPLETED,
+        ],
+      })
+    );
+
+    audioToTextQueue.grantSendMessages(sqsFunction);
+
+    const audioToTextFunction = new lambda.Function(this, `${id}-audioToTextFunction`, {
+      runtime: lambda.Runtime.PYTHON_3_9,
+      code: lambda.Code.fromAsset("lambda/audioToText"),
+      handler: "main.lambda_handler",
+      timeout: Duration.seconds(300),
+      memorySize: 128,
+      vpc: vpcStack.vpc,
+      environment: {
+        AUDIO_BUCKET: audioStorageBucket.bucketName,
+        SM_DB_CREDENTIALS: db.secretPathUser.secretName,
+        RDS_PROXY_ENDPOINT: db.rdsProxyEndpoint,
+        OUTPUT_SQS_QUEUE_URL: textToLlmQueue.queueUrl,
+      },
+      functionName: `${id}-audioToTextFunction`,
+      layers: [powertoolsLayer],
+      role: coglambdaRole,
+    });
+
+    textToLlmQueue.grantSendMessages(audioToTextFunction);
+
+    // Override the Logical ID of the Lambda Function to get ARN in OpenAPI
+    const cfnAudioToTextFunction = audioToTextFunction.node
+      .defaultChild as lambda.CfnFunction;
+    cfnAudioToTextFunction.overrideLogicalId("audioToTextFunction");
+    audioToTextQueue.grantConsumeMessages(audioToTextFunction);
+    // Grant the Lambda function read-only permissions to the S3 bucket
+    audioStorageBucket.grantRead(audioToTextFunction);
+
+    // Grant access to Secret Manager
+    audioToTextFunction.addToRolePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: [
+          //Secrets Manager
+          "secretsmanager:GetSecretValue",
+        ],
+        resources: [
+          `arn:aws:secretsmanager:${this.region}:${this.account}:secret:*`,
+        ],
+      })
+    );
+
+    // Add the permission to the Lambda function's policy to allow API Gateway access
+    audioToTextFunction.addPermission("AllowApiGatewayInvoke", {
+      principal: new iam.ServicePrincipal("apigateway.amazonaws.com"),
+      action: "lambda:InvokeFunction",
+      sourceArn: `arn:aws:execute-api:${this.region}:${this.account}:${this.api.restApiId}/*/*/admin*`,
+    });
+      
 
     const adjustUserRoles = new lambda.Function(this, `${id}-adjustUserRoles`, {
       runtime: lambda.Runtime.NODEJS_20_X,
