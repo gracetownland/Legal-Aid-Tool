@@ -65,7 +65,8 @@ def initialize_constants():
     BEDROCK_LLM_ID = get_parameter(BEDROCK_LLM_PARAM, BEDROCK_LLM_ID)
 
 
-    
+def capitalize_title(s):
+    return ' '.join(word.capitalize() for word in s.split())    
 
 def connect_to_db():
     global connection
@@ -233,7 +234,7 @@ def handler(event, context):
 
     try:
         logger.info("Updating case title.")
-        update_title(case_id, response)
+        update_title(case_id, capitalize_title(response))
     except Exception as e:
         logger.error(f"Error updating case title in DynamoDB: {e}")
         return {

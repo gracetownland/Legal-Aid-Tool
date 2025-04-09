@@ -226,7 +226,7 @@ exports.handler = async (event) => {
             const caseId = newCase[0].case_id;
 
             // Generate a SHA-256 hash of the case_id
-            const caseHash = hashUUID(caseId);
+            const caseHash = hashUUID(caseId.toString());
 
             // Update the case with the generated case_hash
             await sqlConnection`
@@ -346,7 +346,7 @@ exports.handler = async (event) => {
                   c.case_title,
                   m.message_content,
                   m.time_sent,
-                  u.username AS instructor_name
+                  u.first_name||' '||u.last_name AS instructor_name
                   FROM cases c
                   JOIN messages m ON c.case_id = m.case_id
                   JOIN users u ON m.instructor_id = u.user_id

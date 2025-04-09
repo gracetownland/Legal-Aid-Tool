@@ -9,6 +9,7 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import Notification from "./Notification";
 // Amplify
 import { signOut, fetchAuthSession, fetchUserAttributes } from "aws-amplify/auth";
+import { Divider } from "@mui/material";
 
 const StudentHeader = () => {
   const [name, setName] = useState("");
@@ -146,10 +147,10 @@ const StudentHeader = () => {
 
   return (
     <header className="bg-[var(--header)] p-4 flex justify-between items-center h-20 fixed top-0 left-0 w-full z-50 shadow-sm">
-      <img src={logo} alt="Logo" className="h-12 w-12 mr-4" />
-      <h2 className="font-semibold ">Legal Aid Tool</h2>
+      <img src={logo} alt="Logo" className="h-14 w-14 mr-4" />
+      <h2 className="font-semibold text-xl">Legal Aid Tool</h2>
       <div className="flex-grow text-[var(--header-text)] text-3xl font-medium p-4 text-left">
-        {showDashboard && name && getHeaderText()}
+        {/* spacer */}
       </div>
       <div className="flex items-center space-x-6">
         <button
@@ -176,12 +177,9 @@ const StudentHeader = () => {
           <span className="mt-1">All Cases</span>
         </button>
 
-        {/* Notification Bell */}
-        <div
-          className="relative"
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={() => handleMouseLeave("notifications")}
-        >
+        <div className="relative"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={() => handleMouseLeave("notifications")}>
           <button
             onClick={toggleNotifications}
             className="text-[var(--header-text)] flex flex-col items-center hover:text-gray-600 bg-transparent focus:outline-none transition-all duration-200"
@@ -189,26 +187,40 @@ const StudentHeader = () => {
             <NotificationsIcon fontSize="large" />
             <span className="mt-1">Notifications</span>
           </button>
+          {notifications.length > 0 && (
+            <span className="absolute top-4 right-15 transform translate-x-1/3 -translate-y-1/3 inline-flex items-center justify-center px-1 py-0 text-xs font-regular text-white bg-red-600 rounded-full">
+              {notifications.length}
+            </span>
+          )}
           {isNotificationsOpen && (
-            <div className="absolute right-0 top-10 bg-white shadow-lg w-64 p-2 rounded-lg">
-              {notifications.length > 0 ? (
-                notifications.map((notif, index) => (
-                  <div key={index} className="p-2 border-b">
-                    <Notification
-                      title={notif.case_title}
-                      content={notif.message_content}
-                      date={notif.time_sent}
-                      case_id={notif.case_id}
+            <div
+              className="absolute bg-[var(--background)] right-0 shadow-lg rounded-lg border border-[var(--border)] z-50"
+              style={{ maxWidth: "32rem" }}
+              ref={notificationMenuRef}
+            >
+              <h2 className="mx-4 py-2 text-[var(--text)] text-left">Notifications</h2>
+              <Divider className="my-2" style={{ borderColor: "var(--border)" }} />
+              <div style={{ maxHeight: "35rem", overflowY: "auto" }} className="overflow-y-auto">
+                {notifications.length > 0 ? (
+                  notifications.map((notif, index) => (
+                    <div key={index} className="m-0 p-0">
+                      <Notification
+                        title={notif.case_title}
+                        content={notif.message_content}
+                        date={notif.time_sent}
+                        case_id={notif.case_id}
+                        instructor_name={notif.instructor_name}
                       />
-                      
-                  </div>
-                ))
-              ) : (
-                <div className="p-2 text-gray-500">No notifications</div>
-              )}
+                    </div>
+                  ))
+                ) : (
+                  <div className="m-0 p-2 text-gray-500 text-center">No notifications</div>
+                )}
+              </div>
             </div>
           )}
         </div>
+
 
         {/* Account Menu */}
         <div
@@ -224,12 +236,12 @@ const StudentHeader = () => {
             <span className="mt-1">{name}</span>
           </button>
           {isAccountMenuOpen && (
-            <div className="absolute right-0 top-10 bg-[var(--background)] shadow-lg w-48 p-2 rounded-lg">
+            <div className="absolute right-0 bg-[var(--background)] shadow-lg w-48 p-2 rounded-lg">
               <button
                 onClick={handleSignOut}
-                className="w-full text-left p-2 hover:bg-gray-100"
+                className="w-full text-left p-2 bg-[var(--background)] hover:bg-[var(--background2)]"
               >
-                Log Out
+                Sign Out
               </button>
             </div>
           )}

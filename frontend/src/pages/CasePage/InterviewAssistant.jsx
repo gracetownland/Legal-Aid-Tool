@@ -1,25 +1,44 @@
-import React, { useState, useEffect } from "react";
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import { Box, Typography, TextField, Button, Paper, Divider, CircularProgress } from "@mui/material";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import {
+  Box,
+  Typography,
+  TextField,
+  Button,
+  Paper,
+  Divider,
+  CircularProgress,
+} from "@mui/material";
+import { useNavigate, useParams } from "react-router-dom";
 import { fetchAuthSession } from "aws-amplify/auth";
 
 import StudentHeader from "../../components/StudentHeader";
 import InstructorHeader from "../../components/InstructorHeader";
 import SideMenu from "./SideMenu";
 import TypingIndicator from "./TypingIndicator";
-import { useRef } from "react"; // Import useRef at the top
-import MicIcon from '@mui/icons-material/Mic';
+
+import SendIcon from "@mui/icons-material/Send";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import MicIcon from "@mui/icons-material/Mic";
+import SummarizeIcon from "@mui/icons-material/Summarize";
 
 const InterviewAssistant = () => {
   const { caseId } = useParams();
   const navigate = useNavigate();
-  
-  const [userRole, setUserRole] = useState("student"); // Default role is "student"
 
+  const [userRole, setUserRole] = useState("student"); // Default role is "student"
   const [caseData, setCaseData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [messages, setMessages] = useState([
+    {
+      sender: "bot",
+      text:
+        "Hi, I'm your Legal Interview Assistant. Try asking me to analyze the case to begin!",
+    },
+  ]);
+  const [userInput, setUserInput] = useState("");
+  const [isAItyping, setIsAItyping] = useState(false);
 
   const messagesEndRef = useRef(null);
 
@@ -45,7 +64,8 @@ const InterviewAssistant = () => {
         console.log("Case data: ", data);
         setCaseData(data.caseData);
 
-        const userRole = session.tokens.idToken.payload["cognito:groups"]?.[0] || "student"; // Assuming the role is stored in the Cognito groups claim
+        const userRole =
+          session.tokens.idToken.payload["cognito:groups"]?.[0] || "student";
         setUserRole(userRole);
       } catch (error) {
         console.error("Error fetching case data:", error);
@@ -54,8 +74,6 @@ const InterviewAssistant = () => {
         setLoading(false);
       }
     };
-
-    
 
     const fetchMessages = async () => {
       setLoading(true);
@@ -84,16 +102,17 @@ const InterviewAssistant = () => {
           sender: msg.type === "ai" ? "bot" : "user",
           text:
             msg.type === "human"
-              ? msg.content.replace(/^\s*user\s*/, "").trim() // Remove the unwanted prefix
+              ? msg.content.replace(/^\s*user\s*/, "").trim() // Remove unwanted prefix
               : msg.content.trim(),
         }));
-        
-        // Remove the first message only if it's from a user (to prompt llm to start, but hide that user prompt to make it look like it spoke first)
+
+        // Remove the first message if it's from a user
         const filteredMessages =
-          formattedMessages[0]?.sender === "user" ? formattedMessages.slice(1) : formattedMessages;
-        
+          formattedMessages[0]?.sender === "user"
+            ? formattedMessages.slice(1)
+            : formattedMessages;
+
         setMessages(filteredMessages);
-        setMessages(formattedMessages.slice(1)); // Remove the initial message to prompt llm to respond first
       } catch (error) {
         console.error("Error fetching messages data:", error);
       } finally {
@@ -109,13 +128,6 @@ const InterviewAssistant = () => {
     navigate("/"); // Navigate to the homepage
   };
 
-  const [messages, setMessages] = useState([
-    { sender: "bot", text: "Hi, I'm your Legal Interview Assistant. Try asking me to analyze the case to begin!" },
-  ]);
-
-  const [userInput, setUserInput] = useState("");
-  const [isAItyping, setIsAItyping] = useState(false);
-
   const handleSendMessage = async () => {
     if (userInput.trim()) {
       setMessages((prevMessages) => [
@@ -127,37 +139,21 @@ const InterviewAssistant = () => {
       // Await the AI response before updating the messages
       setIsAItyping(true);
       const llmResponse = await getAIResponse(userInput);
-      console.log("LLM Responded with: ", llmResponse); // Check the response in the console
+      console.log("LLM Responded with: ", llmResponse);
 
       setMessages((prevMessages) => [
         ...prevMessages,
-        { sender: "bot", text: llmResponse }, // Bot response
+        { sender: "bot", text: llmResponse },
       ]);
     }
   };
 
   const handleKeyPress = (event) => {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault(); // Prevent default behavior of Enter key
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
       handleSendMessage();
     }
   };
-
-  const promptPreliminarySummary = () => {
-    setMessages((prevMessages) => [
-      ...prevMessages,
-      {
-        sender: "bot",
-        text: "Would you like me to generate a preliminary summary of the case so far? This can help consolidate key points from our discussion.",
-      },
-    ]);
-  };
-
-  useEffect(() => {
-    if (messages.length === 5) {
-      promptPreliminarySummary();
-    }
-  }, [messages]);
 
   const handleAudioUpload = (event) => {
     const file = event.target.files[0];
@@ -172,16 +168,19 @@ const InterviewAssistant = () => {
 
     async function getFetchBody() {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}student/text_generation?case_id=${caseId}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: token
-          },
-          body: JSON.stringify({
-            message_content: userInput
-          })
-        });
+        const response = await fetch(
+          `${import.meta.env.VITE_API_ENDPOINT}student/text_generation?case_id=${caseId}`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: token,
+            },
+            body: JSON.stringify({
+              message_content: userInput,
+            }),
+          }
+        );
 
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
@@ -189,11 +188,11 @@ const InterviewAssistant = () => {
 
         const data = await response.json();
         const res = data.llm_output.llm_output;
-        console.log('Success:', data);
+        console.log("Success:", data);
         setIsAItyping(false);
         return res;
       } catch (error) {
-        console.error('Error:', error);
+        console.error("Error:", error);
         setIsAItyping(false);
         return "Error getting response.";
       }
@@ -202,6 +201,13 @@ const InterviewAssistant = () => {
     const body = await getFetchBody();
     return body;
   }
+
+  // Identify the index of the most recent bot message.
+  const lastBotIndex = messages.reduce(
+    (lastIndex, message, index) =>
+      message.sender === "bot" ? index : lastIndex,
+    -1
+  );
 
   return (
     <Box
@@ -212,130 +218,225 @@ const InterviewAssistant = () => {
         padding: 2,
         backgroundColor: "transparent",
         color: "var(--text)",
-        marginTop: '75px'
+        marginTop: "75px",
       }}
     >
       <Box position="fixed" top={0} left={0} width="100%" zIndex={1000} bgcolor="white">
-        {/* Conditionally render the header based on user role */}
         {userRole === "instructor" ? <InstructorHeader /> : <StudentHeader />}
       </Box>
 
-      <Box sx={{ display: "flex"}}>
+      <Box sx={{ display: "flex" }}>
         <SideMenu />
 
-        <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 2, width: "100%" }}>
-
-          {/* Case Title and Information */}
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            padding: 2,
+            width: "100%",
+          }}
+        >
           <Box>
-            <Typography variant="h6" sx={{ fontWeight: 600, marginBottom: 2, textAlign: "left"}}>
+            <Typography variant="h6" sx={{ fontWeight: 600, marginBottom: 2, textAlign: "left" }}>
               {caseData?.case_title || "Case Title Not Available"}
             </Typography>
-            <Typography variant="body2" sx={{ marginBottom: 2, textAlign: "left", border: "1px solid var(--border)", padding: 2, borderRadius: 1 }}>
-              <strong>Case Overview:</strong> {caseData?.case_description || "Overview information not available."}
+            <Typography
+              variant="body2"
+              sx={{
+                marginBottom: 2,
+                textAlign: "left",
+                border: "1px solid var(--border)",
+                padding: 2,
+                borderRadius: 1,
+              }}
+            >
+              <strong>Case Overview:</strong>{" "}
+              {caseData?.case_description || "Overview information not available."}
             </Typography>
             <Divider sx={{ borderColor: "var(--text)" }} />
           </Box>
 
-          {/* Loading screen */}
           {loading ? (
-            <Box 
+            <Box
               sx={{
-                display: "flex", 
-                justifyContent: "center", 
-                alignItems: "center", 
-                height: "500px", 
-                backgroundColor: "rgba(255, 255, 255, 0.3)", // White translucent background
-                borderRadius: 2, // Optional: Adds rounded corners for a smoother look
-                padding: 2, // Optional: Adds padding around the progress circle
-                position: "absolute", // Optional: Makes sure it overlays the content if needed
-                top: 0, 
-                left: 0, 
-                width: "100%", 
-                zIndex: 999, // Ensure it's on top of other elements
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                height: "500px",
+                backgroundColor: "rgba(255, 255, 255, 0.3)",
+                borderRadius: 2,
+                padding: 2,
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                zIndex: 999,
               }}
             >
-              <CircularProgress sx={{ width: '150px', color: 'var(--text)' }} /> {/* Increased size for the circular progress */}
+              <CircularProgress sx={{ width: "150px", color: "var(--text)" }} />
             </Box>
           ) : (
             <Box sx={{ overflowY: "auto", marginBottom: 2 }}>
-              {messages.map((message, index) => (
-                <Box
-                  key={index}
-                  sx={{
-                    display: "flex",
-                    flexDirection: message.sender === "bot" ? "row" : "row-reverse",
-                    marginTop: 3,
-                    marginBottom: 10,
-                    fontFamily: "'Roboto', sans-serif",
-                    boxShadow: 'none'
-                  }}
-                >
-                  <Paper
-                    sx={{
-                      maxWidth: "60%",
-                      padding: "0 1em",
-                      backgroundColor: message.sender === "bot" ? "var(--bot-text)" : "var(--sender-text)",
-                      borderRadius: 2,
-                      boxShadow: 'none',
-                      marginLeft: message.sender === "bot" ? 0 : "auto",
-                      marginRight: message.sender === "bot" ? "auto" : 0,
-                      color: "var(--text)",
-                      fontFamily: "'Roboto', sans-serif"
-                    }}
-                  >
-                    <Typography variant="body1" sx={{ textAlign: "left" }}>
-                      <div className="markdown">
-                        <ReactMarkdown>{message.text}</ReactMarkdown>
-                      </div>
-                    </Typography>
-                  </Paper>
-                </Box>
-              ))}
+              {messages.map((message, index) => {
+                // For bot messages that are the most recent, use a column layout:
+                if (message.sender === "bot" && index === lastBotIndex) {
+                  return (
+                    <Box
+                      key={index}
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "flex-start",
+                        marginTop: 3,
+                        marginBottom: 10,
+                      }}
+                    >
+                      <Paper
+                        sx={{
+                          maxWidth: "60%",
+                          padding: "0 1em",
+                          backgroundColor: "var(--bot-text)",
+                          borderRadius: 2,
+                          boxShadow: "none",
+                          color: "var(--text)",
+                          fontFamily: "'Roboto', sans-serif",
+                        }}
+                      >
+                        <Typography variant="body1" sx={{ textAlign: "left" }}>
+                          <div className="markdown">
+                            <ReactMarkdown>{message.text}</ReactMarkdown>
+                          </div>
+                        </Typography>
+                      </Paper>
+                      {/* Render buttons directly underneath the bot bubble */}
+                      <Box
+                        sx={{
+                          display: "flex",
+                          gap: 1,
+                          mt: 1,
+                        }}
+                      >
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={() => navigator.clipboard.writeText(message.text)}
+                          startIcon={<ContentCopyIcon fontSize="small" />}
+                          sx={{ fontSize: "0.7rem", border: 'none'}}
+                        >
+                        </Button>
+                        <Button
+                          size="small"
+                          startIcon={<MicIcon fontSize="small" />}
+                          sx={{ fontSize: "0.7rem", border:'none', backgroundColor:'transparent',}}
+                          onClick={() => {
+                            const utterance = new SpeechSynthesisUtterance(message.text);
+                            speechSynthesis.speak(utterance);
+                          }}
+                        >
+                        </Button>
+                        {messages.length >= 5 && (
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            sx={{ fontSize: "0.7rem", border: 'none', backgroundColor:'transparent',}}
+                            onClick={() => handleSendMessage("Can you summarize that?")}
+                          >
+                            Generate Summary
+                          </Button>
+                        )}
+                      </Box>
+                    </Box>
+                  );
+                } else {
+                  // For user messages or bot messages that are not the latest, use the default layout.
+                  return (
+                    <Box
+                      key={index}
+                      sx={{
+                        display: "flex",
+                        flexDirection: message.sender === "bot" ? "row" : "row-reverse",
+                        marginTop: 3,
+                        marginBottom: 10,
+                        fontFamily: "'Roboto', sans-serif",
+                      }}
+                    >
+                      <Paper
+                        sx={{
+                          maxWidth: "60%",
+                          padding: "0 1em",
+                          backgroundColor:
+                            message.sender === "bot" ? "var(--bot-text)" : "var(--sender-text)",
+                          borderRadius: 2,
+                          boxShadow: "none",
+                          marginLeft: message.sender === "bot" ? 0 : "auto",
+                          marginRight: message.sender === "bot" ? "auto" : 0,
+                          color: "var(--text)",
+                          fontFamily: "'Roboto', sans-serif",
+                        }}
+                      >
+                        <Typography variant="body1" sx={{ textAlign: "left" }}>
+                          <div className="markdown">
+                            <ReactMarkdown>{message.text}</ReactMarkdown>
+                          </div>
+                        </Typography>
+                      </Paper>
+                    </Box>
+                  );
+                }
+              })}
             </Box>
           )}
 
           {isAItyping && (
-            <Box sx={{ display: "flex", justifyContent: "flex-start", marginBottom: 6, marginTop: 0 }}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "flex-start",
+                marginBottom: 6,
+                marginTop: 0,
+              }}
+            >
               <TypingIndicator />
             </Box>
           )}
 
-          <Box 
-            sx={{ 
-              position: "fixed", 
-              bottom: 0, 
-              left: 0, 
-              width: "100%", 
-              display: "flex", 
-              justifyContent: "center", 
-              backgroundColor: "var(--background)", 
-              boxShadow: "0 -2px 5px rgba(0,0,0,0.1)", 
-              padding: 2 
+          <Box
+            sx={{
+              position: "fixed",
+              bottom: 0,
+              left: 0,
+              width: "100%",
+              display: "flex",
+              justifyContent: "center",
+              backgroundColor: "var(--background)",
+              boxShadow: "0 -2px 5px rgba(0,0,0,0.1)",
+              padding: 2,
             }}
           >
-            <Box 
-              sx={{ 
-                position: "fixed", 
-                bottom: 0, 
+            <Box
+              sx={{
+                position: "fixed",
+                bottom: 0,
                 right: 0,
                 minHeight: "65px",
-                width: "calc(100% - 250px)",  // Exclude sidebar
-                minWidth: "70vw", // Ensure it doesn't get too small
-                display: "flex", 
+                width: "calc(100% - 250px)",
+                minWidth: "70vw",
+                display: "flex",
                 justifyContent: "center",
-                backgroundColor: "var(--background)", 
-                boxShadow: "none", 
-                padding: 2 ,
-                backgroundColor: "white"
+                backgroundColor: "var(--background)",
+                boxShadow: "none",
+                padding: 2,
+                backgroundColor: "white",
               }}
             >
-              <Box 
-                sx={{ 
-                  width: "100%", 
-                  maxWidth: "90vw",  // Keep it readable
-                  maxHeight: "650px", // Limit height for better UX
-                  display: "flex", 
-                  alignItems: "center" 
+              <Box
+                sx={{
+                  width: "100%",
+                  maxWidth: "90vw",
+                  maxHeight: "650px",
+                  display: "flex",
+                  alignItems: "center",
                 }}
               >
                 <TextField
@@ -348,53 +449,59 @@ const InterviewAssistant = () => {
                   sx={{
                     maxHeight: "300px",
                     overflowY: "auto",
-                    marginRight: '0.5em',
-                    '& .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--border)' },
-                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--border)' },
+                    marginRight: "0.5em",
+                    "& .MuiOutlinedInput-notchedOutline": { borderColor: "var(--border)" },
+                    "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "var(--border)" },
                   }}
                   onKeyDown={handleKeyPress}
-                  InputLabelProps={{ style: { backgroundColor: "transparent", color: "var(--text)" } }}
-                  InputProps={{ style: { backgroundColor: "transparent", color: "var(--text)" } }}
+                  InputLabelProps={{
+                    style: { backgroundColor: "transparent", color: "var(--text)" },
+                  }}
+                  InputProps={{
+                    style: { backgroundColor: "transparent", color: "var(--text)" },
+                  }}
                 />
-                
+
                 <div
                   style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginRight: '0.5em',
-                    width: '55px',          // slightly larger than icon
-                    height: '50px',
-                    borderRadius: '10%',   // optional: makes it look button-like
-                    backgroundColor: 'var(--secondary)', // optional
-                    cursor: 'pointer',
-                    transition: 'transform 0.2s ease',
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginRight: "0.5em",
+                    width: "55px",
+                    height: "50px",
+                    borderRadius: "10%",
+                    backgroundColor: "var(--secondary)",
+                    cursor: "pointer",
+                    transition: "transform 0.2s ease",
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+                  onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
                 >
-                  <label htmlFor="audio-upload" style={{ cursor: 'pointer' }}>
-                    <MicIcon sx={{ width: '30px', height: '30px', color: 'white' }} />
+                  <label htmlFor="audio-upload" style={{ cursor: "pointer" }}>
+                    <MicIcon sx={{ width: "30px", height: "30px", color: "white" }} />
                     <input
                       type="file"
                       id="audio-upload"
                       accept="audio/*"
-                      style={{ display: 'none' }}
+                      style={{ display: "none" }}
                       onChange={handleAudioUpload}
                     />
                   </label>
                 </div>
 
-                <Button 
-                  variant="contained" 
-                  sx={{ color: "#ffffff", backgroundColor: "var(--secondary)", minHeight: "50px",  }} 
-                  style={{boxShadow: 'none'}}
+                <Button
+                  variant="contained"
+                  sx={{
+                    color: "#ffffff",
+                    backgroundColor: "var(--secondary)",
+                    minHeight: "50px",
+                  }}
+                  style={{ boxShadow: "none" }}
                   onClick={handleSendMessage}
                 >
                   Send
                 </Button>
-
-                
               </Box>
             </Box>
           </Box>

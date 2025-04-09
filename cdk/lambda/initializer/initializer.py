@@ -92,6 +92,9 @@ def handler(event, context):
                 "case_description" text,
                 "status" varchar DEFAULT 'In progress',
                 "last_updated" timestamp DEFAULT now(),
+                "time_created" timestamp DEFAULT now(),
+                "time_submitted" timestamp DEFAULT null,
+                "time_reviewed" timestamp DEFAULT null,
                 "sent_to_review" boolean,
                 "student_notes" text DEFAULT ''
             );
