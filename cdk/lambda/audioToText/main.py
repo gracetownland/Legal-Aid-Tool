@@ -4,6 +4,7 @@ import time
 import random
 import logging
 import boto3
+import urllib.request
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -15,7 +16,6 @@ sqs = boto3.client("sqs", region_name=os.environ.get("AWS_REGION"))
 
 # Environment variables for bucket names and output queue.
 AUDIO_BUCKET = os.environ.get("AUDIO_BUCKET")
-TRANSCRIPTS_BUCKET = os.environ.get("TRANSCRIPTS_BUCKET")
 OUTPUT_SQS_QUEUE_URL = os.environ.get("OUTPUT_SQS_QUEUE_URL")
 
 def lambda_handler(event, context):
@@ -27,7 +27,7 @@ def lambda_handler(event, context):
            - (optionally) fileExtension: audio file extension (e.g., "mp3")
       2. Starts an Amazon Transcribe job for that file.
       3. Polls until the job completes.
-      4. Retrieves the transcription result from TRANSCRIPTS_BUCKET.
+      4. Retrieves the transcription result from the TranscriptFileUri URL.
       5. Sends an SQS message (to OUTPUT_SQS_QUEUE_URL) that includes the case_id and the transcribed text.
     """
     for record in event.get("Records", []):
@@ -36,7 +36,7 @@ def lambda_handler(event, context):
             body = json.loads(record["body"])
             file_path = body.get("filePath")
             # You can use 'sessionId' or 'case_id'—here we support either.
-            case_id = body.get("sessionId") or body.get("case_id")
+            case_id = body.get("caseId")
             file_extension = body.get("fileExtension", "mp3").lower()
             
             if not file_path:
@@ -53,24 +53,26 @@ def lambda_handler(event, context):
             # Create a unique transcription job name that embeds the case_id.
             job_name = f"transcription-{case_id}-{int(time.time())}-{random.randint(1000, 9999)}"
             
-            # Start the Transcribe job.
+            # Start the Transcribe job without specifying OutputBucketName
             transcribe.start_transcription_job(
                 TranscriptionJobName=job_name,
                 Media={"MediaFileUri": media_file_uri},
                 MediaFormat=file_extension,
-                LanguageCode="en-US",  # Adjust if needed.
-                OutputBucketName=TRANSCRIPTS_BUCKET
+                LanguageCode="en-US"  # Adjust if needed.
             )
             logger.info("Started transcription job: %s", job_name)
             
             # Poll until the transcription job completes.
             job_complete = False
+            transcript_uri = None
             while not job_complete:
                 response = transcribe.get_transcription_job(TranscriptionJobName=job_name)
                 status = response["TranscriptionJob"]["TranscriptionJobStatus"]
                 logger.info("Transcription job status: %s", status)
                 if status == "COMPLETED":
                     job_complete = True
+                    # Get the URI where the transcript is stored (in Transcribe's default location)
+                    transcript_uri = response["TranscriptionJob"]["Transcript"]["TranscriptFileUri"]
                 elif status == "FAILED":
                     logger.error("Transcription job failed: %s", response)
                     break
@@ -78,14 +80,14 @@ def lambda_handler(event, context):
                     # Wait for a few seconds before polling again.
                     time.sleep(5)
             
-            if not job_complete:
+            if not job_complete or not transcript_uri:
                 logger.error("Job did not complete successfully for job: %s. Skipping output SQS.", job_name)
                 continue
             
-            # Once completed, assume Amazon Transcribe saved the output as {job_name}.json in the TRANSCRIPTS_BUCKET.
-            transcript_key = f"{job_name}.json"
-            transcript_obj = s3.get_object(Bucket=TRANSCRIPTS_BUCKET, Key=transcript_key)
-            transcript_content = transcript_obj["Body"].read().decode("utf-8")
+            # Download the transcript JSON from the provided URI
+            with urllib.request.urlopen(transcript_uri) as response:
+                transcript_content = response.read().decode("utf-8")
+            
             transcript_data = json.loads(transcript_content)
             # Extract the transcript text (from the first transcript result).
             transcript_text = transcript_data.get("results", {}) \
@@ -98,9 +100,11 @@ def lambda_handler(event, context):
             }
             # Send the message to the output SQS queue.
             send_resp = sqs.send_message(
-                QueueUrl=OUTPUT_SQS_QUEUE_URL,
-                MessageBody=json.dumps(output_payload)
-            )
+            QueueUrl=OUTPUT_SQS_QUEUE_URL,
+            MessageBody=json.dumps(output_payload),
+            MessageGroupId=case_id,  # Using case_id as the MessageGroupId
+            MessageDeduplicationId=f"{case_id}-{int(time.time())}"  # Creating a unique deduplication ID
+        )
             logger.info("Sent output SQS message: %s", json.dumps(send_resp))
             
         except Exception as e:

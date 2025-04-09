@@ -21,19 +21,19 @@ exports.handler = async (event, context) => {
         lastDotIndex !== -1 ? fileName.slice(0, lastDotIndex) : fileName;
 
       const pathParts = fullKey.split("/");
-      const sessionId = pathParts.length > 1 ? pathParts[0] : "unknown";
-
+      const caseId = pathParts.length > 1 ? pathParts[0] : "unknown";
+      
       const message = {
         filePath: fullKey,
         fileName: fileName,
         fileExtension: fileExtension,
-        sessionId: sessionId,
+        caseId: caseId,
       };
 
       const params = {
         QueueUrl: process.env.SQS_QUEUE_URL,
         MessageBody: JSON.stringify(message),
-        MessageGroupId: sessionId, 
+        MessageGroupId: caseId, 
         MessageDeduplicationId: `${fullKey}-${Date.now()}-${Math.random().toString(36).substring(2,7)}`, 
       };
 

@@ -125,6 +125,7 @@ export class ApiGatewayStack extends cdk.Stack {
     });
 
 
+
     
     /**
      *
@@ -855,6 +856,35 @@ export class ApiGatewayStack extends cdk.Stack {
     // Grant the Lambda function read-only permissions to the S3 bucket
     audioStorageBucket.grantRead(audioToTextFunction);
 
+    audioToTextFunction.addEventSource(
+      new lambdaEventSources.SqsEventSource(audioToTextQueue, {
+        batchSize: 5,
+      })
+    );
+
+    audioToTextFunction.addToRolePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: ["s3:ListBucket"],
+        resources: [audioStorageBucket.bucketArn], // Access to the specific bucket
+      })
+    );
+
+    audioToTextFunction.addToRolePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:DeleteObject",
+          "s3:HeadObject",
+        ],
+        resources: [
+          `arn:aws:s3:::${audioStorageBucket.bucketName}/*`, // Grant access to all objects within this bucket
+        ],
+      })
+    );
+
     // Grant access to Secret Manager
     audioToTextFunction.addToRolePolicy(
       new iam.PolicyStatement({
@@ -876,6 +906,18 @@ export class ApiGatewayStack extends cdk.Stack {
       sourceArn: `arn:aws:execute-api:${this.region}:${this.account}:${this.api.restApiId}/*/*/admin*`,
     });
       
+    // Add this to your CDK code where you're setting up the Lambda function's permissions
+    audioToTextFunction.addToRolePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: [
+          "transcribe:StartTranscriptionJob",
+          "transcribe:GetTranscriptionJob",
+          "transcribe:ListTranscriptionJobs"
+        ],
+        resources: [`arn:aws:transcribe:${this.region}:${this.account}:transcription-job/*`] // You can restrict this to specific resources if needed
+      })
+    );
 
     const adjustUserRoles = new lambda.Function(this, `${id}-adjustUserRoles`, {
       runtime: lambda.Runtime.NODEJS_20_X,
