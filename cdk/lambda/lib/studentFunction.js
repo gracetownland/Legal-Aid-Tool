@@ -6,21 +6,15 @@ const {
   AdminGetUserCommand,
 } = require("@aws-sdk/client-cognito-identity-provider");
 
-const { S3Client, GetObjectCommand, PutObjectCommand, HeadObjectCommand } = require("@aws-sdk/client-s3");
-
-const s3 = new S3Client({ region: 'ca-central-1' }); // Replace with your desired region
-
 const crypto = require("crypto");
 
+
 function hashUUID(uuid) {
-  // Generate a SHA-256 hash and take the first 8 hex characters
-  const hash = crypto.createHash("sha256").update(uuid).digest("hex");
-  
-  // Convert the first 8 characters of the hash into a number
-  const numericHash = parseInt(hash.substring(0, 8), 16);
-  
-  // Ensure it's a 4-digit number (0-9999)
-  return numericHash % 10000;
+  const hash = crypto.createHash("sha256").update(uuid).digest();
+  const shortHash = hash.subarray(0, 5);
+  let base64 = shortHash.toString("base64");
+  base64 = base64.replace(/[+/=]/g, "").substring(0, 6);
+  return base64;
 }
 
 // SQL conneciton from global variable at lib.js
@@ -232,7 +226,7 @@ exports.handler = async (event) => {
             const caseId = newCase[0].case_id;
 
             // Generate a SHA-256 hash of the case_id
-            const caseHash = hashUUID(caseId);
+            const caseHash = hashUUID(caseId.toString());
 
             // Update the case with the generated case_hash
             await sqlConnection`
@@ -352,7 +346,7 @@ exports.handler = async (event) => {
                   c.case_title,
                   m.message_content,
                   m.time_sent,
-                  u.username AS instructor_name
+                  u.first_name||' '||u.last_name AS instructor_name
                   FROM cases c
                   JOIN messages m ON c.case_id = m.case_id
                   JOIN users u ON m.instructor_id = u.user_id

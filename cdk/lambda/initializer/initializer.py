@@ -68,6 +68,7 @@ def handler(event, context):
                 "message_content" text,
                 "case_id" uuid,
                 "time_sent" timestamp DEFAULT now()
+                "is_read" boolean DEFAULT false,
             );
 
             CREATE TABLE IF NOT EXISTS "system_prompt" (
@@ -92,6 +93,9 @@ def handler(event, context):
                 "case_description" text,
                 "status" varchar DEFAULT 'In progress',
                 "last_updated" timestamp DEFAULT now(),
+                "time_created" timestamp DEFAULT now(),
+                "time_submitted" timestamp DEFAULT null,
+                "time_reviewed" timestamp DEFAULT null,
                 "sent_to_review" boolean,
                 "student_notes" text DEFAULT ''
             );
@@ -101,6 +105,14 @@ def handler(event, context):
                 "case_id" uuid,
                 "content" text,
                 "time_created" timestamp DEFAULT now()
+            );
+
+            CREATE TABLE IF NOT EXISTS "audio_files" (
+            audio_file_id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+            case_id uuid,
+            audio_text text,
+            s3_file_path text,
+            timestamp timestamp DEFAULT now()
             );
 
             -- Add foreign key constraints
@@ -115,6 +127,9 @@ def handler(event, context):
 
             ALTER TABLE "instructor_students" 
             ADD FOREIGN KEY ("student_id") REFERENCES "users" ("user_id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+            ALTER TABLE "audio_files" 
+            ADD FOREIGN KEY ("case_id") REFERENCES "cases" ("case_id") ON DELETE CASCADE ON UPDATE CASCADE;
         """
 
         #

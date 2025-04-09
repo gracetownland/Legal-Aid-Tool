@@ -1705,7 +1705,7 @@ export class ApiGatewayStack extends cdk.Stack {
 
     // Waf Firewall
     const waf = new wafv2.CfnWebACL(this, `${id}-waf`, {
-      description: "VCI waf",
+      description: "VCI waf with OWASP",
       scope: "REGIONAL",
       defaultAction: { allow: {} },
       visibilityConfig: {
@@ -1714,6 +1714,22 @@ export class ApiGatewayStack extends cdk.Stack {
         metricName: "virtualcareint-firewall",
       },
       rules: [
+        {
+          name: "AWSManagedRulesSQLiRuleSet",
+          priority: 2,
+          statement: {
+            managedRuleGroupStatement: {
+              vendorName: "AWS",
+              name: "AWSManagedRulesSQLiRuleSet",
+            },
+          },
+          overrideAction: { none: {} },
+          visibilityConfig: {
+            sampledRequestsEnabled: true,
+            cloudWatchMetricsEnabled: true,
+            metricName: "AWSManagedRulesSQLiRuleSet",
+          },
+        },
         {
           name: "AWS-AWSManagedRulesCommonRuleSet",
           priority: 1,
@@ -1731,8 +1747,40 @@ export class ApiGatewayStack extends cdk.Stack {
           },
         },
         {
+          name: "AWSManagedRulesPHPRuleSet",
+          priority: 3,
+          statement: {
+            managedRuleGroupStatement: {
+              vendorName: "AWS",
+              name: "AWSManagedRulesPHPRuleSet",
+            },
+          },
+          overrideAction: { none: {} },
+          visibilityConfig: {
+            sampledRequestsEnabled: true,
+            cloudWatchMetricsEnabled: true,
+            metricName: "AWSManagedRulesPHPRuleSet",
+          },
+        },
+        {
+          name: "AWSManagedRulesKnownBadInputsRuleSet",
+          priority: 4,
+          statement: {
+            managedRuleGroupStatement: {
+              vendorName: "AWS",
+              name: "AWSManagedRulesKnownBadInputsRuleSet",
+            },
+          },
+          overrideAction: { none: {} },
+          visibilityConfig: {
+            sampledRequestsEnabled: true,
+            cloudWatchMetricsEnabled: true,
+            metricName: "AWSManagedRulesKnownBadInputsRuleSet",
+          },
+        },
+        {
           name: "LimitRequests1000",
-          priority: 2,
+          priority: 5,
           action: {
             block: {},
           },
