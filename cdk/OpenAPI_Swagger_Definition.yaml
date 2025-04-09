@@ -4191,13 +4191,6 @@ paths:
         - Admin
       summary: Get all groups for a given instructor where enrolment type is instructor
       operationId: admin_get_students_GET
-      parameters:
-        - name: instructor_email
-          in: query
-          required: true
-          schema:
-            type: string
-          description: Email of the instructor to find groups for
       responses:
         "200":
           description: List of groups
@@ -4208,11 +4201,7 @@ paths:
                 items:
                   type: object
                   properties:
-                    simulation_group_id:
-                      type: string
-                    group_name:
-                      type: string
-                    group_description:
+                    student_id:
                       type: string
         "400":
           description: Bad Request
@@ -4224,7 +4213,7 @@ paths:
         uri:
           Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${adminFunction.Arn}/invocations"
         passthroughBehavior: "when_no_match"
-        httpMethod: "POST"
+        httpMethod: "GET"
         type: "aws_proxy"
   /admin/instructorStudents:
     options:
@@ -4285,7 +4274,7 @@ paths:
         uri:
           Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${adminFunction.Arn}/invocations"
         passthroughBehavior: "when_no_match"
-        httpMethod: "POST"
+        httpMethod: "GET"
         type: "aws_proxy"
   
   /admin/updateGroupAccess:
