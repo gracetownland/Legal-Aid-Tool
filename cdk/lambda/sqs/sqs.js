@@ -30,20 +30,21 @@ exports.handler = async (event, context) => {
         caseId: caseId,
       };
 
+      // Create a deduplication ID that only contains valid characters
+      // Replace any non-alphanumeric characters with hyphens and ensure it's not too long
+      const sanitizedKey = fullKey.replace(/[^a-zA-Z0-9\-_.]/g, "-");
+      const deduplicationId = `${sanitizedKey}-${Date.now()}-${Math.random().toString(36).substring(2,7)}`.substring(0, 128);
+
       const params = {
         QueueUrl: process.env.SQS_QUEUE_URL,
         MessageBody: JSON.stringify(message),
         MessageGroupId: caseId, 
-        MessageDeduplicationId: `${fullKey}-${Date.now()}-${Math.random().toString(36).substring(2,7)}`, 
+        MessageDeduplicationId: deduplicationId,
       };
-
-      
 
       // Send message to SQS
       const command = new SendMessageCommand(params);
       const response = await sqsClient.send(command);
-
-      
     }
 
     return {
