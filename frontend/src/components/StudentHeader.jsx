@@ -9,6 +9,7 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import Notification from "./Notification";
 // Amplify
 import { signOut, fetchAuthSession, fetchUserAttributes } from "aws-amplify/auth";
+import { Divider } from "@mui/material";
 
 const StudentHeader = () => {
   const [name, setName] = useState("");
@@ -190,25 +191,33 @@ const StudentHeader = () => {
             <span className="mt-1">Notifications</span>
           </button>
           {isNotificationsOpen && (
-            <div className="absolute right-0 top-10 bg-white shadow-lg w-64 p-2 rounded-lg">
+              <div
+              className="absolute bg-[var(--background)] right-0 shadow-lg rounded-lg border border-[var(--border)] z-50"
+              style={{ maxWidth: "32rem"}}
+              ref={notificationMenuRef}
+            >
+              <h2 className="mx-4 py-2 text-[var(--text)] text-left">Notifications</h2>
+              <Divider className="my-2" style={{ borderColor: 'var(--border)' }} />
+              <div style={{ maxHeight: "35rem", overflowY: "auto" }} className="overflow-y-auto">
               {notifications.length > 0 ? (
                 notifications.map((notif, index) => (
-                  <div key={index} className="p-2 border-b">
+                  <div key={index} className="m-0 p-0">
                     <Notification
                       title={notif.case_title}
                       content={notif.message_content}
                       date={notif.time_sent}
                       case_id={notif.case_id}
-                      />
-                      
+                      instructor_name={notif.instructor_name}
+                    />
                   </div>
                 ))
               ) : (
-                <div className="p-2 text-gray-500">No notifications</div>
+                <div className="m-0 p-2 text-gray-500 text-center">No notifications</div>
               )}
+              </div>
             </div>
           )}
-        </div>
+          </div>
 
         {/* Account Menu */}
         <div
