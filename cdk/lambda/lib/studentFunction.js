@@ -226,7 +226,7 @@ exports.handler = async (event) => {
             const caseId = newCase[0].case_id;
 
             // Generate a SHA-256 hash of the case_id
-            const caseHash = hashUUID(caseId);
+            const caseHash = hashUUID(caseId.toString());
 
             // Update the case with the generated case_hash
             await sqlConnection`
