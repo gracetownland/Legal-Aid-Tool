@@ -163,6 +163,13 @@ const InstructorHomepage = () => {
                                                   ? caseItem.jurisdiction.join(", ")
                                                   : caseItem.jurisdiction}
                                                 </Typography>
+
+                                                <Typography
+              variant="body2"
+              sx={{ textAlign: "left", fontWeight: 400 }}
+            >
+              <strong>Student:</strong> {caseItem.student_name}
+            </Typography>
                 
                                                 <Typography
                                                   variant="body2"
