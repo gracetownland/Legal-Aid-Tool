@@ -147,10 +147,10 @@ const StudentHeader = () => {
 
   return (
     <header className="bg-[var(--header)] p-4 flex justify-between items-center h-20 fixed top-0 left-0 w-full z-50 shadow-sm">
-      <img src={logo} alt="Logo" className="h-12 w-12 mr-4" />
-      <h2 className="font-semibold ">Legal Aid Tool</h2>
+      <img src={logo} alt="Logo" className="h-14 w-14 mr-4" />
+      <h2 className="font-semibold text-xl">Legal Aid Tool</h2>
       <div className="flex-grow text-[var(--header-text)] text-3xl font-medium p-4 text-left">
-        {showDashboard && name && getHeaderText()}
+        {/* spacer */}
       </div>
       <div className="flex items-center space-x-6">
         <button
@@ -236,12 +236,12 @@ const StudentHeader = () => {
             <span className="mt-1">{name}</span>
           </button>
           {isAccountMenuOpen && (
-            <div className="absolute right-0 top-10 bg-[var(--background)] shadow-lg w-48 p-2 rounded-lg">
+            <div className="absolute right-0 bg-[var(--background)] shadow-lg w-48 p-2 rounded-lg">
               <button
                 onClick={handleSignOut}
-                className="w-full text-left p-2 hover:bg-gray-100"
+                className="w-full text-left p-2 bg-[var(--background)] hover:bg-[var(--background2)]"
               >
-                Log Out
+                Sign Out
               </button>
             </div>
           )}
