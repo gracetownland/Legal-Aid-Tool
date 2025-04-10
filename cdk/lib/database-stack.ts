@@ -33,13 +33,13 @@ export class DatabaseStack extends Stack {
         /**
          * Retrieve a secret from Secret Manager
          */
-        const secret = secretmanager.Secret.fromSecretNameV2(this, "ImportedSecrets", "VCISecrets");
+        const secret = secretmanager.Secret.fromSecretNameV2(this, "ImportedSecrets", "LATSecrets");
 
         /**
          * Create Secrets for various users
          */
-        this.secretPathAdminName = `${id}-VCI/credentials/rdsDbCredential`;
-        const secretPathUserName = `${id}-VCI/userCredentials/rdsDbCredential`;
+        this.secretPathAdminName = `${id}-LAT/credentials/rdsDbCredential`;
+        const secretPathUserName = `${id}-LAT/userCredentials/rdsDbCredential`;
         this.secretPathUser = new secretsmanager.Secret(this, secretPathUserName, {
             secretName: secretPathUserName,
             description: "Secrets for clients to connect to RDS",
@@ -50,7 +50,7 @@ export class DatabaseStack extends Stack {
             }
         });
 
-        const secretPathTableCreator = `${id}-VCI/userCredentials/TableCreator`;
+        const secretPathTableCreator = `${id}-LAT/userCredentials/TableCreator`;
         this.secretPathTableCreator = new secretsmanager.Secret(this, secretPathTableCreator, {
             secretName: secretPathTableCreator,
             description: "Secrets for TableCreator to connect to RDS",
@@ -97,7 +97,7 @@ export class DatabaseStack extends Stack {
             backupRetention: Duration.days(7),
             deleteAutomatedBackups: true,
             deletionProtection: true,
-            databaseName: "vci",
+            databaseName: "lat",
             publiclyAccessible: false,
             cloudwatchLogsRetention: logs.RetentionDays.INFINITE,
             storageEncrypted: true, // storage encryption at rest

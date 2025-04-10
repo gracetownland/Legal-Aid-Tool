@@ -409,7 +409,7 @@ const InterviewAssistant = () => {
               width: "100%",
               display: "flex",
               justifyContent: "center",
-              backgroundColor: "var(--background)",
+              backgroundColor: "rgba(0,0,0,0)",
               boxShadow: "0 -2px 5px rgba(0,0,0,0.1)",
               padding: 2,
             }}
@@ -427,7 +427,7 @@ const InterviewAssistant = () => {
                 backgroundColor: "var(--background)",
                 boxShadow: "none",
                 padding: 2,
-                backgroundColor: "white",
+                background: "none",
               }}
             >
               <Box
@@ -450,6 +450,8 @@ const InterviewAssistant = () => {
                     maxHeight: "300px",
                     overflowY: "auto",
                     marginRight: "0.5em",
+                    border: "1px solid var(--border)",
+                    backgroundColor: "var(--background)",
                     "& .MuiOutlinedInput-notchedOutline": { borderColor: "var(--border)" },
                     "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "var(--border)" },
                   }}
@@ -462,7 +464,23 @@ const InterviewAssistant = () => {
                   }}
                 />
 
-                <div
+                {/* AUDIO UPLOAD BUTTON (COMMENTED OUT) */}
+                {/* <div
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginRight: "0.5em",
+                    width: "55px",
+                    height: "50px",
+                    borderRadius: "10%",
+                    backgroundColor: "var(--secondary)",
+                    cursor: "pointer",
+                    transition: "transform 0.2s ease",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                 <div
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
@@ -488,7 +506,7 @@ const InterviewAssistant = () => {
                       onChange={handleAudioUpload}
                     />
                   </label>
-                </div>
+                </div> */}
 
                 <Button
                   variant="contained"

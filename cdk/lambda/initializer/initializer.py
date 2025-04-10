@@ -67,8 +67,8 @@ def handler(event, context):
                 "instructor_id" uuid,
                 "message_content" text,
                 "case_id" uuid,
-                "time_sent" timestamp DEFAULT now()
-                "is_read" boolean DEFAULT false,
+                "time_sent" timestamp DEFAULT now(),
+                "is_read" boolean DEFAULT false
             );
 
             CREATE TABLE IF NOT EXISTS "system_prompt" (

@@ -327,7 +327,7 @@ def handler(event, context):
 
     if not question:
         logger.info(f"Start of conversation. Creating conversation history table in DynamoDB.")
-        student_query = get_initial_student_query(patient_name)
+        student_query = get_initial_student_query(case_type, jurisdiction, case_description)
     else:
         logger.info(f"Processing student question: {question}")
         student_query = get_student_query(question)
