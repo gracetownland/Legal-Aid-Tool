@@ -67,8 +67,8 @@ def lambda_handler(event, context):
             'body': json.dumps(f'Unsupported audio file type. Allowed types: {", ".join(allowed_audio_types.keys())}')
         }
 
-    # Define key for audio files
-    key = f"{case_id}/audio/{file_name}.{file_type}"
+    # Modified key path to remove the "audio" subdirectory
+    key = f"{case_id}/{file_name}.{file_type}"
     content_type = allowed_audio_types[file_type]
 
     logger.info({

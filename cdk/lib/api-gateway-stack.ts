@@ -1386,7 +1386,7 @@ export class ApiGatewayStack extends cdk.Stack {
         timeout: Duration.seconds(300),
         memorySize: 128,
         environment: {
-          BUCKET: dataIngestionBucket.bucketName,
+          BUCKET: audioStorageBucket.bucketName,
           REGION: this.region,
         },
         functionName: `${id}-GeneratePreSignedURLFunction`,
@@ -1400,13 +1400,13 @@ export class ApiGatewayStack extends cdk.Stack {
     cfnGeneratePreSignedURL.overrideLogicalId("GeneratePreSignedURLFunc");
 
     // Grant the Lambda function the necessary permissions
-    dataIngestionBucket.grantReadWrite(generatePreSignedURL);
+    audioStorageBucket.grantReadWrite(generatePreSignedURL);
     generatePreSignedURL.addToRolePolicy(
       new iam.PolicyStatement({
         actions: ["s3:PutObject", "s3:GetObject"],
         resources: [
-          dataIngestionBucket.bucketArn,
-          `${dataIngestionBucket.bucketArn}/*`,
+          audioStorageBucket.bucketArn,
+          `${audioStorageBucket.bucketArn}/*`,
         ],
       })
     );
@@ -1415,7 +1415,7 @@ export class ApiGatewayStack extends cdk.Stack {
     generatePreSignedURL.addPermission("AllowApiGatewayInvoke", {
       principal: new iam.ServicePrincipal("apigateway.amazonaws.com"),
       action: "lambda:InvokeFunction",
-      sourceArn: `arn:aws:execute-api:${this.region}:${this.account}:${this.api.restApiId}/*/*/instructor*`,
+      sourceArn: `arn:aws:execute-api:${this.region}:${this.account}:${this.api.restApiId}/*/*/student*`,
     });
 
     /**
