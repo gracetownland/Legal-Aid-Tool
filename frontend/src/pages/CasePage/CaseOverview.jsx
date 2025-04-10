@@ -144,45 +144,6 @@ const CaseOverview = () => {
     }
   };
 
-  const handleGenerateSummary = async () => {
-    try {
-      const session = await fetchAuthSession();
-      const token = session.tokens.idToken;
-  
-      const response = await fetch(
-        `${import.meta.env.VITE_API_ENDPOINT}student/summary_generation?case_id=${caseId}`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            message_content: feedback,
-          }),
-        }
-      );
-  
-      if (!response.ok) throw new Error("Failed to submit feedback");
-  
-      setSnackbar({
-        open: true,
-        message: "Message sent successfully!",
-        severity: "success",
-      });
-      setFeedback("");
-      setIsFeedbackVisible(false);
-    } catch (error) {
-      console.error("Error generating summaries:", error);
-      setSnackbar({
-        open: true,
-        message: "Failed to generate summaries.",
-        severity: "error",
-      });
-    }
-  };
-  
-
   const handleInstructorFeedbackSubmit = async () => {
     try {
       const session = await fetchAuthSession();
@@ -243,7 +204,7 @@ const CaseOverview = () => {
                       {message.message_content}
                     </Typography>
                     <Typography variant="body2" key={message.id} sx={{ mt: 1 }}>
-                    Sent By: Prajna Nayak
+                    Sent By: {message.first_name} {message.last_name} 
                   </Typography>
                   </div>
                   ))
@@ -440,117 +401,6 @@ const CaseOverview = () => {
                     </Grid>
                   </Grid>
                 </CardContent>
-
-                {summaries && (
-  <Card sx={{ mt: 4 }}>
-    <CardContent>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-        <Typography variant="h6" textAlign="left" fontWeight={500}>
-          Summaries
-        </Typography>
-        <Button variant="outlined"
-                      color="primary" onClick={handleGenerateSummary}>
-          Generate Summary
-        </Button>
-      </Box>
-      <Typography variant="body2" textAlign="left">
-      {summaries.length > 0 ? (
-          <Card
-            sx={{
-              background: "transparent",
-              color: "var(--text)",
-              border: "1px solid var(--border)",
-              boxShadow: "none",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              textAlign: "left"
-            }}
-          >
-            <IconButton
-              onClick={() => setCurrentIndex((prev) => Math.max(prev - 1, 0))}
-              disabled={currentIndex === 0}
-              sx={{
-                color: "var(--text)",
-                "&:disabled": { color: "var(--border)" },
-              }}
-            >
-              <ArrowBackIosIcon />
-            </IconButton>
-
-<CardContent sx={{ flexGrow: 1, textAlign: "center" }}>
-  <Typography
-    variant="caption"
-    sx={{
-      color: "var(--text-light)",
-      marginBottom: "10px",
-      display: "block",
-      textAlign: "left",
-    }}
-  >
-
-{new Date(summaries[currentIndex].time_created).toLocaleString('en-US', {
-                          month: 'long', day: 'numeric', year: 'numeric',
-                          hour: 'numeric', minute: 'numeric', hour12: true
-                        })}
-  </Typography>
-
-  <Box sx={{ textAlign: "left" }}>
-  <ReactMarkdown
-    children={summaries[currentIndex].content}
-    components={{
-      h1: ({ node, ...props }) => (
-        <Typography variant="h5" gutterBottom {...props} />
-      ),
-      h2: ({ node, ...props }) => (
-        <Typography variant="h6" gutterBottom {...props} />
-      ),
-      p: ({ node, ...props }) => (
-        <Typography variant="body1" paragraph {...props} />
-      ),
-      li: ({ node, ...props }) => (
-        <li style={{ marginBottom: "4px" }} {...props} />
-      ),
-    }}
-  />
-</Box>
-</CardContent>
-
-
-            <IconButton
-              onClick={() =>
-                setCurrentIndex((prev) =>
-                  Math.min(prev + 1, summaries.length - 1)
-                )
-              }
-              disabled={currentIndex === summaries.length - 1}
-              sx={{
-                color: "var(--text)",
-                "&:disabled": { color: "var(--border)" },
-              }}
-            >
-              <ArrowForwardIosIcon />
-            </IconButton>
-          </Card>
-      ) : (
-        <Typography
-          variant="body1"
-          sx={{
-            color: "#808080",
-            textAlign: "center",
-            marginTop: "20px",
-            textAlign: "left"
-          }}
-        >
-          No summaries available.
-        </Typography>
-      )}
-</Typography>
-
-    </CardContent>
-  </Card>
-)}
-
               </>
             )}
           </Container>
