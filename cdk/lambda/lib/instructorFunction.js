@@ -271,11 +271,13 @@ console.log("Query Params:", event.queryStringParameters);
       // Step 3: Get cases and student names
       const cases = await sqlConnection`
         SELECT 
-          c.*, 
-          u.first_name AS student_name 
-        FROM "cases" c
-        JOIN "users" u ON c.user_id = u.user_id
-        WHERE c.user_id = ANY(${studentIds});
+  c.*, 
+  u.first_name, 
+  u.last_name 
+FROM "cases" c
+JOIN "users" u ON c.user_id = u.user_id
+WHERE c.user_id = ANY(${studentIds});
+
       `;
 
       response.statusCode = 200;
