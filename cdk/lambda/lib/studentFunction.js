@@ -298,7 +298,10 @@ exports.handler = async (event) => {
             if (caseData.length > 0) {
               // Retrieve messages for the case_id
               const messages = await sqlConnection`
-                SELECT * FROM "messages" WHERE case_id = ${case_id};
+              SELECT m.*, u.first_name, u.last_name
+              FROM "messages" m
+              LEFT JOIN "users" u ON m.instructor_id = u.user_id
+              WHERE m.case_id = ${case_id};
               `;
 
               const summaries = await sqlConnection`
