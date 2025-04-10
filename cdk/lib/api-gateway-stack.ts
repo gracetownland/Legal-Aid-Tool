@@ -183,7 +183,7 @@ export class ApiGatewayStack extends cdk.Stack {
       }
     );
 
-    const secretsName = `${id}-VCI_Cognito_Secrets`;
+    const secretsName = `${id}-LAT_Cognito_Secrets`;
 
     this.secret = new secretsmanager.Secret(this, secretsName, {
       secretName: secretsName,
@@ -785,7 +785,7 @@ export class ApiGatewayStack extends cdk.Stack {
       AutoSignupLambda
     );
 
-    // const authorizer = new apigateway.CognitoUserPoolsAuthorizer(this, 'vciAuthorizer', {
+    // const authorizer = new apigateway.CognitoUserPoolsAuthorizer(this, 'latAuthorizer', {
     //   cognitoUserPools: [this.userPool],
     // });
     new cdk.CfnOutput(this, `${id}-UserPoolIdOutput`, {
@@ -799,7 +799,7 @@ export class ApiGatewayStack extends cdk.Stack {
       handler: "preSignup.handler",
       timeout: Duration.seconds(300),
       environment: {
-        ALLOWED_EMAIL_DOMAINS: "/VCI/AllowedEmailDomains",
+        ALLOWED_EMAIL_DOMAINS: "/LAT/AllowedEmailDomains",
       },
       vpc: vpcStack.vpc,
       functionName: `${id}-preSignupLambda`,
@@ -916,19 +916,19 @@ export class ApiGatewayStack extends cdk.Stack {
 
     // Create parameters for Bedrock LLM ID, Embedding Model ID, and Table Name in Parameter Store
     const bedrockLLMParameter = new ssm.StringParameter(this, "BedrockLLMParameter", {
-      parameterName: `/${id}/VCI/BedrockLLMId`,
+      parameterName: `/${id}/LAT/BedrockLLMId`,
       description: "Parameter containing the Bedrock LLM ID",
       stringValue: "meta.llama3-70b-instruct-v1:0",
     });
 
     const embeddingModelParameter = new ssm.StringParameter(this, "EmbeddingModelParameter", {
-      parameterName: `/${id}/VCI/EmbeddingModelId`,
+      parameterName: `/${id}/LAT/EmbeddingModelId`,
       description: "Parameter containing the Embedding Model ID",
       stringValue: "amazon.titan-embed-text-v2:0",
     });
 
     const tableNameParameter = new ssm.StringParameter(this, "TableNameParameter", {
-      parameterName: `/${id}/VCI/TableName`,
+      parameterName: `/${id}/LAT/TableName`,
       description: "Parameter containing the DynamoDB table name",
       stringValue: "DynamoDB-Conversation-Table",
     });
@@ -1705,7 +1705,7 @@ export class ApiGatewayStack extends cdk.Stack {
 
     // Waf Firewall
     const waf = new wafv2.CfnWebACL(this, `${id}-waf`, {
-      description: "VCI waf with OWASP",
+      description: "LAT waf with OWASP",
       scope: "REGIONAL",
       defaultAction: { allow: {} },
       visibilityConfig: {
