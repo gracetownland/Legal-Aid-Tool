@@ -298,7 +298,10 @@ exports.handler = async (event) => {
             if (caseData.length > 0) {
               // Retrieve messages for the case_id
               const messages = await sqlConnection`
-                SELECT * FROM "messages" WHERE case_id = ${case_id};
+              SELECT m.*, u.first_name, u.last_name
+              FROM "messages" m
+              LEFT JOIN "users" u ON m.instructor_id = u.user_id
+              WHERE m.case_id = ${case_id};
               `;
 
               const summaries = await sqlConnection`
@@ -527,6 +530,37 @@ exports.handler = async (event) => {
             response.body = JSON.stringify({ error: "case_id is required" });
         }
         break;
+
+        case "DELETE /student/delete_summary":
+          console.log(event);
+          if (
+            event.queryStringParameters != null &&
+            event.queryStringParameters.summary_id
+        ) {
+            const summaryId = event.queryStringParameters.summary_id;
+    
+            try {
+                // Delete the patient from the patients table
+                await sqlConnection`
+                    DELETE FROM "summaries"
+                    WHERE summary_id = ${summaryId};
+                `;
+    
+                response.statusCode = 200;
+                response.body = JSON.stringify({
+                    message: "Case deleted successfully",
+                });
+            } catch (err) {
+                response.statusCode = 500;
+                console.error(err);
+                response.body = JSON.stringify({ error: "Internal server error" });
+            }
+        } else {
+            response.statusCode = 400;
+            response.body = JSON.stringify({ error: "summary_id is required" });
+        }
+        break;
+
 
         case "PUT /student/edit_case":
           if (

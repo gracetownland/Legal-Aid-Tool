@@ -96,6 +96,7 @@ const SideMenu = () => {
           anchor="left"
         >
           <List sx={{ flexGrow: 1 }}>
+
   <ListItem
     button
     onClick={() => handleNavigation("Overview")}
@@ -103,6 +104,16 @@ const SideMenu = () => {
     sx={isActive("Overview") ? { backgroundColor: "var(--background3)" } : {}}
   >
     <ListItemText primary="Case Overview" />
+  </ListItem>
+
+  
+  <ListItem
+    button
+    onClick={() => handleNavigation("Summaries")}
+    selected={isActive("Summaries")}
+    sx={isActive("Summaries") ? { backgroundColor: "var(--background3)" } : {}}
+  >
+    <ListItemText primary="Case Summaries" />
   </ListItem>
 
   {isPrelimSummaryGenerated && (

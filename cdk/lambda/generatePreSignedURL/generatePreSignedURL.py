@@ -33,22 +33,14 @@ def lambda_handler(event, context):
             'body': json.dumps('Missing queries to generate pre-signed URL')
         }
 
-    simulation_group_id = query_params.get("simulation_group_id", "")
-    patient_id = query_params.get("patient_id", "")
-    file_type = query_params.get("file_type", "")
+    case_id = query_params.get("case_id", "")
+    file_type = query_params.get("file_type", "").lower()
     file_name = query_params.get("file_name", "")
-    folder_type = query_params.get("folder_type", "")
 
-    if not simulation_group_id:
+    if not case_id:
         return {
             'statusCode': 400,
-            'body': json.dumps('Missing required parameter: simulation_group_id')
-        }
-
-    if not patient_id:
-        return {
-            'statusCode': 400,
-            'body': json.dumps('Missing required parameter: patient_id')
+            'body': json.dumps('Missing required parameter: case_id')
         }
 
     if not file_name:
@@ -57,64 +49,35 @@ def lambda_handler(event, context):
             'body': json.dumps('Missing required parameter: file_name')
         }
 
-    # Allowed file types for documents with their corresponding MIME types
-    allowed_document_types = {
-        "pdf": "application/pdf",
-        "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        "pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-        "txt": "text/plain",
-        "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "xps": "application/oxps",  # or "application/vnd.ms-xpsdocument" for legacy XPS
-        "mobi": "application/x-mobipocket-ebook",
-        "cbz": "application/vnd.comicbook+zip"
+    # Allowed audio file types for Amazon Transcribe with their corresponding MIME types
+    allowed_audio_types = {
+        "mp3": "audio/mpeg",
+        "mp4": "audio/mp4",
+        "wav": "audio/wav",
+        "flac": "audio/flac",
+        "amr": "audio/amr",
+        "ogg": "audio/ogg",
+        "webm": "audio/webm",
+        "m4a": "audio/m4a"
     }
 
-    # Allowed file types for information and answer keys with their corresponding MIME types
-    allowed_generic_types = {
-        "pdf": "application/pdf",
-        "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        "pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-        "txt": "text/plain",
-        "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "xps": "application/oxps",  # or "application/vnd.ms-xpsdocument" for legacy XPS
-        "mobi": "application/x-mobipocket-ebook",
-        "cbz": "application/vnd.comicbook+zip",
-        'bmp': 'image/bmp', 'eps': 'application/postscript', 'gif': 'image/gif',
-        'icns': 'image/icns', 'ico': 'image/vnd.microsoft.icon', 'im': 'application/x-im',
-        'jpeg': 'image/jpeg', 'jpg': 'image/jpeg', 'j2k': 'image/jp2', 'jp2': 'image/jp2',
-        'msp': 'application/vnd.ms-paint', 'pcx': 'image/x-pcx', 'png': 'image/png',
-        'ppm': 'image/x-portable-pixmap', 'pgm': 'image/x-portable-graymap',
-        'pbm': 'image/x-portable-bitmap', 'sgi': 'image/sgi', 'tga': 'image/x-tga',
-        'tiff': 'image/tiff', 'tif': 'image/tiff', 'webp': 'image/webp', 'xbm': 'image/x-xbitmap'
-    }
-
-    if folder_type == "documents" and file_type in allowed_document_types:
-        key = f"{simulation_group_id}/{patient_id}/documents/{file_name}.{file_type}"
-        content_type = allowed_document_types[file_type]
-    elif folder_type == "info" and file_type in allowed_generic_types:
-        key = f"{simulation_group_id}/{patient_id}/info/{file_name}.{file_type}"
-        content_type = allowed_generic_types[file_type]
-    elif folder_type == "answer_key" and file_type in allowed_generic_types:
-        key = f"{simulation_group_id}/{patient_id}/answer_key/{file_name}.{file_type}"
-        content_type = allowed_generic_types[file_type]
-    elif folder_type == "profile_picture":
-        key = f"{simulation_group_id}/{patient_id}/profile_picture/{file_name}.{file_type}"
-        content_type = 'image/png'
-    else:
+    if file_type not in allowed_audio_types:
         return {
             'statusCode': 400,
-            'body': json.dumps('Unsupported file type')
+            'body': json.dumps(f'Unsupported audio file type. Allowed types: {", ".join(allowed_audio_types.keys())}')
         }
 
+    # Modified key path to remove the "audio" subdirectory
+    key = f"{case_id}/{file_name}.{file_type}"
+    content_type = allowed_audio_types[file_type]
+
     logger.info({
-        "simulation_group_id": simulation_group_id,
-        "patient_id": patient_id,
+        "case_id": case_id,
         "file_type": file_type,
         "file_name": file_name,
     })
 
     try:
-
         presigned_url = s3.generate_presigned_url(
             ClientMethod="put_object",
             Params={

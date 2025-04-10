@@ -252,7 +252,7 @@ def handler(event, context) -> dict:
                 if not error_message and "sensitiveInformationPolicy" in assessment:
                     for pii in assessment["sensitiveInformationPolicy"].get("piiEntities", []):
                         if pii.get("action") == "BLOCKED":
-                            error_message = ("Sorry, I cannot process your case because it contains sensitive information. "
+                            error_message = ("Sorry, I cannot process your case because it contains sensitive information (Personal Information). "
                                             "Kindly remove the relevant content and try again.")
                             break
                     if error_message:
