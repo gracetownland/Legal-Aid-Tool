@@ -375,7 +375,7 @@ const InterviewAssistant = () => {
       sx={{
         display: "flex",
         justifyContent: "flex-end", // Right align
-        gap: 1,
+        gap: 0,
         mt: 2,
       }}
     >
@@ -401,11 +401,11 @@ const InterviewAssistant = () => {
           },
         }}
       >
-        <ContentCopyIcon fontSize="small" />
+        <ContentCopyIcon fontSize="extrasmall" />
       </Button>
 
       <Button
-        size="small"
+        size="extrasmall"
         disableRipple
         onClick={() => (isSpeaking ? stopTTS() : startTTS(message.text))}
         sx={{
@@ -438,6 +438,7 @@ const InterviewAssistant = () => {
             fontSize: "0.7rem",
             px: 1.2,
             py: 0.5,
+            ml: 1,
             backgroundColor: 'transparent',
             color: '#808080',
             borderColor: 'var(--border)',
@@ -504,7 +505,7 @@ const InterviewAssistant = () => {
                     <Box
   sx={{
     display: "flex",
-    gap: 1,
+    gap: 0,
     mt: 1,
     position: "absolute", // Ensures the buttons align with the message properly
     right: message.sender !== "bot" ? 30 : "auto", // Align right if sender is not a bot
@@ -538,11 +539,11 @@ const InterviewAssistant = () => {
     },
   }}
 >
-  <ContentCopyIcon fontSize="small" />
+  <ContentCopyIcon fontSize="extrasmall" />
 </Button>
 
 <Button
-        size="small"
+        size="extrasmall"
         disableRipple
         onClick={() => (isSpeaking ? stopTTS() : startTTS(message.text))}
         sx={{
