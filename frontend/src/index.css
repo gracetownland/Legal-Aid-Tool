@@ -21,6 +21,7 @@
   --input: #c4c4c4;
   --placeholder-text: #696873;
   --border: #cccccc;
+  --feedback: #3b58ff;
 
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -54,6 +55,7 @@
     --input: #5c5c5c;
     --placeholder-text: #8e8e8e;
     --border: #5c5c5c;
+    --feedback: #8476ff;
 
     color: var(--text);
     background-color: var(--background);

@@ -78,7 +78,7 @@ const NewCaseForm = () => {
       // Step 1: Create the case in the database
       console.log("Creating the case in the database...");
       const response = await fetch(
-        `${import.meta.env.VITE_API_ENDPOINT}student/new_case?` +
+        `${import.meta.env.VITE_API_ENDPOINT}student/case?` +
           `user_id=${encodeURIComponent(cognito_id)}`,
         {
           method: "POST",

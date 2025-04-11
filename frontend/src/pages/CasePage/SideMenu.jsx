@@ -4,12 +4,15 @@ import { useNavigate, useParams } from "react-router-dom";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import CaseOverview from "./CaseOverview";
 import InterviewAssistant from "./InterviewAssistant";
+import CaseFeedback from "./CaseFeedback";
 import PrelimSummary from "./PrelimSummary";
 import DraggableNotes from "../../components/DraggableNotes";
 import SaveIcon from "@mui/icons-material/Save";
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import IconButton from "@mui/material/IconButton";
 import { useLocation } from "react-router-dom";
+import { fetchAuthSession } from "aws-amplify/auth";
+import { set } from "date-fns";
 
 
 const drawerWidth = 240; // Sidebar width
@@ -20,11 +23,29 @@ const SideMenu = () => {
   const { caseId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-
   const [isNotesOpen, setIsNotesOpen] = useState(false);
   const [isPrelimSummaryGenerated, setIsPrelimSummaryGenerated] = useState(false); 
+  const [isUnreadFeedback, setIsUnreadFeedback] = useState(false);
   const isActive = (route) => location.pathname.includes(route.toLowerCase().replace(" ", "-"));
 
+   useEffect(() => {
+      const fetchCaseData = async () => {
+        const session = await fetchAuthSession();
+        const token = session.tokens.idToken;
+  
+        const res = await fetch(`${import.meta.env.VITE_API_ENDPOINT}student/case_page?case_id=${caseId}`, {
+          headers: { Authorization: token, "Content-Type": "application/json" },
+        });
+  
+        const data = await res.json();
+        
+        if (data.caseData.status === "Review Feedback") {
+          setIsUnreadFeedback(true);
+        }
+      };
+  
+      fetchCaseData();
+    }, [caseId]);
 
   const toggleNotes = () => {
     setIsNotesOpen(!isNotesOpen);
@@ -106,7 +127,34 @@ const SideMenu = () => {
     <ListItemText primary="Case Overview" />
   </ListItem>
 
-  
+
+<ListItem
+  button
+  onClick={() => handleNavigation("Feedback")}
+  selected={isActive("Feedback")}
+  sx={{
+    pl: 2,
+    ...(isActive("Feedback") && { backgroundColor: "var(--background3)" }),
+    
+  }}
+>
+  <Box display="flex" alignItems="center">
+
+    {/* Notification Dot */}
+    {isUnreadFeedback && (
+      <Box
+        sx={{
+          width: 8,
+          height: 8,
+          borderRadius: "50%",
+          backgroundColor: "var(--feedback)",
+          mr: 1.5,
+        }}
+      />
+    )}
+    <ListItemText primary="Case Feedback" />
+  </Box>
+</ListItem>
   <ListItem
     button
     onClick={() => handleNavigation("Summaries")}
@@ -168,6 +216,7 @@ const SideMenu = () => {
         <Box sx={{ flexGrow: 1 }}>
           <Routes>
             <Route path="/case/overview" element={<CaseOverview />} />
+            <Route path="/case/feedback" element={<CaseFeedback />} />
             <Route path="/case/interview-assistant" element={<InterviewAssistant />} />
             
             {/* Route still exists but only accessible when isPrelimSummaryGenerated is true */}

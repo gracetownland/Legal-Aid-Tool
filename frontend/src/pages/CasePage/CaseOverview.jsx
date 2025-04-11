@@ -16,7 +16,6 @@ const CaseOverview = () => {
   const navigate = useNavigate();
   const [caseData, setCaseData] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [summaries, setSummaries] = useState("");
   const [editMode, setEditMode] = useState(false);
@@ -27,8 +26,7 @@ const CaseOverview = () => {
     jurisdiction: "",
   });
   const [userRole, setUserRole] = useState("student"); 
-  const [feedback, setFeedback] = useState("");
-  const [isFeedbackVisible, setIsFeedbackVisible] = useState(false);
+  
 
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -75,7 +73,6 @@ const CaseOverview = () => {
         if (!response.ok) throw new Error("Case not found");
         const data = await response.json();
         setCaseData(data.caseData);
-        setMessages(data.messages);
         setSummaries(data.summaries);
         console.log(data);
       } catch (error) {
@@ -93,28 +90,7 @@ const CaseOverview = () => {
 
   
 
-  const handleSendForReview = async () => {
-    try {
-      const session = await fetchAuthSession();
-      const token = session.tokens.idToken;
-      const cognito_id = token.payload.sub;
 
-      const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}student/review_case?case_id=${caseId}&cognito_id=${cognito_id}`, {
-        method: "PUT",
-        headers: {
-          Authorization: token,
-          "Content-Type": "application/json",
-        }
-      });
-
-      if (!response.ok) throw new Error("Failed to send for review");
-
-      setSnackbar({ open: true, message: "Case sent for review successfully!", severity: "success" });
-    } catch (error) {
-      console.error("Error sending case for review:", error);
-      setSnackbar({ open: true, message: "Failed to send case for review.", severity: "error" });
-    }
-  };
 
   const handleSaveEdit = async () => {
     try {
@@ -144,36 +120,7 @@ const CaseOverview = () => {
     }
   };
 
-  const handleInstructorFeedbackSubmit = async () => {
-    try {
-      const session = await fetchAuthSession();
-      const token = session.tokens.idToken;
-      const instructorId = token.payload.sub;
 
-      const response = await fetch(
-        `${import.meta.env.VITE_API_ENDPOINT}instructor/send_feedback?case_id=${caseId}&instructor_id=${instructorId}`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            message_content: feedback,
-          }),
-        }
-      );
-
-      if (!response.ok) throw new Error("Failed to submit feedback");
-
-      setSnackbar({ open: true, message: "Message sent successfully!", severity: "success" });
-      setFeedback("");
-      setIsFeedbackVisible(false);
-    } catch (error) {
-      console.error("Error submitting feedback:", error);
-      setSnackbar({ open: true, message: "Failed to submit feedback.", severity: "error" });
-    }
-  };
 
   if (loading) {
     return <Typography align="center" mt={5}>Loading...</Typography>;
@@ -193,26 +140,7 @@ const CaseOverview = () => {
           <SideMenu />
           <Container sx={{ flexGrow: 1, p: 4, maxWidth: "900px", mx: "auto" }}>
             
-            {/* Feedback Section */}
-            {userRole === "student" && (
-              <Box sx={{ mb: 2, textAlign: "left", border: "1px solid var(--border)", borderRadius: 2, padding: 2 }}>
-                <Typography variant="h6" fontWeight={600}>Feedback</Typography>
-                {messages.length > 0 ? (
-                  messages.map((message) => (
-                    <div>
-                    <Typography variant="body2" key={message.id} sx={{ mt: 1, border: "1px solid var(--border)", padding: 1, borderRadius: 2 }}>
-                      {message.message_content}
-                    </Typography>
-                    <Typography variant="body2" key={message.id} sx={{ mt: 1 }}>
-                    Sent By: {message.first_name} {message.last_name} 
-                  </Typography>
-                  </div>
-                  ))
-                ) : (
-                  <Typography variant="body2" color="gray">No feedback available.</Typography>
-                )}
-              </Box>
-            )}
+
 
             {!caseData ? (
               <Box display="flex" justifyContent="center" alignItems="center" minHeight="70vh">
@@ -220,29 +148,6 @@ const CaseOverview = () => {
               </Box>
             ) : (
               <>
-                
-
-                <Stack direction="row" spacing={2} mb={3}>
-                  {userRole === "instructor" ? (
-                    <Button
-                      variant="contained"
-                      color="secondary"
-                      onClick={() => setIsFeedbackVisible(!isFeedbackVisible)}
-                    >
-                      {messages.length !== 0 ? "Update Feedback" : "Send Feedback"}
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="outlined"
-                      color="primary"
-                      onClick={handleSendForReview}
-                    >
-                      {messages.length !== 0 ? "Send Case For Additional Review" : "Send Case For Review"}
-                    </Button>
-                  )}
-                </Stack>
-
-                <Divider sx={{ mb: 3, borderColor: "var(--border)"}} />
 
                 <div style={{ display: "flex", alignItems: "center", marginBottom: "1em", gap: "1em" }}>
                 <Typography variant="h4" fontWeight={600} mb={0} textAlign="left">
@@ -281,24 +186,7 @@ const CaseOverview = () => {
                 </div>
                 
 
-                {isFeedbackVisible && userRole === "instructor" && (
-                  <Card sx={{ mb: 3, padding: 2 }}>
-                    <CardContent>
-                      <TextField
-                        label="Your Feedback"
-                        fullWidth
-                        multiline
-                        rows={4}
-                        value={feedback}
-                        onChange={(e) => setFeedback(e.target.value)}
-                        sx={{ mb: 2 }}
-                      />
-                      <Button variant="contained" color="primary" onClick={handleInstructorFeedbackSubmit}>
-                        Submit Feedback
-                      </Button>
-                    </CardContent>
-                  </Card>
-                )}
+                
 
                 <Card sx={{ mb: 3, textAlign: "left", color: 'var(--text)', backgroundColor: "var(--background)", boxShadow: 'none', border: '1px solid var(--border)' }}>
                   <CardContent>
