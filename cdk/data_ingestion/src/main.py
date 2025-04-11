@@ -3,6 +3,7 @@ import json
 import boto3
 import logging
 import hashlib
+import base64
 import uuid
 import time
 import psycopg2
@@ -62,19 +63,18 @@ def connect_to_db():
             raise
     return connection
 
-def hash_uuid(uuid_str: str) -> int:
+def hash_uuid(uuid_str: str) -> str:
     """
-    Generate a 4-digit numeric hash from a UUID string.
-    
+    Generate a short Base64-encoded hash from a UUID string.
+
     Steps:
-      1. Compute the SHA-256 hash of the input string.
-      2. Extract the first 8 hexadecimal characters.
-      3. Convert them to an integer.
-      4. Return the result modulo 10000 to ensure a 4-digit number.
+      1. Compute SHA-256 hash of the UUID string.
+      2. Encode the hash in URL-safe Base64.
+      3. Return the first 6 characters for compact ID.
     """
-    hash_hex = hashlib.sha256(uuid_str.encode('utf-8')).hexdigest()
-    numeric_hash = int(hash_hex[:8], 16)
-    return numeric_hash % 10000
+    sha_digest = hashlib.sha256(uuid_str.encode('utf-8')).digest()
+    base64_hash = base64.urlsafe_b64encode(sha_digest).decode('utf-8')
+    return base64_hash[:6]  # Adjust length as needed
 
 
 ##########################################

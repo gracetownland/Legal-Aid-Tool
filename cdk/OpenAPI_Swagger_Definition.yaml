@@ -678,7 +678,7 @@ paths:
         httpMethod: "POST"
         type: "aws_proxy"
   
-  /student/new_case:
+  /student/case:
     options:
       summary: CORS support
       description: |
