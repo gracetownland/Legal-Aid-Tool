@@ -594,6 +594,7 @@ const InterviewAssistant = () => {
               position: "fixed",
               bottom: 0,
               left: 0,
+              
               width: "100%",
               display: "flex",
               justifyContent: "center",
@@ -639,8 +640,9 @@ const InterviewAssistant = () => {
                     maxHeight: "300px",
                     overflowY: "auto",
                     marginRight: "0.5em",
+                    marginLeft: "1em",
                     backgroundColor: "var(--background)",
-                    "& .MuiOutlinedInput-notchedOutline": { borderColor: "var(--border)" },
+                    "& .MuiOutlinedInput-notchedOutline": { borderColor: "var(--border)" , borderRadius: 5, borderBottomRightRadius: 2, borderTopRightRadius: 2},
                     "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "var(--border)" },
                   }}
                   onKeyDown={handleKeyPress}
@@ -701,7 +703,12 @@ const InterviewAssistant = () => {
                   sx={{
                     color: "#ffffff",
                     backgroundColor: "var(--secondary)",
-                    minHeight: "50px",
+                    minHeight: "55px",
+                    borderRadius: 5,
+                    borderStartStartRadius: 2,
+                    borderEndStartRadius: 2,
+                    marginRight: "2em",
+                    fontFamily: "Inter",
                   }}
                   style={{ boxShadow: "none" }}
                   onClick={handleSendMessage}
