@@ -232,11 +232,9 @@ export const StudentHomepage = () => {
                       alignItems: "flex-start",
                       justifyContent: "flex-start",
                       width: "100%",
-                      height: "calc(90vh - 100px)",
-                      overflowY: "auto",
-                      overflowX: "hidden",
                     }}
                   >
+
                     {cases.length === 0 ? (
                       <Typography
                         variant="body1"

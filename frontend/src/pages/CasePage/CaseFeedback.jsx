@@ -110,8 +110,9 @@ const FeedbackPage = () => {
       startIcon={<FeedbackIcon />}
       onClick={() => setIsFeedbackVisible(!isFeedbackVisible)}
       sx={{
+        fontFamily: 'Inter',
         textTransform: "none",
-        fontWeight: 600,
+        fontWeight: 450,
         px: 3,
         py: 1.5,
         borderRadius: 2,
@@ -133,7 +134,8 @@ const FeedbackPage = () => {
       onClick={() => {/* your student review handler */}}
       sx={{
         textTransform: "none",
-        fontWeight: 600,
+        fontFamily: 'Inter',
+        fontWeight: 450,
         px: 3,
         color: "white",
         backgroundColor: "var(--secondary)",

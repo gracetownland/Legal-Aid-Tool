@@ -146,9 +146,12 @@ const StudentHeader = () => {
   };
 
   return (
-    <header className="bg-[var(--header)] p-4 flex justify-between items-center h-20 fixed top-0 left-0 w-full z-50 shadow-sm">
+    <header
+  className="bg-[var(--header)] p-4 flex justify-between items-center h-20 fixed top-0 left-0 w-full z-50 shadow-sm"
+  style={{ fontFamily: 'Outfit, sans-serif' }}
+>
       <img src={logo} alt="Logo" className="h-14 w-14 mr-4" />
-      <h2 className="font-semibold text-xl text-[var(--header-text)]">Legal Aid Tool</h2>
+      <h2 className="font-semibold text-xl text-[var(--header-text)]" >Legal Aid Tool</h2>
       <div className="flex-grow text-[var(--header-text)] text-3xl font-medium p-4 text-left">
         {/* spacer */}
       </div>
