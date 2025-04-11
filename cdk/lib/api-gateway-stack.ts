@@ -839,6 +839,7 @@ export class ApiGatewayStack extends cdk.Stack {
         AUDIO_BUCKET: audioStorageBucket.bucketName,
         SM_DB_CREDENTIALS: db.secretPathUser.secretName,
         RDS_PROXY_ENDPOINT: db.rdsProxyEndpoint,
+        REGION: this.region,
       },
       functionName: `${id}-audioToTextFunction`,
       layers: [powertoolsLayer, psycopgLayer],
@@ -902,7 +903,7 @@ export class ApiGatewayStack extends cdk.Stack {
     audioToTextFunction.addPermission("AllowApiGatewayInvoke", {
       principal: new iam.ServicePrincipal("apigateway.amazonaws.com"),
       action: "lambda:InvokeFunction",
-      sourceArn: `arn:aws:execute-api:${this.region}:${this.account}:${this.api.restApiId}/*/*/admin*`,
+      sourceArn: `arn:aws:execute-api:${this.region}:${this.account}:${this.api.restApiId}/*/*/student*`,
     });
       
     // Add this to your CDK code where you're setting up the Lambda function's permissions

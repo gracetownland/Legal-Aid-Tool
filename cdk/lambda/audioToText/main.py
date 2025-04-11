@@ -120,17 +120,17 @@ def get_cors_headers():
     return {
         "Access-Control-Allow-Origin": "*",  # For production, restrict to specific origins
         "Access-Control-Allow-Headers": "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
-        "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
+        "Access-Control-Allow-Methods": "OPTIONS,GET",
         "Access-Control-Allow-Credentials": "true"
     }
 
 def lambda_handler(event, context):
     """
     This function:
-      1. Receives an API request with JSON body containing:
-           - filePath: the location of the audio file (relative to AUDIO_BUCKET)
-           - caseId: identifier for the case
-           - (optionally) fileExtension: audio file extension (e.g., "mp3")
+      1. Receives parameters from querystring:
+           - file_name: the name of the audio file
+           - case_id: identifier for the case
+           - file_type: audio file extension (e.g., "mp3")
       2. Starts an Amazon Transcribe job for that file.
       3. Polls until the job completes.
       4. Retrieves the transcription result from the TranscriptFileUri URL.
@@ -143,27 +143,33 @@ def lambda_handler(event, context):
             "headers": get_cors_headers(),
             "body": ""
         }
-    
+        
     try:
-        # Parse the API request body
-        body = json.loads(event.get("body", "{}"))
-        file_name = body.get("file_name")
-        case_id = body.get("case_id")
-        file_type = body.get("file_type", "mp3").lower()
+        # Extract query parameters instead of body
+        query_params = event.get("queryStringParameters", {})
+        if query_params is None:
+            query_params = {}
+            
+        file_name = query_params.get("file_name")
+        case_id = query_params.get("case_id")
+        file_type = query_params.get("file_type", "mp3").lower()
+        
+        # Log the received parameters
+        logger.info(f"Received parameters: file_name={file_name}, case_id={case_id}, file_type={file_type}")
         
         if not file_name:
-            logger.error("No filePath provided in request: %s", body)
+            logger.error("No file_name provided in request")
             return {
                 "statusCode": 400,
                 "headers": get_cors_headers(),
-                "body": json.dumps({"error": "No filePath provided"})
+                "body": json.dumps({"error": "No file_name provided"})
             }
         if not case_id:
-            logger.error("No caseId provided in request: %s", body)
+            logger.error("No case_id provided in request")
             return {
                 "statusCode": 400,
                 "headers": get_cors_headers(),
-                "body": json.dumps({"error": "No caseId provided"})
+                "body": json.dumps({"error": "No case_id provided"})
             }
 
         # Build the S3 URI of the audio file.
@@ -230,8 +236,8 @@ def lambda_handler(event, context):
                 **get_cors_headers()
             },
             "body": json.dumps({
+                "text": transcript_text,  # Changed to match API schema
                 "caseId": case_id,
-                "transcriptText": transcript_text,
                 "jobName": job_name
             })
         }

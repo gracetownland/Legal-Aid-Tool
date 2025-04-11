@@ -242,7 +242,7 @@ class CanLIICitationLinker:
     
     def add_legislation_links(self, text: str) -> str:
         """
-        Replace legislative references with hyperlinks.
+        Replace legislative references with their direct URLs.
         """
         cc_pattern = r'section\s+(\d+(?:\.\d+)?)\s+of\s+the\s+Criminal\s+Code'
         def replace_cc_reference(match):
@@ -292,4 +292,5 @@ class CanLIICitationLinker:
         
         enhanced_response = self.add_legislation_links(enhanced_response)
         print("[DEBUG] Finished enhancement with citation links.")
+
         return enhanced_response

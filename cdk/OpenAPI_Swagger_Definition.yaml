@@ -1455,7 +1455,7 @@ paths:
               schema:
                 type: object
                 properties:
-                  presignedurl:
+                  text:
                     type: string
                     description: Presigned URL to upload document file to S3 Bucket
         "400":
@@ -1467,7 +1467,7 @@ paths:
         "500":
           description: Internal Server Error
       security:
-        - instructorAuthorizer: []
+        - studentAuthorizer: []
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${audioToTextFunction.Arn}/invocations"
@@ -1543,7 +1543,7 @@ paths:
         "500":
           description: Internal Server Error
       security:
-        - instructorAuthorizer: []
+        - studentAuthorizer: []
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GeneratePreSignedURLFunc.Arn}/invocations"
