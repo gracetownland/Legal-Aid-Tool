@@ -376,7 +376,7 @@ const InterviewAssistant = () => {
         display: "flex",
         justifyContent: "flex-end", // Right align
         gap: 1,
-        mt: 1,
+        mt: 2,
       }}
     >
       <Button
@@ -509,6 +509,11 @@ const InterviewAssistant = () => {
     position: "absolute", // Ensures the buttons align with the message properly
     right: message.sender !== "bot" ? 30 : "auto", // Align right if sender is not a bot
     left: message.sender === "bot" ? 272 : "auto",  // Align left if sender is a bot
+    opacity: 0,
+    transition: "opacity 0.3s ease-in-out",
+    "&:hover": {
+      opacity: 1,
+    },
   }}
 >
 <Button
