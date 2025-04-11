@@ -33,10 +33,34 @@ const FeedbackPage = () => {
 
       const data = await res.json();
       setMessages(data.messages || []);
+      console.log("messages: ", data.messages[0].message_content);
     };
 
     fetchCaseData();
   }, [caseId]);
+
+  const handleSendForReview = async () => {
+    try {
+      const session = await fetchAuthSession();
+      const token = session.tokens.idToken;
+      const cognito_id = token.payload.sub;
+
+      const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}student/review_case?case_id=${caseId}&cognito_id=${cognito_id}`, {
+        method: "PUT",
+        headers: {
+          Authorization: token,
+          "Content-Type": "application/json",
+        }
+      });
+
+      if (!response.ok) throw new Error("Failed to send for review");
+
+      setSnackbar({ open: true, message: "Case sent for review successfully!", severity: "success" });
+    } catch (error) {
+      console.error("Error sending case for review:", error);
+      setSnackbar({ open: true, message: "Failed to send case for review.", severity: "error" });
+    }
+  };
 
   const handleSubmitFeedback = async () => {
     try {
@@ -89,7 +113,7 @@ const FeedbackPage = () => {
               {messages.length > 0 ? (
                 messages.map((msg) => (
                   <Box key={msg.id} mb={2}>
-                    <Typography variant="body1">{msg.message_content}</Typography>
+                    <Typography variant="body1" sx={{ whiteSpace: "pre-wrap" }}>{msg.message_content}</Typography>
                     <Typography variant="caption" color="#808080">
                       Sent by: {msg.first_name} {msg.last_name}
                     </Typography>
@@ -131,7 +155,7 @@ const FeedbackPage = () => {
       variant="contained"
       color="primary"
       startIcon={<SendIcon />}
-      onClick={() => {/* your student review handler */}}
+      onClick={handleSendForReview}
       sx={{
         textTransform: "none",
         fontFamily: 'Inter',
@@ -182,9 +206,10 @@ const FeedbackPage = () => {
         open={snackbar.open}
         autoHideDuration={4000}
         onClose={handleSnackbarClose}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        variant='filled'
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
-        <Alert onClose={handleSnackbarClose} severity={snackbar.severity} sx={{ width: "100%" }}>
+        <Alert onClose={handleSnackbarClose} severity={snackbar.severity} sx={{ width: "100%" }} variant='filled'>
           {snackbar.message}
         </Alert>
       </Snackbar>
