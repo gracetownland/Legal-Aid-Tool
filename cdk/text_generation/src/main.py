@@ -8,7 +8,7 @@ from langchain_aws import BedrockEmbeddings
 
 from helpers.vectorstore import get_vectorstore_retriever
 from helpers.chat import get_bedrock_llm, get_initial_student_query, get_student_query, create_dynamodb_history_table, get_response, update_session_name, get_audio_response
-
+from helpers.canlii import CanLIICitationLinker
 # Set up basic logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
@@ -20,7 +20,8 @@ RDS_PROXY_ENDPOINT = os.environ["RDS_PROXY_ENDPOINT"]
 BEDROCK_LLM_PARAM = os.environ["BEDROCK_LLM_PARAM"]
 EMBEDDING_MODEL_PARAM = os.environ["EMBEDDING_MODEL_PARAM"]
 TABLE_NAME_PARAM = os.environ["TABLE_NAME_PARAM"]
-
+# CANLII_API_KEY = os.environ.get("CANLII_API_KEY", "")
+CANLII_API_KEY = "yvMWSx8fZH5hSWVjSoSUp7o7pdIS6xW89H6WtZ35"
 # AWS Clients
 secrets_manager_client = boto3.client("secretsmanager")
 ssm_client = boto3.client("ssm", region_name=REGION)
@@ -35,6 +36,8 @@ TABLE_NAME = None
 
 # Cached embeddings instance
 embeddings = None
+
+
 
 def get_secret(secret_name, expect_json=True):
     global db_secret
@@ -265,6 +268,10 @@ def handler(event, context):
     logger.info("Text Generation Lambda function is called!")
     initialize_constants()
     case_audio_description = None
+    api_key = "yvMWSx8fZH5hSWVjSoSUp7o7pdIS6xW89H6WtZ35"
+    # api_key = os.environ.get("CANLII_API_KEY", "")  # Make sure to set this environment variable
+    citation_linker = CanLIICitationLinker(api_key)
+    
     query_params = event.get("queryStringParameters", {})
     case_id = query_params.get("case_id", "")
     audio_flag = query_params.get("audio_flag", "")
@@ -294,9 +301,9 @@ def handler(event, context):
             'body': json.dumps('Error fetching system prompt')
         }
     
-    if audio_flag is not None:
+    if audio_flag == "YAy":
         case_audio_description = get_audio_details(case_id)
-        if case_description is None:    
+        if case_audio_description is None:    
             return {
                 'statusCode': 400,
                 "headers": {
@@ -307,7 +314,7 @@ def handler(event, context):
                 },
                 'body': json.dumps('Error fetching audio details')
             }
-    add_audio_to_db(case_id, case_audio_description)
+    # add_audio_to_db(case_id, case_audio_description)
     case_title, case_type, jurisdiction, case_description = get_case_details(case_id)
     if case_title is None or case_type is None or jurisdiction is None or case_description is None:
         logger.error(f"Error fetching case details for case_id: {case_id}")
@@ -395,7 +402,7 @@ def handler(event, context):
 
     try:
         logger.info("Generating response from the LLM.")
-        if audio_flag is not None:
+        if audio_flag == "yay":
             response = get_audio_response(
                 query=student_query,
                 llm=llm,
@@ -418,6 +425,26 @@ def handler(event, context):
                 jurisdiction=jurisdiction,
                 case_description=case_description
             )
+        print("response: ", response)
+        logger.info("Enhancing response with citation links.")
+        try:
+            if isinstance(response, dict):
+                llm_response = response.get("llm_output", "")  # Assuming the text is in llm_output field
+            else:
+                llm_response = response  # If it's already a string
+                
+            enhanced_response = citation_linker.enhance_response(llm_response)
+            
+            if isinstance(response, dict):
+                response["llm_output"] = enhanced_response  # Update the text in the dictionary
+            else:
+                response = enhanced_response  # Replace the string
+            print("response after canlii: ", response)
+            logger.info("Successfully enhanced response with citation links.")
+        except Exception as e:
+            logger.error(f"Error enhancing response with citation links: {e}")
+            # Continue with the original response if enhancement fails
+            
     except Exception as e:
         logger.error(f"Error getting response: {e}")
         return {
@@ -431,18 +458,6 @@ def handler(event, context):
             'body': json.dumps('Error getting response')
         }
 
-    # try:
-    #     logger.info("Updating session name if this is the first exchange between the LLM and student")
-    #     potential_session_name = update_session_name(
-    #         TABLE_NAME, case_id, BEDROCK_LLM_ID)
-    #     if potential_session_name:
-    #         logger.info("This is the first exchange between the LLM and student. Updating session name.")
-    #         session_name = potential_session_name
-    #     else:
-    #         logger.info("Not the first exchange between the LLM and student. Session name remains the same.")
-    # except Exception as e:
-    #     logger.error(f"Error updating session name: {e}")
-    #     session_name = "New Chat"
 
     logger.info("Returning the generated response.")
     return {
@@ -457,5 +472,8 @@ def handler(event, context):
             "llm_output": response #.get("llm_output", "LLM failed to create response"),
         })
     }
+
+
+    
 
 
