@@ -22,6 +22,8 @@ import CaseOverview from "./pages/CasePage/CaseOverview";
 import InterviewAssistant from "./pages/CasePage/InterviewAssistant";
 import PrelimSummary from "./pages/CasePage/PrelimSummary";
 import AdminChangeSystemPrompt  from "./pages/admin/AdminChangeSystemPrompt";
+import SummariesPage from "./pages/CasePage/CaseSummaries";
+import CaseFeedback from "./pages/CasePage/CaseFeedback";
 
 export const UserContext = createContext();
 
@@ -47,6 +49,14 @@ function App() {
   const [user, setUser] = useState(null);
   const [userGroup, setUserGroup] = useState(null);
   const [group, setGroup] = useState(null);
+
+  const ProtectedRoute = ({ allowedGroups, userGroup, children }) => {
+    if (!userGroup) return null; // Or a loading spinner
+  
+    const isAuthorized = userGroup.some((group) => allowedGroups.includes(group));
+  
+    return isAuthorized ? children : <Navigate to="/home" />;
+  };
 
   useEffect(() => {
     const fetchAuthData = () => {
@@ -95,11 +105,13 @@ function App() {
           <Route path="/new-case" element={<NewCaseForm />} />
           <Route path="/cases" element={<ViewAllCases />} />
           <Route path="/home/*" element={getHomePage()} />
-          
           <Route path="/case/:caseId/interview-assistant" element={<InterviewAssistant />} />
           <Route path="/case/:caseId/overview/*" element={<CaseOverview />} />
-          <Route path="/case/:caseId/prelim-summary" element={<PrelimSummary />} />
-          <Route path="/system-prompt" element={<AdminChangeSystemPrompt />} />
+          <Route path="/case/:caseId/summaries" element={<SummariesPage />} />
+          <Route path="/case/:caseId/feedback" element={<CaseFeedback />} />
+          <Route path="/system-prompt" element={<ProtectedRoute allowedGroups={["admin", "techadmin"]} userGroup={userGroup}>
+                                                  <AdminChangeSystemPrompt />
+                                                </ProtectedRoute>} />
         </Routes>
       </Router>
     </UserContext.Provider>

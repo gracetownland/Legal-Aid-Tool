@@ -5,6 +5,7 @@ import * as lambdaEventSources from "aws-cdk-lib/aws-lambda-event-sources";
 import * as iam from "aws-cdk-lib/aws-iam";
 import { Construct } from "constructs";
 import { Duration } from "aws-cdk-lib";
+import * as sqs from "aws-cdk-lib/aws-sqs";
 import * as wafv2 from "aws-cdk-lib/aws-wafv2";
 import {
   Architecture,
@@ -82,6 +83,50 @@ export class ApiGatewayStack extends cdk.Stack {
       }
     );
 
+    const audioStorageBucket = new s3.Bucket(
+      this,
+      `${id}-audio-prompt-bucket`,
+      {
+        blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+        cors: [
+          {
+            allowedHeaders: ["*"],
+            allowedMethods: [
+              s3.HttpMethods.GET,
+              s3.HttpMethods.PUT,
+              s3.HttpMethods.HEAD,
+              s3.HttpMethods.POST,
+              s3.HttpMethods.DELETE,
+            ],
+            allowedOrigins: ["*"],
+          },
+        ],
+        // When deleting the stack, need to empty the Bucket and delete it manually
+        removalPolicy: cdk.RemovalPolicy.RETAIN,
+        enforceSSL: true,
+      }
+    );
+
+
+    // Create FIFO SQS Queue
+    const audioToTextQueue = new sqs.Queue(this, `${id}-AudioToTextQueue`, {
+      queueName: `${id}-audioToText-queue.fifo`,
+      fifo: true,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      visibilityTimeout: cdk.Duration.seconds(900),
+    });
+
+    // Create FIFO SQS Queue
+    const textToLlmQueue = new sqs.Queue(this, `${id}-TextToLlmQueue`, {
+      queueName: `${id}-textToLlm-queue.fifo`,
+      fifo: true,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      visibilityTimeout: cdk.Duration.seconds(900),
+    });
+
+
+
+    
     /**
      *
      * Create Integration Lambda layer for aws-jwt-verify
@@ -183,7 +228,7 @@ export class ApiGatewayStack extends cdk.Stack {
       }
     );
 
-    const secretsName = `${id}-VCI_Cognito_Secrets`;
+    const secretsName = `${id}-LAT_Cognito_Secrets`;
 
     this.secret = new secretsmanager.Secret(this, secretsName, {
       secretName: secretsName,
@@ -514,6 +559,8 @@ export class ApiGatewayStack extends cdk.Stack {
       enforceSSL: true,
     });
 
+    
+
     const lambdaStudentFunction = new lambda.Function(this, `${id}-studentFunction`, {
       runtime: lambda.Runtime.NODEJS_20_X,
       code: lambda.Code.fromAsset("lambda/lib"),
@@ -757,6 +804,121 @@ export class ApiGatewayStack extends cdk.Stack {
       role: coglambdaRole,
     });
 
+    const sqsFunction = new lambda.Function(this, `${id}-sqsFunction`, {
+      runtime: lambda.Runtime.NODEJS_20_X,
+      handler: "sqs.handler",
+      memorySize: 512,
+      code: lambda.Code.fromAsset("lambda/sqs"),
+      timeout: cdk.Duration.seconds(900),
+      environment: {
+        SQS_QUEUE_URL: audioToTextQueue.queueUrl,
+      },
+      vpc: vpcStack.vpc,
+      role: coglambdaRole,
+    });
+
+    sqsFunction.addEventSource(
+      new lambdaEventSources.S3EventSource(audioStorageBucket, {
+        events: [
+          s3.EventType.OBJECT_CREATED,
+          s3.EventType.OBJECT_RESTORE_COMPLETED,
+        ],
+      })
+    );
+
+    audioToTextQueue.grantSendMessages(sqsFunction);
+
+    const audioToTextFunction = new lambda.Function(this, `${id}-audioToTextFunction`, {
+      runtime: lambda.Runtime.PYTHON_3_9,
+      code: lambda.Code.fromAsset("lambda/audioToText"),
+      handler: "main.lambda_handler",
+      timeout: Duration.seconds(300),
+      memorySize: 128,
+      vpc: vpcStack.vpc,
+      environment: {
+        AUDIO_BUCKET: audioStorageBucket.bucketName,
+        SM_DB_CREDENTIALS: db.secretPathUser.secretName,
+        RDS_PROXY_ENDPOINT: db.rdsProxyEndpoint,
+        OUTPUT_SQS_QUEUE_URL: textToLlmQueue.queueUrl,
+      },
+      functionName: `${id}-audioToTextFunction`,
+      layers: [powertoolsLayer],
+      role: coglambdaRole,
+    });
+
+    textToLlmQueue.grantSendMessages(audioToTextFunction);
+
+    // Override the Logical ID of the Lambda Function to get ARN in OpenAPI
+    const cfnAudioToTextFunction = audioToTextFunction.node
+      .defaultChild as lambda.CfnFunction;
+    cfnAudioToTextFunction.overrideLogicalId("audioToTextFunction");
+    audioToTextQueue.grantConsumeMessages(audioToTextFunction);
+    // Grant the Lambda function read-only permissions to the S3 bucket
+    audioStorageBucket.grantRead(audioToTextFunction);
+
+    audioToTextFunction.addEventSource(
+      new lambdaEventSources.SqsEventSource(audioToTextQueue, {
+        batchSize: 5,
+      })
+    );
+
+    audioToTextFunction.addToRolePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: ["s3:ListBucket"],
+        resources: [audioStorageBucket.bucketArn], // Access to the specific bucket
+      })
+    );
+
+    audioToTextFunction.addToRolePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:DeleteObject",
+          "s3:HeadObject",
+        ],
+        resources: [
+          `arn:aws:s3:::${audioStorageBucket.bucketName}/*`, // Grant access to all objects within this bucket
+        ],
+      })
+    );
+
+    // Grant access to Secret Manager
+    audioToTextFunction.addToRolePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: [
+          //Secrets Manager
+          "secretsmanager:GetSecretValue",
+        ],
+        resources: [
+          `arn:aws:secretsmanager:${this.region}:${this.account}:secret:*`,
+        ],
+      })
+    );
+
+    // Add the permission to the Lambda function's policy to allow API Gateway access
+    audioToTextFunction.addPermission("AllowApiGatewayInvoke", {
+      principal: new iam.ServicePrincipal("apigateway.amazonaws.com"),
+      action: "lambda:InvokeFunction",
+      sourceArn: `arn:aws:execute-api:${this.region}:${this.account}:${this.api.restApiId}/*/*/admin*`,
+    });
+      
+    // Add this to your CDK code where you're setting up the Lambda function's permissions
+    audioToTextFunction.addToRolePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: [
+          "transcribe:StartTranscriptionJob",
+          "transcribe:GetTranscriptionJob",
+          "transcribe:ListTranscriptionJobs"
+        ],
+        resources: [`arn:aws:transcribe:${this.region}:${this.account}:transcription-job/*`] // You can restrict this to specific resources if needed
+      })
+    );
+
     const adjustUserRoles = new lambda.Function(this, `${id}-adjustUserRoles`, {
       runtime: lambda.Runtime.NODEJS_20_X,
       code: lambda.Code.fromAsset("lambda/lib"),
@@ -785,7 +947,7 @@ export class ApiGatewayStack extends cdk.Stack {
       AutoSignupLambda
     );
 
-    // const authorizer = new apigateway.CognitoUserPoolsAuthorizer(this, 'vciAuthorizer', {
+    // const authorizer = new apigateway.CognitoUserPoolsAuthorizer(this, 'latAuthorizer', {
     //   cognitoUserPools: [this.userPool],
     // });
     new cdk.CfnOutput(this, `${id}-UserPoolIdOutput`, {
@@ -799,7 +961,7 @@ export class ApiGatewayStack extends cdk.Stack {
       handler: "preSignup.handler",
       timeout: Duration.seconds(300),
       environment: {
-        ALLOWED_EMAIL_DOMAINS: "/VCI/AllowedEmailDomains",
+        ALLOWED_EMAIL_DOMAINS: "/LAT/AllowedEmailDomains",
       },
       vpc: vpcStack.vpc,
       functionName: `${id}-preSignupLambda`,
@@ -916,19 +1078,19 @@ export class ApiGatewayStack extends cdk.Stack {
 
     // Create parameters for Bedrock LLM ID, Embedding Model ID, and Table Name in Parameter Store
     const bedrockLLMParameter = new ssm.StringParameter(this, "BedrockLLMParameter", {
-      parameterName: `/${id}/VCI/BedrockLLMId`,
+      parameterName: `/${id}/LAT/BedrockLLMId`,
       description: "Parameter containing the Bedrock LLM ID",
       stringValue: "meta.llama3-70b-instruct-v1:0",
     });
 
     const embeddingModelParameter = new ssm.StringParameter(this, "EmbeddingModelParameter", {
-      parameterName: `/${id}/VCI/EmbeddingModelId`,
+      parameterName: `/${id}/LAT/EmbeddingModelId`,
       description: "Parameter containing the Embedding Model ID",
       stringValue: "amazon.titan-embed-text-v2:0",
     });
 
     const tableNameParameter = new ssm.StringParameter(this, "TableNameParameter", {
-      parameterName: `/${id}/VCI/TableName`,
+      parameterName: `/${id}/LAT/TableName`,
       description: "Parameter containing the DynamoDB table name",
       stringValue: "DynamoDB-Conversation-Table",
     });
@@ -1224,7 +1386,7 @@ export class ApiGatewayStack extends cdk.Stack {
         timeout: Duration.seconds(300),
         memorySize: 128,
         environment: {
-          BUCKET: dataIngestionBucket.bucketName,
+          BUCKET: audioStorageBucket.bucketName,
           REGION: this.region,
         },
         functionName: `${id}-GeneratePreSignedURLFunction`,
@@ -1238,13 +1400,13 @@ export class ApiGatewayStack extends cdk.Stack {
     cfnGeneratePreSignedURL.overrideLogicalId("GeneratePreSignedURLFunc");
 
     // Grant the Lambda function the necessary permissions
-    dataIngestionBucket.grantReadWrite(generatePreSignedURL);
+    audioStorageBucket.grantReadWrite(generatePreSignedURL);
     generatePreSignedURL.addToRolePolicy(
       new iam.PolicyStatement({
         actions: ["s3:PutObject", "s3:GetObject"],
         resources: [
-          dataIngestionBucket.bucketArn,
-          `${dataIngestionBucket.bucketArn}/*`,
+          audioStorageBucket.bucketArn,
+          `${audioStorageBucket.bucketArn}/*`,
         ],
       })
     );
@@ -1253,7 +1415,7 @@ export class ApiGatewayStack extends cdk.Stack {
     generatePreSignedURL.addPermission("AllowApiGatewayInvoke", {
       principal: new iam.ServicePrincipal("apigateway.amazonaws.com"),
       action: "lambda:InvokeFunction",
-      sourceArn: `arn:aws:execute-api:${this.region}:${this.account}:${this.api.restApiId}/*/*/instructor*`,
+      sourceArn: `arn:aws:execute-api:${this.region}:${this.account}:${this.api.restApiId}/*/*/student*`,
     });
 
     /**
@@ -1705,7 +1867,7 @@ export class ApiGatewayStack extends cdk.Stack {
 
     // Waf Firewall
     const waf = new wafv2.CfnWebACL(this, `${id}-waf`, {
-      description: "VCI waf",
+      description: "LAT waf with OWASP",
       scope: "REGIONAL",
       defaultAction: { allow: {} },
       visibilityConfig: {
@@ -1714,6 +1876,22 @@ export class ApiGatewayStack extends cdk.Stack {
         metricName: "virtualcareint-firewall",
       },
       rules: [
+        {
+          name: "AWSManagedRulesSQLiRuleSet",
+          priority: 2,
+          statement: {
+            managedRuleGroupStatement: {
+              vendorName: "AWS",
+              name: "AWSManagedRulesSQLiRuleSet",
+            },
+          },
+          overrideAction: { none: {} },
+          visibilityConfig: {
+            sampledRequestsEnabled: true,
+            cloudWatchMetricsEnabled: true,
+            metricName: "AWSManagedRulesSQLiRuleSet",
+          },
+        },
         {
           name: "AWS-AWSManagedRulesCommonRuleSet",
           priority: 1,
@@ -1731,8 +1909,40 @@ export class ApiGatewayStack extends cdk.Stack {
           },
         },
         {
+          name: "AWSManagedRulesPHPRuleSet",
+          priority: 3,
+          statement: {
+            managedRuleGroupStatement: {
+              vendorName: "AWS",
+              name: "AWSManagedRulesPHPRuleSet",
+            },
+          },
+          overrideAction: { none: {} },
+          visibilityConfig: {
+            sampledRequestsEnabled: true,
+            cloudWatchMetricsEnabled: true,
+            metricName: "AWSManagedRulesPHPRuleSet",
+          },
+        },
+        {
+          name: "AWSManagedRulesKnownBadInputsRuleSet",
+          priority: 4,
+          statement: {
+            managedRuleGroupStatement: {
+              vendorName: "AWS",
+              name: "AWSManagedRulesKnownBadInputsRuleSet",
+            },
+          },
+          overrideAction: { none: {} },
+          visibilityConfig: {
+            sampledRequestsEnabled: true,
+            cloudWatchMetricsEnabled: true,
+            metricName: "AWSManagedRulesKnownBadInputsRuleSet",
+          },
+        },
+        {
           name: "LimitRequests1000",
-          priority: 2,
+          priority: 5,
           action: {
             block: {},
           },

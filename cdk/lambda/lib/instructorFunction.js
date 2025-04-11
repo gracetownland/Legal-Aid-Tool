@@ -230,34 +230,69 @@ console.log("Query Params:", event.queryStringParameters);
         break;
       
       case "GET /instructor/view_students":
-        if (
-          event.queryStringParameters != null &&
-          event.queryStringParameters.cognito_id
-        ) {
-          const cognito_id = event.queryStringParameters.cognito_id;
+        case "GET /instructor/view_students":
+  if (
+    event.queryStringParameters != null &&
+    event.queryStringParameters.cognito_id
+  ) {
+    const cognito_id = event.queryStringParameters.cognito_id;
 
-          try {
-            // First, get the user ID using the email
-            //const userIdResult = await sqlConnection`
-            // Query to get all cases sent for review
-            const data = await sqlConnection`
-                SELECT *
-                FROM cases
-                WHERE sent_to_review = true;
-              `;
+    try {
+      // Step 1: Get the instructor's user_id
+      const userIdResult = await sqlConnection`
+        SELECT user_id
+        FROM "users"
+        WHERE cognito_id = ${cognito_id};
+      `;
 
-            response.statusCode = 200;
-            response.body = JSON.stringify(data);
-          } catch (err) {
-            response.statusCode = 500;
-            console.error(err);
-            response.body = JSON.stringify({ error: "Internal server error" });
-          }
-        } else {
-          response.statusCode = 400;
-          response.body = JSON.stringify({ error: "email is required" });
-        }
+      const instructorId = userIdResult[0]?.user_id;
+
+      if (!instructorId) {
+        response.statusCode = 404;
+        response.body = JSON.stringify({ error: "Instructor not found" });
         break;
+      }
+
+      // Step 2: Get student_ids associated with the instructor
+      const studentIdsResult = await sqlConnection`
+        SELECT student_id
+        FROM "instructor_students"
+        WHERE instructor_id = ${instructorId};
+      `;
+
+      const studentIds = studentIdsResult.map(row => row.student_id);
+
+      if (studentIds.length === 0) {
+        response.statusCode = 200;
+        response.body = JSON.stringify([]); // No students, return empty array
+        break;
+      }
+
+      // Step 3: Get cases and student names
+      const cases = await sqlConnection`
+        SELECT 
+  c.*, 
+  u.first_name, 
+  u.last_name 
+FROM "cases" c
+JOIN "users" u ON c.user_id = u.user_id
+WHERE c.user_id = ANY(${studentIds});
+
+      `;
+
+      response.statusCode = 200;
+      response.body = JSON.stringify(cases);
+    } catch (err) {
+      console.error(err);
+      response.statusCode = 500;
+      response.body = JSON.stringify({ error: "Internal server error" });
+    }
+  } else {
+    response.statusCode = 400;
+    response.body = JSON.stringify({ error: "cognito_id is required" });
+  }
+  break;
+
       case "DELETE /instructor/delete_student":
         if (
           event.queryStringParameters != null &&

@@ -7,7 +7,7 @@ import psycopg2
 from langchain_aws import BedrockEmbeddings
 
 from helpers.vectorstore import get_vectorstore_retriever
-from helpers.chat import get_bedrock_llm, get_initial_student_query, get_student_query, create_dynamodb_history_table, get_response, update_session_name
+from helpers.chat import get_bedrock_llm, get_initial_student_query, get_student_query, create_dynamodb_history_table, get_response, update_session_name, get_audio_response
 
 # Set up basic logging
 logging.basicConfig(level=logging.INFO)
@@ -102,6 +102,44 @@ def connect_to_db():
             raise
     return connection
 
+def add_audio_to_db(case_id, audio_text):
+    connection = connect_to_db()
+    if connection is None:
+        logger.error("No database connection available.")
+        return {
+            "statusCode": 500,
+            "body": json.dumps("Database connection failed.")
+        }
+    
+    try:
+        cur = connection.cursor()
+        logger.info("Connected to RDS instance!")
+        cur.execute("""
+            INSERT INTO "cases" (case_id, case_description)
+            VALUES (%s, %s);
+        """, (case_id, audio_text))
+        connection.commit()
+        cur.close()
+        logger.info(f"Successfully added audio to the database for case_id {case_id}")
+        return {
+            "statusCode": 200,
+            "body": json.dumps({
+                "message": "Audio added to the database successfully."
+            })
+        }
+    except Exception as e:
+        logger.error(f"Error adding audio to the database: {e}")
+        if cur:
+            cur.close()
+        connection.rollback()
+        return {
+            "statusCode": 500,
+            "body": json.dumps({
+                "error": "Failed to add audio to the database"
+            })
+        }
+    
+
 def get_default_system_prompt():
     return '''You are a helpful assistant to me, a UBC law student, who answers with kindness while being concise, so that it is easy to read your responses quickly yet still get valuable information from them. No need to be conversational, just skip to talking about the content. Refer to me, the law student, in the second person. I will provide you with context to a legal case I am interviewing my client about, and you exist to help provide legal context and analysis, relevant issues, possible strategies to defend the client, and other important details in a structured natural language response.
 
@@ -149,6 +187,39 @@ def get_system_prompt():
         connection.rollback()
         return None
 
+def get_audio_details(case_id):
+    connection = connect_to_db()
+    if connection is None:
+        logger.error("No database connection available.")
+        return {
+            "statusCode": 500,
+            "body": json.dumps("Database connection failed.")
+        }
+    
+    try:
+        cur = connection.cursor()
+        logger.info("Connected to RDS instance!")
+        cur.execute("""
+            SELECT audio_text
+            FROM "audio_files"
+            WHERE case_id = %s;
+        """, (case_id,))        
+        result = cur.fetchone()
+        logger.info(f"Query result: {result}")        
+        cur.close()
+        if result:
+            audio_description = result[0]
+            logger.info(f"Audio description found for case_id {case_id}: {audio_description}")
+            return audio_description
+        else:
+            logger.warning(f"No audio description found for case_id {case_id}")
+            return None
+    except Exception as e:
+        logger.error(f"Error fetching audio description: {e}")
+        if cur:
+            cur.close()
+        connection.rollback()
+        return None
 
 def get_case_details(case_id):
     connection = connect_to_db()
@@ -193,10 +264,10 @@ def get_case_details(case_id):
 def handler(event, context):
     logger.info("Text Generation Lambda function is called!")
     initialize_constants()
-
+    case_audio_description = None
     query_params = event.get("queryStringParameters", {})
     case_id = query_params.get("case_id", "")
-
+    audio_flag = query_params.get("audio_flag", "")
     if not case_id:
         return {
             'statusCode': 400,
@@ -222,7 +293,21 @@ def handler(event, context):
             },
             'body': json.dumps('Error fetching system prompt')
         }
-
+    
+    if audio_flag is not None:
+        case_audio_description = get_audio_details(case_id)
+        if case_description is None:    
+            return {
+                'statusCode': 400,
+                "headers": {
+                    "Content-Type": "application/json",
+                    "Access-Control-Allow-Headers": "*",
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Methods": "*",
+                },
+                'body': json.dumps('Error fetching audio details')
+            }
+    add_audio_to_db(case_id, case_audio_description)
     case_title, case_type, jurisdiction, case_description = get_case_details(case_id)
     if case_title is None or case_type is None or jurisdiction is None or case_description is None:
         logger.error(f"Error fetching case details for case_id: {case_id}")
@@ -242,7 +327,7 @@ def handler(event, context):
 
     if not question:
         logger.info(f"Start of conversation. Creating conversation history table in DynamoDB.")
-        student_query = get_initial_student_query(patient_name)
+        student_query = get_initial_student_query(case_type, jurisdiction, case_description)
     else:
         logger.info(f"Processing student question: {question}")
         student_query = get_student_query(question)
@@ -310,18 +395,29 @@ def handler(event, context):
 
     try:
         logger.info("Generating response from the LLM.")
-        response = get_response(
-            query=student_query,
-            case_title=case_title,
-            llm=llm,
-            history_aware_retriever=history_aware_retriever,
-            table_name=TABLE_NAME,
-            case_id=case_id,
-            system_prompt=system_prompt,
-            case_type=case_type,
-            jurisdiction=jurisdiction,
-            case_description=case_description
-        )
+        if audio_flag is not None:
+            response = get_audio_response(
+                query=student_query,
+                llm=llm,
+                history_aware_retriever=history_aware_retriever,
+                table_name=TABLE_NAME,
+                case_id=case_id,
+                system_prompt=system_prompt,
+                case_audio_description=case_audio_description
+            )
+        else:
+            response = get_response(
+                query=student_query,
+                case_title=case_title,
+                llm=llm,
+                history_aware_retriever=history_aware_retriever,
+                table_name=TABLE_NAME,
+                case_id=case_id,
+                system_prompt=system_prompt,
+                case_type=case_type,
+                jurisdiction=jurisdiction,
+                case_description=case_description
+            )
     except Exception as e:
         logger.error(f"Error getting response: {e}")
         return {

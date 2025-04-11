@@ -120,6 +120,90 @@ def get_initial_student_query(case_type: str, jurisdiction: str, case_descriptio
     """
     return student_query
 
+def get_audio_response(
+    query: str,
+    llm: ChatBedrock,
+    history_aware_retriever,
+    table_name: str,
+    case_id: str,
+    system_prompt: str,
+    case_audio_description: str,
+) -> dict:
+    """
+    Generates a response to a query using the LLM and a history-aware retriever for context.
+
+    Args:
+    query (str): The student's query string for which a response is needed.
+    patient_name (str): The specific patient that the student needs to diagnose.
+    llm (ChatBedrock): The language model instance used to generate the response.
+    history_aware_retriever: The history-aware retriever instance that provides relevant context documents for the query.
+    table_name (str): The DynamoDB table name used to store and retrieve the chat history.
+    session_id (str): The unique identifier for the chat session to manage history.
+
+    Returns:
+    dict: A dictionary containing the generated response and the source documents used in the retrieval.
+    """
+    
+    # completion_string = """
+    #             Once I, the law student, have give you a diagnosis, politely leave the conversation and wish me goodbye.
+    #             Regardless if I have given you the proper diagnosis or not for the patient you are pretending to be, stop talking to me.
+    #             """
+    # if llm_completion:
+    #     completion_string = """
+    #             Continue this process until you determine that me, the law student, has properly diagnosed the patient you are pretending to be.                                                        
+    #             Once the proper diagnosis is provided, include PROPER DIAGNOSIS ACHIEVED in your response and do not continue the conversation.
+    #             """
+
+    # Create a system prompt for the question answering
+    processed_system_prompt = (
+        f"""
+        <|begin_of_text|>
+        <|start_header_id|>case<|end_header_id|>
+        {system_prompt}
+        Pay close attention to the latest system prompt I've given you, as it may have been updated since the last message, but don't entirely discard the previous system prompts unless they conflict. This is for your behaviour, you do not need to include it in the response.
+
+        Additional case detials that are relevant:
+        Case description: {case_audio_description}
+        <|eot_id|>
+        <|start_header_id|>documents<|end_header_id|>
+        {{context}}
+        <|eot_id|>
+        """
+    )
+    
+    qa_prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", processed_system_prompt),
+            MessagesPlaceholder("chat_history"),
+            ("human", "{input}"),
+        ]
+    )
+    question_answer_chain = create_stuff_documents_chain(llm, qa_prompt)
+    rag_chain = create_retrieval_chain(history_aware_retriever, question_answer_chain)
+
+    conversational_rag_chain = RunnableWithMessageHistory(
+        rag_chain,
+        lambda _: DynamoDBChatMessageHistory(
+            table_name=table_name, 
+            session_id=case_id  # Uses case_id from function scope
+        ),
+        input_messages_key="input",
+        history_messages_key="chat_history",
+        output_messages_key="answer",
+    )
+    
+    # Generate the response until it's not empty
+    response = ""
+    while not response:
+        response = generate_response(
+            conversational_rag_chain,
+            query,
+            case_id
+        )    
+    
+    return get_llm_output(response)
+
+
 def get_response(
     query: str,
     case_title: str,
