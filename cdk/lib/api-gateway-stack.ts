@@ -841,7 +841,7 @@ export class ApiGatewayStack extends cdk.Stack {
         RDS_PROXY_ENDPOINT: db.rdsProxyEndpoint,
       },
       functionName: `${id}-audioToTextFunction`,
-      layers: [powertoolsLayer],
+      layers: [powertoolsLayer, psycopgLayer],
       role: coglambdaRole,
     });
 
