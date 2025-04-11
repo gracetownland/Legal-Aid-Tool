@@ -108,21 +108,21 @@ export class ApiGatewayStack extends cdk.Stack {
     );
 
 
-    // Create FIFO SQS Queue
-    const audioToTextQueue = new sqs.Queue(this, `${id}-AudioToTextQueue`, {
-      queueName: `${id}-audioToText-queue.fifo`,
-      fifo: true,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-      visibilityTimeout: cdk.Duration.seconds(900),
-    });
+    // // Create FIFO SQS Queue
+    // const audioToTextQueue = new sqs.Queue(this, `${id}-AudioToTextQueue`, {
+    //   queueName: `${id}-audioToText-queue.fifo`,
+    //   fifo: true,
+    //   removalPolicy: cdk.RemovalPolicy.DESTROY,
+    //   visibilityTimeout: cdk.Duration.seconds(900),
+    // });
 
-    // Create FIFO SQS Queue
-    const textToLlmQueue = new sqs.Queue(this, `${id}-TextToLlmQueue`, {
-      queueName: `${id}-textToLlm-queue.fifo`,
-      fifo: true,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-      visibilityTimeout: cdk.Duration.seconds(900),
-    });
+    // // Create FIFO SQS Queue
+    // const textToLlmQueue = new sqs.Queue(this, `${id}-TextToLlmQueue`, {
+    //   queueName: `${id}-textToLlm-queue.fifo`,
+    //   fifo: true,
+    //   removalPolicy: cdk.RemovalPolicy.DESTROY,
+    //   visibilityTimeout: cdk.Duration.seconds(900),
+    // });
 
 
 
@@ -804,29 +804,29 @@ export class ApiGatewayStack extends cdk.Stack {
       role: coglambdaRole,
     });
 
-    const sqsFunction = new lambda.Function(this, `${id}-sqsFunction`, {
-      runtime: lambda.Runtime.NODEJS_20_X,
-      handler: "sqs.handler",
-      memorySize: 512,
-      code: lambda.Code.fromAsset("lambda/sqs"),
-      timeout: cdk.Duration.seconds(900),
-      environment: {
-        SQS_QUEUE_URL: audioToTextQueue.queueUrl,
-      },
-      vpc: vpcStack.vpc,
-      role: coglambdaRole,
-    });
+    // const sqsFunction = new lambda.Function(this, `${id}-sqsFunction`, {
+    //   runtime: lambda.Runtime.NODEJS_20_X,
+    //   handler: "sqs.handler",
+    //   memorySize: 512,
+    //   code: lambda.Code.fromAsset("lambda/sqs"),
+    //   timeout: cdk.Duration.seconds(900),
+    //   environment: {
+    //     SQS_QUEUE_URL: audioToTextQueue.queueUrl,
+    //   },
+    //   vpc: vpcStack.vpc,
+    //   role: coglambdaRole,
+    // });
 
-    sqsFunction.addEventSource(
-      new lambdaEventSources.S3EventSource(audioStorageBucket, {
-        events: [
-          s3.EventType.OBJECT_CREATED,
-          s3.EventType.OBJECT_RESTORE_COMPLETED,
-        ],
-      })
-    );
+    // sqsFunction.addEventSource(
+    //   new lambdaEventSources.S3EventSource(audioStorageBucket, {
+    //     events: [
+    //       s3.EventType.OBJECT_CREATED,
+    //       s3.EventType.OBJECT_RESTORE_COMPLETED,
+    //     ],
+    //   })
+    // );
 
-    audioToTextQueue.grantSendMessages(sqsFunction);
+    // audioToTextQueue.grantSendMessages(sqsFunction);
 
     const audioToTextFunction = new lambda.Function(this, `${id}-audioToTextFunction`, {
       runtime: lambda.Runtime.PYTHON_3_9,
@@ -839,28 +839,27 @@ export class ApiGatewayStack extends cdk.Stack {
         AUDIO_BUCKET: audioStorageBucket.bucketName,
         SM_DB_CREDENTIALS: db.secretPathUser.secretName,
         RDS_PROXY_ENDPOINT: db.rdsProxyEndpoint,
-        OUTPUT_SQS_QUEUE_URL: textToLlmQueue.queueUrl,
       },
       functionName: `${id}-audioToTextFunction`,
       layers: [powertoolsLayer],
       role: coglambdaRole,
     });
 
-    textToLlmQueue.grantSendMessages(audioToTextFunction);
+    // textToLlmQueue.grantSendMessages(audioToTextFunction);
 
     // Override the Logical ID of the Lambda Function to get ARN in OpenAPI
     const cfnAudioToTextFunction = audioToTextFunction.node
       .defaultChild as lambda.CfnFunction;
     cfnAudioToTextFunction.overrideLogicalId("audioToTextFunction");
-    audioToTextQueue.grantConsumeMessages(audioToTextFunction);
+    // audioToTextQueue.grantConsumeMessages(audioToTextFunction);
     // Grant the Lambda function read-only permissions to the S3 bucket
     audioStorageBucket.grantRead(audioToTextFunction);
 
-    audioToTextFunction.addEventSource(
-      new lambdaEventSources.SqsEventSource(audioToTextQueue, {
-        batchSize: 5,
-      })
-    );
+    // audioToTextFunction.addEventSource(
+    //   new lambdaEventSources.SqsEventSource(audioToTextQueue, {
+    //     batchSize: 5,
+    //   })
+    // );
 
     audioToTextFunction.addToRolePolicy(
       new iam.PolicyStatement({
