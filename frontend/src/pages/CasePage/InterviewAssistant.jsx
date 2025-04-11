@@ -22,6 +22,8 @@ import SendIcon from "@mui/icons-material/Send";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import MicIcon from "@mui/icons-material/Mic";
 import SummarizeIcon from "@mui/icons-material/Summarize";
+import StopRounded from "@mui/icons-material/StopRounded";
+import { VolumeUpRounded } from "@mui/icons-material";
 
 const InterviewAssistant = () => {
   const { caseId } = useParams();
@@ -39,6 +41,8 @@ const InterviewAssistant = () => {
   ]);
   const [userInput, setUserInput] = useState("");
   const [isAItyping, setIsAItyping] = useState(false);
+  const [utterance, setUtterance] = useState(null);
+  const [isSpeaking, setIsSpeaking] = useState(false); // Track if TTS is speaking
 
   const messagesEndRef = useRef(null);
 
@@ -124,6 +128,22 @@ const InterviewAssistant = () => {
     fetchMessages();
   }, [caseId]);
 
+    // Function to start TTS
+    const startTTS = (text) => {
+      const newUtterance = new SpeechSynthesisUtterance(text);
+      speechSynthesis.speak(newUtterance);
+      setUtterance(newUtterance);
+      setIsSpeaking(true); // Set speaking to true when TTS starts
+    };
+  
+    // Function to stop TTS
+    const stopTTS = () => {
+      if (utterance) {
+        speechSynthesis.cancel(); // Stop the speech
+        setIsSpeaking(false); // Set speaking to false when TTS stops
+      }
+    };
+
   const handleBack = () => {
     navigate("/"); // Navigate to the homepage
   };
@@ -161,6 +181,42 @@ const InterviewAssistant = () => {
       console.log("Uploaded audio file:", file);
     }
   };
+  
+  const handleGenerateSummary = async () => {
+    try {
+      const session = await fetchAuthSession();
+      const token = session.tokens.idToken;
+  
+      const response = await fetch(
+        `${import.meta.env.VITE_API_ENDPOINT}student/summary_generation?case_id=${caseId}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `${token}`,
+            "Content-Type": "application/json",
+          },
+          
+        }
+      );
+  
+      if (!response.ok) throw new Error("Failed to submit feedback");
+  
+      // setSnackbar({
+      //   open: true,
+      //   message: "Message sent successfully!",
+      //   severity: "success",
+      // });
+    } catch (error) {
+      console.error("Error generating summaries:", error);
+      // setSnackbar({
+      //   open: true,
+      //   message: "Failed to generate summaries.",
+      //   severity: "error",
+      // });
+    }
+  };
+
+
 
   async function getAIResponse(userInput) {
     const session = await fetchAuthSession();
@@ -297,7 +353,11 @@ const InterviewAssistant = () => {
                           maxWidth: "60%",
                           padding: "0 1em",
                           backgroundColor: "var(--bot-text)",
-                          borderRadius: 2,
+                          borderRadius: 10,
+                          borderBottomLeftRadius: message.sender === "bot" ? 7 : '10',
+                          borderBottomRightRadius: message.sender === "bot" ? '10' : 7,
+                          paddingY: 1,
+                          paddingX: 3,              
                           boxShadow: "none",
                           color: "var(--text)",
                           fontFamily: "'Roboto', sans-serif",
@@ -310,69 +370,126 @@ const InterviewAssistant = () => {
                         </Typography>
                       </Paper>
                       {/* Render buttons directly underneath the bot bubble */}
+                      
                       <Box
-                        sx={{
-                          display: "flex",
-                          gap: 1,
-                          mt: 1,
-                        }}
-                      >
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          onClick={() => navigator.clipboard.writeText(message.text)}
-                          startIcon={<ContentCopyIcon fontSize="small" />}
-                          sx={{ fontSize: "0.7rem", border: 'none'}}
-                        >
-                        </Button>
-                        <Button
-                          size="small"
-                          startIcon={<MicIcon fontSize="small" />}
-                          sx={{ fontSize: "0.7rem", border:'none', backgroundColor:'transparent',}}
-                          onClick={() => {
-                            const utterance = new SpeechSynthesisUtterance(message.text);
-                            speechSynthesis.speak(utterance);
-                          }}
-                        >
-                        </Button>
-                        {messages.length >= 5 && (
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            sx={{ fontSize: "0.7rem", border: 'none', backgroundColor:'transparent',}}
-                            onClick={() => handleSendMessage("Can you summarize that?")}
-                          >
-                            Generate Summary
-                          </Button>
-                        )}
-                      </Box>
+      sx={{
+        display: "flex",
+        justifyContent: "flex-end", // Right align
+        gap: 0,
+        mt: 2,
+      }}
+    >
+      <Button
+        size="small"
+        disableRipple
+        onClick={() => navigator.clipboard.writeText(message.text)}
+        sx={{
+          minWidth: 30,
+          width: 30,
+          height: 30,
+          p: 0,
+          color: '#808080',
+          backgroundColor: 'transparent',
+          border: 'none',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          outline: 'none',
+          '&:focus': {
+            outline: 'none',
+            boxShadow: 'none',
+          },
+        }}
+      >
+        <ContentCopyIcon fontSize="extrasmall" />
+      </Button>
+
+      <Button
+        size="extrasmall"
+        disableRipple
+        onClick={() => (isSpeaking ? stopTTS() : startTTS(message.text))}
+        sx={{
+          minWidth: 30,
+          width: 30,
+          height: 30,
+          p: 0,
+          color: '#808080',
+          backgroundColor: 'transparent',
+          border: 'none',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          outline: 'none',
+          '&:focus': {
+            outline: 'none',
+            boxShadow: 'none',
+          },
+        }}
+      >
+        {isSpeaking ? <StopRounded fontSize="small" /> : <VolumeUpRounded fontSize="small" />}
+      </Button>
+
+      {messages.length >= 5 && (
+        <Button
+          size="small"
+          disableRipple
+          variant="outlined"
+          sx={{
+            fontSize: "0.7rem",
+            px: 1.2,
+            py: 0.5,
+            ml: 1,
+            backgroundColor: 'transparent',
+            color: '#808080',
+            borderColor: 'var(--border)',
+            whiteSpace: 'nowrap',
+            height: 30,
+            outline: 'none',
+            '&:focus': {
+              outline: 'none',
+              boxShadow: 'none',
+            },
+          }}
+          onClick={() => handleGenerateSummary()}
+        >
+          Generate Summary
+        </Button>
+      )}
+    </Box>
+
                     </Box>
                   );
                 } else {
                   // For user messages or bot messages that are not the latest, use the default layout.
                   return (
+                    <div>
                     <Box
                       key={index}
                       sx={{
                         display: "flex",
                         flexDirection: message.sender === "bot" ? "row" : "row-reverse",
                         marginTop: 3,
-                        marginBottom: 10,
-                        fontFamily: "'Roboto', sans-serif",
+                        marginBottom: 0,
+                        fontFamily: "'Inter', sans-serif",
                       }}
                     >
+                      
                       <Paper
                         sx={{
                           maxWidth: "60%",
                           padding: "0 1em",
                           backgroundColor:
                             message.sender === "bot" ? "var(--bot-text)" : "var(--sender-text)",
-                          borderRadius: 2,
+                          borderRadius: 10,
+                          borderBottomLeftRadius: message.sender === "bot" ? 7 : '10',
+                          borderBottomRightRadius: message.sender === "bot" ? '10' : 7,
+                          paddingY: message.sender== "bot" ? 1 : 0,
+                          paddingX: 3, 
                           boxShadow: "none",
                           marginLeft: message.sender === "bot" ? 0 : "auto",
                           marginRight: message.sender === "bot" ? "auto" : 0,
                           color: "var(--text)",
-                          fontFamily: "'Roboto', sans-serif",
+                          fontFamily: "'Inter', sans-serif",
                         }}
                       >
                         <Typography variant="body1" sx={{ textAlign: "left" }}>
@@ -380,8 +497,79 @@ const InterviewAssistant = () => {
                             <ReactMarkdown>{message.text}</ReactMarkdown>
                           </div>
                         </Typography>
+
+                        
                       </Paper>
+                      
                     </Box>
+                    <Box
+  sx={{
+    display: "flex",
+    gap: 0,
+    mt: 1,
+    position: "absolute", // Ensures the buttons align with the message properly
+    right: message.sender !== "bot" ? 30 : "auto", // Align right if sender is not a bot
+    left: message.sender === "bot" ? 272 : "auto",  // Align left if sender is a bot
+    opacity: 0,
+    transition: "opacity 0.3s ease-in-out",
+    "&:hover": {
+      opacity: 1,
+    },
+  }}
+>
+<Button
+  size="small"
+  disableRipple
+  onClick={() => navigator.clipboard.writeText(message.text)}
+  sx={{
+    minWidth: 30,
+    width: 30,
+    height: 30,
+    p: 0,
+    color: '#808080',
+    backgroundColor: 'transparent',
+    border: 'none',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    outline: 'none',
+    '&:focus': {
+      outline: 'none',
+      boxShadow: 'none',
+    },
+  }}
+>
+  <ContentCopyIcon fontSize="extrasmall" />
+</Button>
+
+<Button
+        size="extrasmall"
+        disableRipple
+        onClick={() => (isSpeaking ? stopTTS() : startTTS(message.text))}
+        sx={{
+          minWidth: 30,
+          width: 30,
+          height: 30,
+          p: 0,
+          color: '#808080',
+          backgroundColor: 'transparent',
+          border: 'none',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          outline: 'none',
+          '&:focus': {
+            outline: 'none',
+            boxShadow: 'none',
+          },
+        }}
+      >
+        {isSpeaking ? <StopRounded fontSize="small" /> : <VolumeUpRounded fontSize="small" />}
+      </Button>
+</Box>
+                    </div>
+
+                    
                   );
                 }
               })}
@@ -395,6 +583,7 @@ const InterviewAssistant = () => {
                 justifyContent: "flex-start",
                 marginBottom: 6,
                 marginTop: 0,
+                
               }}
             >
               <TypingIndicator />
@@ -406,11 +595,12 @@ const InterviewAssistant = () => {
               position: "fixed",
               bottom: 0,
               left: 0,
+              
               width: "100%",
               display: "flex",
               justifyContent: "center",
-              backgroundColor: "rgba(0,0,0,0)",
-              boxShadow: "0 -2px 5px rgba(0,0,0,0.1)",
+              backgroundColor: "var(--background)",
+              boxShadow: "none",
               padding: 2,
             }}
           >
@@ -419,14 +609,13 @@ const InterviewAssistant = () => {
                 position: "fixed",
                 bottom: 0,
                 right: 0,
-                minHeight: "65px",
+                minHeight: "80px",
                 width: "calc(100% - 250px)",
                 minWidth: "70vw",
                 display: "flex",
                 justifyContent: "center",
                 backgroundColor: "var(--background)",
                 boxShadow: "none",
-                padding: 2,
                 background: "none",
               }}
             >
@@ -437,6 +626,8 @@ const InterviewAssistant = () => {
                   maxHeight: "650px",
                   display: "flex",
                   alignItems: "center",
+                  backgroundColor: "var(--background)",
+                   
                 }}
               >
                 <TextField
@@ -450,9 +641,9 @@ const InterviewAssistant = () => {
                     maxHeight: "300px",
                     overflowY: "auto",
                     marginRight: "0.5em",
-                    border: "1px solid var(--border)",
+                    marginLeft: "1em",
                     backgroundColor: "var(--background)",
-                    "& .MuiOutlinedInput-notchedOutline": { borderColor: "var(--border)" },
+                    "& .MuiOutlinedInput-notchedOutline": { borderColor: "var(--border)" , borderRadius: 5, borderBottomRightRadius: 2, borderTopRightRadius: 2},
                     "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "var(--border)" },
                   }}
                   onKeyDown={handleKeyPress}
@@ -513,7 +704,12 @@ const InterviewAssistant = () => {
                   sx={{
                     color: "#ffffff",
                     backgroundColor: "var(--secondary)",
-                    minHeight: "50px",
+                    minHeight: "55px",
+                    borderRadius: 5,
+                    borderStartStartRadius: 2,
+                    borderEndStartRadius: 2,
+                    marginRight: "2em",
+                    fontFamily: "Inter",
                   }}
                   style={{ boxShadow: "none" }}
                   onClick={handleSendMessage}
