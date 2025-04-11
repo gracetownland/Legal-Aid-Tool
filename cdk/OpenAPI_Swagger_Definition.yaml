@@ -678,7 +678,7 @@ paths:
         httpMethod: "POST"
         type: "aws_proxy"
   
-  /student/new_case:
+  /student/case:
     options:
       summary: CORS support
       description: |
@@ -2178,7 +2178,7 @@ paths:
         httpMethod: "POST"
         type: "aws_proxy"
 
-  /instructor/get_students:
+  /instructor/students:
     options:
       summary: CORS support
       description: Enable CORS by returning correct headers
@@ -2206,7 +2206,7 @@ paths:
       tags:
         - Instructor
       summary: Get a list of all students of the instructor
-      operationId: instructor_get_review_cases_GET
+      operationId: instructor_students_GET
       parameters:
         - in: query
           name: cognito_id
@@ -2216,18 +2216,14 @@ paths:
             type: string
       responses:
         "200":
-          description: Recieved all the files for the group and patient successfully
+          description: Students of the instructor
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  files:
-                    type: array
-                    description: A list of student IDs for the instructor
-                    items:
-                      type: string
-                      description: ID of the student
+                type: array
+                items:
+                  type: string
+                  description: ID of the student
         "400":
           description: Bad Request
         "401":

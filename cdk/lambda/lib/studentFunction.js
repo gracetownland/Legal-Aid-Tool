@@ -11,10 +11,7 @@ const crypto = require("crypto");
 
 function hashUUID(uuid) {
   const hash = crypto.createHash("sha256").update(uuid).digest();
-  const shortHash = hash.subarray(0, 5);
-  let base64 = shortHash.toString("base64");
-  base64 = base64.replace(/[+/=]/g, "").substring(0, 6);
-  return base64;
+  return hash.slice(0, 4).toString('base64').replace(/[^A-Za-z0-9]/g, '').slice(0, 6);
 }
 
 // SQL conneciton from global variable at lib.js
@@ -203,7 +200,7 @@ exports.handler = async (event) => {
         break;
 
 
-      case "POST /student/new_case":
+      case "POST /student/case":
           console.log(event);
           console.log("Received event:", JSON.stringify(event, null, 2));
           const cognito_id = event.queryStringParameters.user_id;
