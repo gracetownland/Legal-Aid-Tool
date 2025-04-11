@@ -78,51 +78,55 @@ exports.handler = async (event) => {
   let data;
   try {
     const pathData = event.httpMethod + " " + event.resource;
-    console.log("🌟 Lambda triggered");
-console.log("RouteKey:", event.routeKey);
-console.log("Path:", event.path);
-console.log("Method:", event.httpMethod);
-console.log("Query Params:", event.queryStringParameters);
 
     switch (pathData) {
       case "GET /instructor/students":
-        if (
-          event.queryStringParameters != null &&
-          event.queryStringParameters.cognito_id
-        ) {
-          const cognito_id = event.queryStringParameters.cognito_id;
+  if (
+    event.queryStringParameters != null &&
+    event.queryStringParameters.cognito_id
+  ) {
+    const cognito_id = event.queryStringParameters.cognito_id;
 
-          try {
-            // First, get the user_id for the given email
-            const userResult = await sqlConnection`
-              SELECT user_id FROM "users" WHERE cognito_id = ${cognito_id};
-            `;
+    try {
+      // First, get the user_id for the given email
+      const userResult = await sqlConnection`
+        SELECT user_id FROM "users" WHERE cognito_id = ${cognito_id};
+      `;
 
-            if (userResult.length === 0) {
-              response.statusCode = 404;
-              response.body = JSON.stringify({ error: "User not found" });
-              break;
-            }
-
-            const userId = userResult[0].user_id;
-
-            // Now, fetch the students for that user_id
-            const data = await sqlConnection`
-              SELECT student_id FROM "instructor_students" WHERE instructor_id = ${userId};
-            `;
-
-            response.statusCode = 200;
-            response.body = JSON.stringify(data);
-          } catch (err) {
-            response.statusCode = 500;
-            console.error(err);
-            response.body = JSON.stringify({ error: "Internal server error" });
-          }
-        } else {
-          response.statusCode = 400;
-          response.body = JSON.stringify({ error: "Invalid value" });
-        }
+      if (userResult.length === 0) {
+        response.statusCode = 404;
+        response.body = JSON.stringify({ error: "User not found" });
         break;
+      }
+
+      const userId = userResult[0].user_id;
+
+      // Now, fetch the student details by joining the "instructor_students" with the "users" table
+      const data = await sqlConnection`
+        SELECT u.student_id, u.first_name, u.last_name 
+        FROM "instructor_students" i
+        JOIN "users" u ON i.student_id = u.user_id
+        WHERE i.instructor_id = ${userId};
+      `;
+
+      if (data.length === 0) {
+        response.statusCode = 404;
+        response.body = JSON.stringify({ error: "No students found for this instructor" });
+      } else {
+        response.statusCode = 200;
+        response.body = JSON.stringify(data);
+      }
+    } catch (err) {
+      response.statusCode = 500;
+      console.error(err);
+      response.body = JSON.stringify({ error: "Internal server error" });
+    }
+  } else {
+    response.statusCode = 400;
+    response.body = JSON.stringify({ error: "Invalid value" });
+  }
+  break;
+
       case "GET /instructor/cases_to_review":
         if (
           event.queryStringParameters != null &&
@@ -228,8 +232,6 @@ console.log("Query Params:", event.queryStringParameters);
           });
       }
         break;
-      
-      case "GET /instructor/view_students":
         case "GET /instructor/view_students":
   if (
     event.queryStringParameters != null &&
