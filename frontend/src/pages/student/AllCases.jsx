@@ -68,6 +68,10 @@ const ViewAllCases = () => {
         );
 
         const data = await response.json();
+        if (response.status === 404) {
+          setCases([]);
+          return;
+        }
         setCases(data);
         setFilteredData(data);
       } catch (error) {
@@ -181,7 +185,7 @@ const ViewAllCases = () => {
 
         <Grid container spacing={2}>
           {filteredData.length === 0 ? (
-            <Typography variant="body1" sx={{ textAlign: "center", width: "100%" }}>
+            <Typography variant="body1" sx={{ textAlign: "center", width: "100%", color: "grey" }}>
               No cases found
             </Typography>
           ) : (
