@@ -44,7 +44,15 @@ const InterviewAssistant = () => {
   const [utterance, setUtterance] = useState(null);
   const [isSpeaking, setIsSpeaking] = useState(false); // Track if TTS is speaking
 
+  // Ref for scrolling to bottom of message container
   const messagesEndRef = useRef(null);
+
+  // Smooth scroll when messages change or when the AI starts typing
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, isAItyping]);
 
   useEffect(() => {
     const fetchCaseData = async () => {
@@ -128,27 +136,30 @@ const InterviewAssistant = () => {
     fetchMessages();
   }, [caseId]);
 
-    // Function to start TTS
-    const startTTS = (text) => {
-      const newUtterance = new SpeechSynthesisUtterance(text);
-      speechSynthesis.speak(newUtterance);
-      setUtterance(newUtterance);
-      setIsSpeaking(true); // Set speaking to true when TTS starts
-    };
-  
-    // Function to stop TTS
-    const stopTTS = () => {
-      if (utterance) {
-        speechSynthesis.cancel(); // Stop the speech
-        setIsSpeaking(false); // Set speaking to false when TTS stops
-      }
-    };
+  // Function to start TTS
+  const startTTS = (text) => {
+    const newUtterance = new SpeechSynthesisUtterance(text);
+    speechSynthesis.speak(newUtterance);
+    setUtterance(newUtterance);
+    setIsSpeaking(true); // Set speaking to true when TTS starts
+  };
+
+  // Function to stop TTS
+  const stopTTS = () => {
+    if (utterance) {
+      speechSynthesis.cancel(); // Stop the speech
+      setIsSpeaking(false); // Set speaking to false when TTS stops
+    }
+  };
 
   const handleBack = () => {
     navigate("/"); // Navigate to the homepage
   };
 
   const handleSendMessage = async () => {
+    // Block sending if AI hasn't responded
+    if (isAItyping) return;
+
     if (userInput.trim()) {
       setMessages((prevMessages) => [
         ...prevMessages,
@@ -181,12 +192,12 @@ const InterviewAssistant = () => {
       console.log("Uploaded audio file:", file);
     }
   };
-  
+
   const handleGenerateSummary = async () => {
     try {
       const session = await fetchAuthSession();
       const token = session.tokens.idToken;
-  
+
       const response = await fetch(
         `${import.meta.env.VITE_API_ENDPOINT}student/summary_generation?case_id=${caseId}`,
         {
@@ -195,28 +206,14 @@ const InterviewAssistant = () => {
             Authorization: `${token}`,
             "Content-Type": "application/json",
           },
-          
         }
       );
-  
+
       if (!response.ok) throw new Error("Failed to submit feedback");
-  
-      // setSnackbar({
-      //   open: true,
-      //   message: "Message sent successfully!",
-      //   severity: "success",
-      // });
     } catch (error) {
       console.error("Error generating summaries:", error);
-      // setSnackbar({
-      //   open: true,
-      //   message: "Failed to generate summaries.",
-      //   severity: "error",
-      // });
     }
   };
-
-
 
   async function getAIResponse(userInput) {
     const session = await fetchAuthSession();
@@ -294,7 +291,10 @@ const InterviewAssistant = () => {
           }}
         >
           <Box>
-            <Typography variant="h6" sx={{ fontWeight: 600, marginBottom: 2, textAlign: "left" }}>
+            <Typography
+              variant="h6"
+              sx={{ fontWeight: 600, marginBottom: 2, textAlign: "left" }}
+            >
               {caseData?.case_title || "Case Title Not Available"}
             </Typography>
             <Typography
@@ -308,7 +308,8 @@ const InterviewAssistant = () => {
               }}
             >
               <strong>Case Overview:</strong>{" "}
-              {caseData?.case_description || "Overview information not available."}
+              {caseData?.case_description ||
+                "Overview information not available."}
             </Typography>
             <Divider sx={{ borderColor: "var(--text)" }} />
           </Box>
@@ -335,7 +336,6 @@ const InterviewAssistant = () => {
           ) : (
             <Box sx={{ overflowY: "auto", marginBottom: 2 }}>
               {messages.map((message, index) => {
-                // For bot messages that are the most recent, use a column layout:
                 if (message.sender === "bot" && index === lastBotIndex) {
                   return (
                     <Box
@@ -352,12 +352,14 @@ const InterviewAssistant = () => {
                         sx={{
                           maxWidth: "60%",
                           padding: "0 1em",
-                          backgroundColor: "var(--bot-text)", // SPEECH BUBBLE COLOR
+                          backgroundColor: "var(--bot-text)",
                           borderRadius: 10,
-                          borderBottomLeftRadius: message.sender === "bot" ? 7 : '10',
-                          borderBottomRightRadius: message.sender === "bot" ? '10' : 7,
-                          paddingY: 1,
-                          paddingX: 3,              
+                          borderBottomLeftRadius:
+                            message.sender === "bot" ? 7 : '10',
+                          borderBottomRightRadius:
+                            message.sender === "bot" ? '10' : 7,
+                          py: 1,
+                          px: 3,
                           boxShadow: "none",
                           color: "var(--text)",
                           fontFamily: "'Roboto', sans-serif",
@@ -369,233 +371,247 @@ const InterviewAssistant = () => {
                           </div>
                         </Typography>
                       </Paper>
-                      {/* Render buttons directly underneath the bot bubble */}
-                      
                       <Box
-      sx={{
-        display: "flex",
-        justifyContent: "flex-end", // Right align
-        gap: 0,
-        mt: 0, // change if speech bubble isnt background color
-      }}
-    >
-      <Button
-        size="small"
-        disableRipple
-        onClick={() => navigator.clipboard.writeText(message.text)}
-        sx={{
-          minWidth: 30,
-          width: 30,
-          height: 30,
-          p: 0,
-          marginLeft: 2,
-          color: '#808080',
-          backgroundColor: 'transparent',
-          border: 'none',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          outline: 'none',
-          '&:focus': {
-            outline: 'none',
-            boxShadow: 'none',
-          },
-          '&:hover': {
-            backgroundColor: 'transparent',
-            color: 'var(--text)',
-          },
-        }}
-      >
-        <ContentCopyIcon fontSize="extrasmall" />
-      </Button>
+                        sx={{
+                          display: "flex",
+                          justifyContent: "flex-end",
+                          gap: 0,
+                          mt: 0,
+                        }}
+                      >
+                        <Button
+                          size="small"
+                          disableRipple
+                          onClick={() =>
+                            navigator.clipboard.writeText(message.text)
+                          }
+                          sx={{
+                            minWidth: 30,
+                            width: 30,
+                            height: 30,
+                            p: 0,
+                            ml: 2,
+                            color: "#808080",
+                            backgroundColor: "transparent",
+                            border: "none",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            outline: "none",
+                            "&:focus": {
+                              outline: "none",
+                              boxShadow: "none",
+                            },
+                            "&:hover": {
+                              backgroundColor: "transparent",
+                              color: "var(--text)",
+                            },
+                          }}
+                        >
+                          <ContentCopyIcon fontSize="extrasmall" />
+                        </Button>
 
-      <Button
-        size="extrasmall"
-        disableRipple
-        onClick={() => (isSpeaking ? stopTTS() : startTTS(message.text))}
-        sx={{
-          minWidth: 30,
-          width: 30,
-          height: 30,
-          p: 0,
-          color: '#808080',
-          backgroundColor: 'transparent',
-          border: 'none',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          outline: 'none',
-          '&:focus': {
-            outline: 'none',
-            boxShadow: 'none',
-          },
-          '&:hover': {
-            backgroundColor: 'transparent',
-            color: 'var(--text)',
-          },
-        }}
-      >
-        {isSpeaking ? <StopRounded fontSize="small" /> : <VolumeUpRounded fontSize="small" />}
-      </Button>
+                        <Button
+                          size="extrasmall"
+                          disableRipple
+                          onClick={() =>
+                            isSpeaking
+                              ? stopTTS()
+                              : startTTS(message.text)
+                          }
+                          sx={{
+                            minWidth: 30,
+                            width: 30,
+                            height: 30,
+                            p: 0,
+                            color: "#808080",
+                            backgroundColor: "transparent",
+                            border: "none",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            outline: "none",
+                            "&:focus": {
+                              outline: "none",
+                              boxShadow: "none",
+                            },
+                            "&:hover": {
+                              backgroundColor: "transparent",
+                              color: "var(--text)",
+                            },
+                          }}
+                        >
+                          {isSpeaking ? (
+                            <StopRounded fontSize="small" />
+                          ) : (
+                            <VolumeUpRounded fontSize="small" />
+                          )}
+                        </Button>
 
-      {messages.length >= 5 && (
-        <Button
-          size="small"
-          disableRipple
-          variant="outlined"
-          sx={{
-            fontSize: "0.7rem",
-            px: 1.2,
-            py: 0.5,
-            ml: 1,
-            backgroundColor: 'transparent',
-            color: '#808080',
-            borderColor: 'var(--border)',
-            whiteSpace: 'nowrap',
-            height: 30,
-            outline: 'none',
-            '&:focus': {
-              outline: 'none',
-              boxShadow: 'none',
-            },
-            '&:hover': {
-            color: 'var(--feedback)',
-          },
-          }}
-          onClick={() => handleGenerateSummary()}
-        >
-          Generate Summary
-        </Button>
-      )}
-    </Box>
-
+                        {messages.length >= 5 && (
+                          <Button
+                            size="small"
+                            disableRipple
+                            variant="outlined"
+                            sx={{
+                              fontSize: "0.7rem",
+                              px: 1.2,
+                              py: 0.5,
+                              ml: 1,
+                              backgroundColor: "transparent",
+                              color: "#808080",
+                              borderColor: "var(--border)",
+                              whiteSpace: "nowrap",
+                              height: 30,
+                              outline: "none",
+                              "&:focus": {
+                                outline: "none",
+                                boxShadow: "none",
+                              },
+                              "&:hover": {
+                                color: "var(--feedback)",
+                              },
+                            }}
+                            onClick={() => handleGenerateSummary()}
+                          >
+                            Generate Summary
+                          </Button>
+                        )}
+                      </Box>
                     </Box>
                   );
                 } else {
-                  // For user messages or bot messages that are not the latest, use the default layout.
                   return (
-                    <div>
-                    <Box
-                      key={index}
-                      sx={{
-                        display: "flex",
-                        flexDirection: message.sender === "bot" ? "row" : "row-reverse",
-                        marginTop: 3,
-                        marginBottom: 0,
-                        fontFamily: "'Inter', sans-serif",
-                      }}
-                    >
-                      
-                      <Paper
+                    <div key={index}>
+                      <Box
                         sx={{
-                          maxWidth: "60%",
-                          padding: "0 1em",
-                          backgroundColor:
-                            message.sender === "bot" ? "var(--bot-text)" : "var(--sender-text)", // SPEECH BUBBLE COLOR
-                          borderRadius: 10,
-                          borderBottomLeftRadius: message.sender === "bot" ? 7 : '10',
-                          borderBottomRightRadius: message.sender === "bot" ? '10' : 7,
-                          paddingY: message.sender== "bot" ? 0 : 0,
-                          paddingX: 3, 
-                          boxShadow: "none",
-                          marginLeft: message.sender === "bot" ? 0 : "auto",
-                          marginRight: message.sender === "bot" ? "auto" : 0,
-                          color: "var(--text)",
+                          display: "flex",
+                          flexDirection:
+                            message.sender === "bot"
+                              ? "row"
+                              : "row-reverse",
+                          mt: 3,
+                          mb: 0,
                           fontFamily: "'Inter', sans-serif",
                         }}
                       >
-                        <Typography variant="body1" sx={{ textAlign: "left" }}>
-                          <div className="markdown">
-                            <ReactMarkdown>{message.text}</ReactMarkdown>
-                          </div>
-                        </Typography>
+                        <Paper
+                          sx={{
+                            maxWidth: "60%",
+                            padding: "0 1em",
+                            backgroundColor:
+                              message.sender === "bot"
+                                ? "var(--bot-text)"
+                                : "var(--sender-text)",
+                            borderRadius: 10,
+                            borderBottomLeftRadius:
+                              message.sender === "bot" ? 7 : '10',
+                            borderBottomRightRadius:
+                              message.sender === "bot" ? '10' : 7,
+                            px: 3,
+                            boxShadow: "none",
+                            ml: message.sender === "bot" ? 0 : "auto",
+                            mr: message.sender === "bot" ? "auto" : 0,
+                            color: "var(--text)",
+                            fontFamily: "'Inter', sans-serif",
+                          }}
+                        >
+                          <Typography variant="body1" sx={{ textAlign: "left" }}>
+                            <div className="markdown">
+                              <ReactMarkdown>{message.text}</ReactMarkdown>
+                            </div>
+                          </Typography>
+                        </Paper>
+                      </Box>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          gap: 0,
+                          mt: 0,
+                          position: "absolute",
+                          right: message.sender !== "bot" ? 30 : "auto",
+                          left: message.sender === "bot" ? 290 : "auto",
+                          opacity: 0,
+                          transition: "opacity 0.3s ease-in-out",
+                          "&:hover": {
+                            opacity: 1,
+                          },
+                        }}
+                      >
+                        <Button
+                          size="small"
+                          disableRipple
+                          onClick={() =>
+                            navigator.clipboard.writeText(message.text)
+                          }
+                          sx={{
+                            minWidth: 30,
+                            width: 30,
+                            height: 30,
+                            p: 0,
+                            color: "#808080",
+                            backgroundColor: "transparent",
+                            border: "none",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            outline: "none",
+                            "&:focus": {
+                              outline: "none",
+                              boxShadow: "none",
+                            },
+                            "&:hover": {
+                              backgroundColor: "transparent",
+                              color: "var(--text)",
+                            },
+                          }}
+                        >
+                          <ContentCopyIcon fontSize="extrasmall" />
+                        </Button>
 
-                        
-                      </Paper>
-                      
-                    </Box>
-                    <Box
-  sx={{
-    display: "flex",
-    gap: 0,
-    mt: 0,
-    position: "absolute", // Ensures the buttons align with the message properly
-    right: message.sender !== "bot" ? 30 : "auto", // Align right if sender is not a bot
-    left: message.sender === "bot" ? 290 : "auto",  // Align left if sender is a bot
-    opacity: 0,
-    transition: "opacity 0.3s ease-in-out",
-    "&:hover": {
-      opacity: 1,
-    },
-  }}
->
-<Button
-  size="small"
-  disableRipple
-  onClick={() => navigator.clipboard.writeText(message.text)}
-  sx={{
-    minWidth: 30,
-    width: 30,
-    height: 30,
-    p: 0,
-    color: '#808080',
-    backgroundColor: 'transparent',
-    border: 'none',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    outline: 'none',
-    '&:focus': {
-      outline: 'none',
-      boxShadow: 'none',
-    },
-
-    '&:hover': {
-            backgroundColor: 'transparent',
-            color: 'var(--text)',
-          },
-          
-  }}
->
-  <ContentCopyIcon fontSize="extrasmall" />
-</Button>
-
-<Button
-        size="extrasmall"
-        disableRipple
-        onClick={() => (isSpeaking ? stopTTS() : startTTS(message.text))}
-        sx={{
-          minWidth: 30,
-          width: 30,
-          height: 30,
-          p: 0,
-          color: '#808080',
-          backgroundColor: 'transparent',
-          border: 'none',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          outline: 'none',
-          '&:focus': {
-            outline: 'none',
-            boxShadow: 'none',
-          },
-
-          '&:hover': {
-            backgroundColor: 'transparent',
-            color: 'var(--text)',
-          },
-        }}
-      >
-        {isSpeaking ? <StopRounded fontSize="small" /> : <VolumeUpRounded fontSize="small" />}
-      </Button>
-</Box>
+                        <Button
+                          size="extrasmall"
+                          disableRipple
+                          onClick={() =>
+                            isSpeaking
+                              ? stopTTS()
+                              : startTTS(message.text)
+                          }
+                          sx={{
+                            minWidth: 30,
+                            width: 30,
+                            height: 30,
+                            p: 0,
+                            color: "#808080",
+                            backgroundColor: "transparent",
+                            border: "none",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            outline: "none",
+                            "&:focus": {
+                              outline: "none",
+                              boxShadow: "none",
+                            },
+                            "&:hover": {
+                              backgroundColor: "transparent",
+                              color: "var(--text)",
+                            },
+                          }}
+                        >
+                          {isSpeaking ? (
+                            <StopRounded fontSize="small" />
+                          ) : (
+                            <VolumeUpRounded fontSize="small" />
+                          )}
+                        </Button>
+                      </Box>
                     </div>
-
-                    
                   );
                 }
               })}
+              {/* Dummy element to scroll into view */}
+              <div ref={messagesEndRef} />
             </Box>
           )}
 
@@ -604,9 +620,8 @@ const InterviewAssistant = () => {
               sx={{
                 display: "flex",
                 justifyContent: "flex-start",
-                marginBottom: 6,
-                marginTop: 0,
-                
+                mb: 6,
+                mt: 0,
               }}
             >
               <TypingIndicator />
@@ -618,7 +633,6 @@ const InterviewAssistant = () => {
               position: "fixed",
               bottom: 0,
               left: 0,
-              
               width: "100%",
               display: "flex",
               justifyContent: "center",
@@ -651,7 +665,6 @@ const InterviewAssistant = () => {
                   alignItems: "center",
                   backgroundColor: "var(--background)",
                   borderRadius: 10,
-                   
                 }}
               >
                 <TextField
@@ -664,64 +677,28 @@ const InterviewAssistant = () => {
                   sx={{
                     maxHeight: "300px",
                     overflowY: "auto",
-                    marginRight: "0.5em",
-                    marginLeft: "1em",
+                    mr: "0.5em",
+                    ml: "1em",
                     backgroundColor: "var(--background)",
-                    "& .MuiOutlinedInput-notchedOutline": { borderColor: "var(--border)" , borderRadius: 10},
-                    "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "var(--border)" },
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "var(--border)",
+                      borderRadius: 10,
+                    },
+                    "&:hover .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "var(--border)",
+                    },
                   }}
                   onKeyDown={handleKeyPress}
                   InputLabelProps={{
-                    style: { backgroundColor: "transparent", color: "var(--text)" },
+                    style: {
+                      backgroundColor: "transparent",
+                      color: "var(--text)",
+                    },
                   }}
                   InputProps={{
                     style: { backgroundColor: "transparent", color: "var(--text)" },
                   }}
                 />
-
-                {/* AUDIO UPLOAD BUTTON (COMMENTED OUT) */}
-                {/* <div
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    marginRight: "0.5em",
-                    width: "55px",
-                    height: "50px",
-                    borderRadius: "10%",
-                    backgroundColor: "var(--secondary)",
-                    cursor: "pointer",
-                    transition: "transform 0.2s ease",
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
-                 <div
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    marginRight: "0.5em",
-                    width: "55px",
-                    height: "50px",
-                    borderRadius: "10%",
-                    backgroundColor: "var(--secondary)",
-                    cursor: "pointer",
-                    transition: "transform 0.2s ease",
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
-                  onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
-                >
-                  <label htmlFor="audio-upload" style={{ cursor: "pointer" }}>
-                    <MicIcon sx={{ width: "30px", height: "30px", color: "white" }} />
-                    <input
-                      type="file"
-                      id="audio-upload"
-                      accept="audio/*"
-                      style={{ display: "none" }}
-                      onChange={handleAudioUpload}
-                    />
-                  </label>
-                </div> */}
 
                 <Button
                   variant="contained"
@@ -732,13 +709,12 @@ const InterviewAssistant = () => {
                     borderRadius: 10,
                     minWidth: "55px",
                     minHeight: "55px",
-                    // borderStartStartRadius: 2,
-                    // borderEndStartRadius: 2,
-                    marginRight: "2em",
+                    mr: "2em",
                     fontFamily: "Inter",
                   }}
                   style={{ boxShadow: "none" }}
                   onClick={handleSendMessage}
+                  disabled={isAItyping}  /* Disable if AI hasn't responded */
                 >
                   <ArrowUpwardRoundedIcon sx={{ color: "white" }} />
                 </Button>
