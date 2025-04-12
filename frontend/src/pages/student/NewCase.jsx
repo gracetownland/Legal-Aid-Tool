@@ -7,6 +7,8 @@ import {
   FormControl,
   FormLabel,
   FormGroup,
+  RadioGroup,
+  Radio,
   FormControlLabel,
   Checkbox,
   Select,
@@ -195,18 +197,45 @@ const NewCaseForm = () => {
           sx={{
             mt: 8,
             p: 4,
-            backgroundColor: "white",
-            borderRadius: 2,
+            backgroundColor: "var(--background)",
+            color: "var(--text)",
+            borderRadius: 3,
             width: "80%",
+            border: "1px solid var(--border)",
           }}
         >
-          <Typography variant="h5" sx={{ textAlign: "left", mb: 2 }}>
+          <Typography variant="h5" sx={{ textAlign: "left", mb: 2, fontFamily: "inter" }}>
             Start A New Case
           </Typography>
-          <form noValidate autoComplete="off" onSubmit={handleSubmit}>
-            <FormControl fullWidth sx={{ mb: 2, textAlign: "left" }}>
-              <InputLabel>Broad Area of Law</InputLabel>
+          <form noValidate autoComplete="off" onSubmit={handleSubmit} >
+            <FormControl fullWidth sx={{ mb:2, textAlign: "left", borderColor: "var(--border)",
+              borderColor: "var(--border)",
+              "& .MuiOutlinedInput-root": {
+                "& fieldset": {
+                  borderColor: "var(--border)", // Set border color
+                },
+                "&.Mui-focused fieldset": {
+                  borderColor: "var(--border)", // Set focused border color
+                },
+                "& input": {
+                  color: "var(--text)", // Set input text color
+                },
+                "& .MuiInputBase-input::placeholder": {
+                  color: "var(--placeholder-text)", // Set placeholder text color
+                },
+              },
+            }}>
+              <InputLabel sx={{color: 'var(--placeholder-text)'}}>Broad Area of Law</InputLabel>
               <Select
+              InputLabelProps={{
+    sx: {
+      color: "var(--placeholder-text)", // Normal label color
+      "&.Mui-focused": {
+        color: "var(--placeholder-text)", // Focused label color
+      },
+    },
+  }}
+              sx={{color: 'var(--text)'}}
                 name="broadAreaOfLaw"
                 value={formData.broadAreaOfLaw}
                 onChange={handleChange}
@@ -233,8 +262,8 @@ const NewCaseForm = () => {
             </FormControl>
 
             <FormControl fullWidth sx={{ mb: 2, textAlign: "left" }}>
-              <FormLabel>Jurisdiction</FormLabel>
-              <FormGroup>
+              <FormLabel style={{color: 'var(--text)'}}>Jurisdiction</FormLabel>
+              <FormGroup >
                 {["Federal Law", "Provincial"].map((option) => (
                   <FormControlLabel
                     key={option}
@@ -244,6 +273,7 @@ const NewCaseForm = () => {
                         onChange={handleChange}
                         name="jurisdiction"
                         value={option}
+                        style={{color: 'var(--text)'}}
                       />
                     }
                     label={option}
@@ -282,17 +312,47 @@ const NewCaseForm = () => {
                 </Select>
               </FormControl>
             )}
+            <div style={{display: "flex", flexDirection: "row", gap: "1rem"}}>
 
-            <TextField
-              label="Statute"
-              name="statute"
-              fullWidth
-              variant="outlined"
-              value={formData.statute}
-              onChange={handleChange}
-              required
-              sx={{ mb: 2 }}
-            />
+            
+<p style={{marginTop: 10, color: 'grey'}}>Statute Applicable?</p>
+<RadioGroup
+  name="statute"
+  value={formData.statute}
+  onChange={handleChange}
+  row
+  sx={{ mb: 2 }}
+>
+<FormControlLabel 
+    value="Yes" 
+    control={
+      <Radio 
+        sx={{
+          color: "var(--border)", // Set the default circle color
+          "&.Mui-checked": {
+            color: "var(--text)", // Set the checked circle color
+          },
+        }} 
+      />
+    } 
+    label="Yes" 
+  />
+  <FormControlLabel 
+    value="No" 
+    control={
+      <Radio 
+        sx={{
+          color: "var(--border)", // Set the default circle color
+          "&.Mui-checked": {
+            color: "var(--text)", // Set the checked circle color
+          },
+        }} 
+      />
+    } 
+    label="No" 
+  />
+</RadioGroup>
+</div>
             <TextField
               label="Statute Details"
               name="statuteDetails"
@@ -300,27 +360,76 @@ const NewCaseForm = () => {
               variant="outlined"
               value={formData.statuteDetails}
               onChange={handleChange}
-              sx={{ mb: 2 }}
+              InputLabelProps={{
+                sx: {
+                  color: "var(--placeholder-text)", // Normal label color
+                  "&.Mui-focused": {
+                    color: "var(--placeholder-text)", // Focused label color
+                  },
+                },
+              }}
+              sx={{ mb: 2 ,
+                "& .MuiOutlinedInput-root": {
+                  "& fieldset": {
+                    borderColor: "var(--border)", // Set border color
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: "var(--border)", // Set focused border color
+                  },
+                  "& input": {
+                    color: "var(--text)", // Set input text color
+                  },
+                  "& .MuiInputBase-input::placeholder": {
+                    color: "var(--placeholder-text)", // Set placeholder text color
+                  },
+                }}}
             />
+            
             <TextField
-              label="Legal Matter Summary"
-              name="legalMatterSummary"
-              fullWidth
-              variant="outlined"
-              value={formData.legalMatterSummary}
-              onChange={handleChange}
-              multiline
-              rows={4}
-              required
-              sx={{ mb: 2 }}
-            />
+  label="Legal Matter Summary"
+  name="legalMatterSummary"
+  fullWidth
+  variant="outlined"
+  value={formData.legalMatterSummary}
+  onChange={handleChange}
+  multiline
+  rows={4}
+  required
+  InputLabelProps={{
+    sx: {
+      color: "var(--placeholder-text)", // Normal label color
+      "&.Mui-focused": {
+        color: "var(--placeholder-text)", // Focused label color
+      },
+    },
+  }}
+  sx={{
+    mb: 2,
+    "& .MuiOutlinedInput-root": {
+      "& fieldset": {
+        borderColor: "var(--border)", // Set border color
+      },
+      "&.Mui-focused fieldset": {
+        borderColor: "var(--border)", // Set focused border color
+      },
+      // Targeting both input and textarea for multiline fields:
+      "& input, & textarea": {
+        color: "var(--text)", // Set input text color
+        "&::placeholder, &::label": {
+          color: "var(--placeholder-text)", // Set placeholder text color
+          opacity: 1, // Optional: Ensures full color in some browsers
+        },
+      },
+    },
+  }}
+/>
             <Button
               variant="contained"
               fullWidth
               color="primary"
               type="submit"
               disabled={isSubmitting}
-              sx={{ color: "white" }}
+              sx={{ color: "white", borderRadius: 2, fontFamily: "Outfit", backgroundColor: "var(--secondary)" }}
             >
               {isSubmitting ? "Submitting..." : "Start Interview"}
             </Button>
