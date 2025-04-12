@@ -332,7 +332,7 @@ export const StudentHomepage = () => {
                                     mb: 1,
                                     color:
                                       caseItem.status === "Review Feedback"
-                                        ? "green"
+                                        ? "var(--feedback)"
                                         : "grey",
                                   }}
                                 >

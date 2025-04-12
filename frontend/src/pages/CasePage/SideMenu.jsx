@@ -23,6 +23,7 @@ const SideMenu = () => {
   const { caseId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const [userRole, setUserRole] = useState("student");
   const [isNotesOpen, setIsNotesOpen] = useState(false);
   const [isPrelimSummaryGenerated, setIsPrelimSummaryGenerated] = useState(false); 
   const [isUnreadFeedback, setIsUnreadFeedback] = useState(false);
@@ -32,6 +33,8 @@ const SideMenu = () => {
       const fetchCaseData = async () => {
         const session = await fetchAuthSession();
         const token = session.tokens.idToken;
+        const group = token.payload["cognito:groups"]?.[0] || "student";
+        setUserRole(group);
   
         const res = await fetch(`${import.meta.env.VITE_API_ENDPOINT}student/case_page?case_id=${caseId}`, {
           headers: { Authorization: token, "Content-Type": "application/json" },
@@ -141,7 +144,7 @@ const SideMenu = () => {
   <Box display="flex" alignItems="center">
 
     {/* Notification Dot */}
-    {isUnreadFeedback && (
+    {isUnreadFeedback && userRole === "student" &&  (
       <Box
         sx={{
           width: 8,

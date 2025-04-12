@@ -15,7 +15,6 @@ const FeedbackPage = () => {
   const [userRole, setUserRole] = useState("student");
   const [messages, setMessages] = useState([]);
   const [feedback, setFeedback] = useState("");
-  const [isFeedbackVisible, setIsFeedbackVisible] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
 
   const handleSnackbarClose = () => setSnackbar((prev) => ({ ...prev, open: false }));
@@ -39,28 +38,7 @@ const FeedbackPage = () => {
     fetchCaseData();
   }, [caseId]);
 
-  const handleSendForReview = async () => {
-    try {
-      const session = await fetchAuthSession();
-      const token = session.tokens.idToken;
-      const cognito_id = token.payload.sub;
 
-      const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}student/review_case?case_id=${caseId}&cognito_id=${cognito_id}`, {
-        method: "PUT",
-        headers: {
-          Authorization: token,
-          "Content-Type": "application/json",
-        }
-      });
-
-      if (!response.ok) throw new Error("Failed to send for review");
-
-      setSnackbar({ open: true, message: "Case sent for review successfully!", severity: "success" });
-    } catch (error) {
-      console.error("Error sending case for review:", error);
-      setSnackbar({ open: true, message: "Failed to send case for review.", severity: "error" });
-    }
-  };
 
   const handleSubmitFeedback = async () => {
     try {
@@ -80,7 +58,6 @@ const FeedbackPage = () => {
       if (!response.ok) throw new Error();
       setSnackbar({ open: true, message: "Feedback submitted!", severity: "success" });
       setFeedback("");
-      setIsFeedbackVisible(false);
     } catch {
       setSnackbar({ open: true, message: "Failed to submit feedback.", severity: "error" });
     }
@@ -126,16 +103,51 @@ const FeedbackPage = () => {
           )}
 
 
-<Stack direction="row" spacing={2} mb={3}>
+
+
+
+          {userRole === "instructor" && (
+            <Card sx={{ backgroundColor: 'var(--background)', borderRadius: 2, boxShadow: 'none', border: '1px solid var(--border)' }}>
+              
+              <CardContent sx={{m: 1, color: 'var(--text)'}}>
+              <p>Send your students feedback on this case here. They will be able to see your name.</p>
+                <TextField
+                  placeholder="Your Feedback"
+                  fullWidth
+                  multiline
+                  value={feedback}
+                  onChange={(e) => setFeedback(e.target.value)}
+                  sx={{ my: 2, 
+                    overflow: "auto",
+                    "& .MuiOutlinedInput-root": {
+                      color: "var(--text)",
+                      "& fieldset": {
+                        borderColor: "var(--border)",
+                      },
+                      "&:hover fieldset": {
+                        borderColor: "var(--border)",
+                      },
+                      "&.Mui-focused fieldset": {
+                        borderColor: "var(--border)",
+                      },
+                    },
+                    "& .MuiInputLabel-root": {
+                      color: "var(--text)",
+                    },
+                  }}    
+                />
+                <Stack direction="row" spacing={2} mb={3}>
   {userRole === "instructor" ? (
     <Button
       variant="contained"
       color="secondary"
       startIcon={<FeedbackIcon />}
-      onClick={() => setIsFeedbackVisible(!isFeedbackVisible)}
+      onClick={handleSubmitFeedback}
       sx={{
         fontFamily: 'Inter',
         textTransform: "none",
+        backgroundColor: "var(--secondary)",
+        color: "white",
         fontWeight: 450,
         px: 3,
         py: 1.5,
@@ -151,50 +163,9 @@ const FeedbackPage = () => {
       {messages.length > 0 ? "Update Feedback" : "Send Feedback"}
     </Button>
   ) : (
-    <Button
-      variant="contained"
-      color="primary"
-      startIcon={<SendIcon />}
-      onClick={handleSendForReview}
-      sx={{
-        textTransform: "none",
-        fontFamily: 'Inter',
-        fontWeight: 450,
-        px: 3,
-        color: "white",
-        backgroundColor: "var(--secondary)",
-        "&:hover": {
-          backgroundColor: "var(--primary)",
-        },
-        py: 1.5,
-        borderRadius: 10,
-        transition: "0.2s ease",
-        boxShadow: "none",
-        "&:hover": {
-          boxShadow: "0px 2px 10px rgba(0,0,0,0.15)",
-          transform: "translateY(-1px)"
-        }
-      }}
-    >
-      {messages.length > 0 ? "Send Case for Additional Review" : "Send Case for Review"}
-    </Button>
+    <></>
   )}
 </Stack>
-
-
-          {isFeedbackVisible && userRole === "instructor" && (
-            <Card sx={{ maxWidth: 600 }}>
-              <CardContent>
-                <TextField
-                  label="Your Feedback"
-                  fullWidth
-                  multiline
-                  rows={4}
-                  value={feedback}
-                  onChange={(e) => setFeedback(e.target.value)}
-                  sx={{ mb: 2 }}
-                />
-                <Button variant="contained" onClick={handleSubmitFeedback}>Submit Feedback</Button>
               </CardContent>
             </Card>
           )}
