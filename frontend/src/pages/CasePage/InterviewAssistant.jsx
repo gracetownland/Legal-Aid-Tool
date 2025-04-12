@@ -352,7 +352,7 @@ const InterviewAssistant = () => {
                         sx={{
                           maxWidth: "60%",
                           padding: "0 1em",
-                          backgroundColor: "var(--bot-text)",
+                          backgroundColor: "var(--bot-text)", // SPEECH BUBBLE COLOR
                           borderRadius: 10,
                           borderBottomLeftRadius: message.sender === "bot" ? 7 : '10',
                           borderBottomRightRadius: message.sender === "bot" ? '10' : 7,
@@ -376,7 +376,7 @@ const InterviewAssistant = () => {
         display: "flex",
         justifyContent: "flex-end", // Right align
         gap: 0,
-        mt: 2,
+        mt: 0, // change if speech bubble isnt background color
       }}
     >
       <Button
@@ -388,6 +388,7 @@ const InterviewAssistant = () => {
           width: 30,
           height: 30,
           p: 0,
+          marginLeft: 2,
           color: '#808080',
           backgroundColor: 'transparent',
           border: 'none',
@@ -398,6 +399,10 @@ const InterviewAssistant = () => {
           '&:focus': {
             outline: 'none',
             boxShadow: 'none',
+          },
+          '&:hover': {
+            backgroundColor: 'transparent',
+            color: 'var(--text)',
           },
         }}
       >
@@ -424,6 +429,10 @@ const InterviewAssistant = () => {
             outline: 'none',
             boxShadow: 'none',
           },
+          '&:hover': {
+            backgroundColor: 'transparent',
+            color: 'var(--text)',
+          },
         }}
       >
         {isSpeaking ? <StopRounded fontSize="small" /> : <VolumeUpRounded fontSize="small" />}
@@ -449,6 +458,9 @@ const InterviewAssistant = () => {
               outline: 'none',
               boxShadow: 'none',
             },
+            '&:hover': {
+            color: 'var(--feedback)',
+          },
           }}
           onClick={() => handleGenerateSummary()}
         >
@@ -479,11 +491,11 @@ const InterviewAssistant = () => {
                           maxWidth: "60%",
                           padding: "0 1em",
                           backgroundColor:
-                            message.sender === "bot" ? "var(--bot-text)" : "var(--sender-text)",
+                            message.sender === "bot" ? "var(--bot-text)" : "var(--sender-text)", // SPEECH BUBBLE COLOR
                           borderRadius: 10,
                           borderBottomLeftRadius: message.sender === "bot" ? 7 : '10',
                           borderBottomRightRadius: message.sender === "bot" ? '10' : 7,
-                          paddingY: message.sender== "bot" ? 1 : 0,
+                          paddingY: message.sender== "bot" ? 0 : 0,
                           paddingX: 3, 
                           boxShadow: "none",
                           marginLeft: message.sender === "bot" ? 0 : "auto",
@@ -506,10 +518,10 @@ const InterviewAssistant = () => {
   sx={{
     display: "flex",
     gap: 0,
-    mt: 1,
+    mt: 0,
     position: "absolute", // Ensures the buttons align with the message properly
     right: message.sender !== "bot" ? 30 : "auto", // Align right if sender is not a bot
-    left: message.sender === "bot" ? 272 : "auto",  // Align left if sender is a bot
+    left: message.sender === "bot" ? 290 : "auto",  // Align left if sender is a bot
     opacity: 0,
     transition: "opacity 0.3s ease-in-out",
     "&:hover": {
@@ -537,6 +549,12 @@ const InterviewAssistant = () => {
       outline: 'none',
       boxShadow: 'none',
     },
+
+    '&:hover': {
+            backgroundColor: 'transparent',
+            color: 'var(--text)',
+          },
+          
   }}
 >
   <ContentCopyIcon fontSize="extrasmall" />
@@ -561,6 +579,11 @@ const InterviewAssistant = () => {
           '&:focus': {
             outline: 'none',
             boxShadow: 'none',
+          },
+
+          '&:hover': {
+            backgroundColor: 'transparent',
+            color: 'var(--text)',
           },
         }}
       >
