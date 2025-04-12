@@ -510,6 +510,7 @@ const InterviewAssistant = () => {
                               message.sender === "bot" ? '10' : 7,
                             px: 3,
                             boxShadow: "none",
+                            // border: message.sender === "bot" ? 'none' : '1px solid #e0e0e0',
                             ml: message.sender === "bot" ? 0 : "auto",
                             mr: message.sender === "bot" ? "auto" : 0,
                             color: "var(--text)",
