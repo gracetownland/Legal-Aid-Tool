@@ -231,8 +231,8 @@ const Login = () => {
                         <TextField fullWidth label="New Password" type="password" margin="normal" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} sx={inputStyles} />
                       </>
                     )}
-                    {step === "requestReset" && <Button fullWidth onClick={handleReset} variant="contained" sx={{ mt: 2 }}>Send Reset Code</Button>}
-                    {step === "confirmReset" && <Button type="submit" fullWidth variant="contained" sx={{ mt: 2 }}>Confirm Reset</Button>}
+                    {step === "requestReset" && <Button fullWidth onClick={handleReset} variant="contained" sx={{ mt: 2, color: "white", backgroundColor: "var(--primary)", boxShadow: 'none', borderRadius: 2, fontFamily: 'Outfit' }}>Send Reset Code</Button>}
+                    {step === "confirmReset" && <Button type="submit" fullWidth variant="contained" sx={{ mt: 2, color: "white", backgroundColor: "var(--primary)", boxShadow: 'none', borderRadius: 2, fontFamily: 'Outfit' }}>Confirm Reset</Button>}
                     <Box mt={2} textAlign="center">
                       <Link href="#" onClick={(e) => { e.preventDefault(); setIsReset(false); }} underline="hover" sx={{ fontSize: 14, color: "var(--primary)" }}>Back to Sign In</Link>
                     </Box>
