@@ -18,7 +18,7 @@ import InstructorHeader from "../../components/InstructorHeader";
 import SideMenu from "./SideMenu";
 import TypingIndicator from "./TypingIndicator";
 
-import SendIcon from "@mui/icons-material/Send";
+import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded';
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import MicIcon from "@mui/icons-material/Mic";
 import SummarizeIcon from "@mui/icons-material/Summarize";
@@ -627,11 +627,12 @@ const InterviewAssistant = () => {
                   display: "flex",
                   alignItems: "center",
                   backgroundColor: "var(--background)",
+                  borderRadius: 10,
                    
                 }}
               >
                 <TextField
-                  label="Type here..."
+                  placeholder="Type here..."
                   variant="outlined"
                   fullWidth
                   multiline
@@ -643,7 +644,7 @@ const InterviewAssistant = () => {
                     marginRight: "0.5em",
                     marginLeft: "1em",
                     backgroundColor: "var(--background)",
-                    "& .MuiOutlinedInput-notchedOutline": { borderColor: "var(--border)" , borderRadius: 5, borderBottomRightRadius: 2, borderTopRightRadius: 2},
+                    "& .MuiOutlinedInput-notchedOutline": { borderColor: "var(--border)" , borderRadius: 10},
                     "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "var(--border)" },
                   }}
                   onKeyDown={handleKeyPress}
@@ -705,16 +706,18 @@ const InterviewAssistant = () => {
                     color: "#ffffff",
                     backgroundColor: "var(--secondary)",
                     minHeight: "55px",
-                    borderRadius: 5,
-                    borderStartStartRadius: 2,
-                    borderEndStartRadius: 2,
+                    borderRadius: 10,
+                    minWidth: "55px",
+                    minHeight: "55px",
+                    // borderStartStartRadius: 2,
+                    // borderEndStartRadius: 2,
                     marginRight: "2em",
                     fontFamily: "Inter",
                   }}
                   style={{ boxShadow: "none" }}
                   onClick={handleSendMessage}
                 >
-                  Send
+                  <ArrowUpwardRoundedIcon sx={{ color: "white" }} />
                 </Button>
               </Box>
             </Box>
