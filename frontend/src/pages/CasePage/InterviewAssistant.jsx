@@ -24,6 +24,11 @@ import MicIcon from "@mui/icons-material/Mic";
 import SummarizeIcon from "@mui/icons-material/Summarize";
 import StopRounded from "@mui/icons-material/StopRounded";
 import { VolumeUpRounded } from "@mui/icons-material";
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
+import CheckIcon from "@mui/icons-material/Check";
+import MessageCopyButton from "../../components/MessageCopyButton";
+
 
 const InterviewAssistant = () => {
   const { caseId } = useParams();
@@ -32,6 +37,11 @@ const InterviewAssistant = () => {
   const [userRole, setUserRole] = useState("student"); // Default role is "student"
   const [caseData, setCaseData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "info",
+  });
   const [messages, setMessages] = useState([
     {
       sender: "bot",
@@ -43,6 +53,9 @@ const InterviewAssistant = () => {
   const [isAItyping, setIsAItyping] = useState(false);
   const [utterance, setUtterance] = useState(null);
   const [isSpeaking, setIsSpeaking] = useState(false); // Track if TTS is speaking
+  const [copied, setCopied] = useState(false);
+
+
 
   // Ref for scrolling to bottom of message container
   const messagesEndRef = useRef(null);
@@ -152,6 +165,16 @@ const InterviewAssistant = () => {
     }
   };
 
+  const handleCopyClick = (message) => {
+    if (!copied) {
+      navigator.clipboard.writeText(message.text);
+      setCopied(true);
+      setTimeout(() => {
+        setCopied(false);
+      }, 2000);
+    }
+  };
+
   const handleBack = () => {
     navigate("/"); // Navigate to the homepage
   };
@@ -193,10 +216,20 @@ const InterviewAssistant = () => {
     }
   };
 
+  const handleSnackbarClose = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };
+
   const handleGenerateSummary = async () => {
     try {
       const session = await fetchAuthSession();
       const token = session.tokens.idToken;
+
+      setSnackbar({
+        open: true, 
+        message: "Case summary being generated, please check the summary tab in a few moments.",
+        severity: "warning",
+      });
 
       const response = await fetch(
         `${import.meta.env.VITE_API_ENDPOINT}student/summary_generation?case_id=${caseId}`,
@@ -208,6 +241,12 @@ const InterviewAssistant = () => {
           },
         }
       );
+
+      setSnackbar({
+        open: true, 
+        message: "Summary generated successfully!",
+        severity: "success",
+      });
 
       if (!response.ok) throw new Error("Failed to submit feedback");
     } catch (error) {
@@ -382,15 +421,13 @@ const InterviewAssistant = () => {
                         <Button
                           size="small"
                           disableRipple
-                          onClick={() =>
-                            navigator.clipboard.writeText(message.text)
-                          }
+                          onClick={() => handleCopyClick(message)}
                           sx={{
                             minWidth: 30,
                             width: 30,
                             height: 30,
                             p: 0,
-                            ml: 2,
+                            ml: 1,
                             color: "#808080",
                             backgroundColor: "transparent",
                             border: "none",
@@ -408,7 +445,7 @@ const InterviewAssistant = () => {
                             },
                           }}
                         >
-                          <ContentCopyIcon fontSize="extrasmall" />
+                          <MessageCopyButton text={message.text} />
                         </Button>
 
                         <Button
@@ -531,7 +568,7 @@ const InterviewAssistant = () => {
                           mt: 0,
                           position: "absolute",
                           right: message.sender !== "bot" ? 30 : "auto",
-                          left: message.sender === "bot" ? 290 : "auto",
+                          left: message.sender === "bot" ? 280 : "auto",
                           opacity: 0,
                           transition: "opacity 0.3s ease-in-out",
                           "&:hover": {
@@ -542,9 +579,7 @@ const InterviewAssistant = () => {
                         <Button
                           size="small"
                           disableRipple
-                          onClick={() =>
-                            navigator.clipboard.writeText(message.text)
-                          }
+                          onClick={() => handleCopyClick(message)}
                           sx={{
                             minWidth: 30,
                             width: 30,
@@ -567,7 +602,7 @@ const InterviewAssistant = () => {
                             },
                           }}
                         >
-                          <ContentCopyIcon fontSize="extrasmall" />
+                          <MessageCopyButton text={message.text} />
                         </Button>
 
                         <Button
@@ -724,6 +759,17 @@ const InterviewAssistant = () => {
           </Box>
         </Box>
       </Box>
+      {/* Snackbar for alerts */}
+            <Snackbar
+              open={snackbar.open}
+              autoHideDuration={4000}
+              onClose={handleSnackbarClose}
+              anchorOrigin={{ vertical: "top", horizontal: "center" }}
+            >
+              <Alert onClose={handleSnackbarClose} severity={snackbar.severity} variant='standard' sx={{ width: "100%" }}>
+                {snackbar.message}
+              </Alert>
+            </Snackbar>
     </Box>
   );
 };
