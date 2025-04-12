@@ -429,7 +429,7 @@ const NewCaseForm = () => {
               color="primary"
               type="submit"
               disabled={isSubmitting}
-              sx={{ color: "white", borderRadius: 2, fontFamily: "Outfit", backgroundColor: "var(--secondary)" }}
+              sx={{ color: "white", borderRadius: 2, fontFamily: "Outfit", backgroundColor: "var(--secondary)", boxShadow: "none",}}
             >
               {isSubmitting ? "Submitting..." : "Start Interview"}
             </Button>
