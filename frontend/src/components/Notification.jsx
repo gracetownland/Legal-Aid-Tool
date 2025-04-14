@@ -27,7 +27,7 @@ function formatShortRelativeTime(date) {
 export default function Notification({ title, content, date, case_id, instructor_name }) {
   return (
     <div
-      onClick={() => window.location.href = `/case/${case_id}/overview`}
+      onClick={() => window.location.href = `/case/${case_id}/feedback`}
       className="flex items-start py-3 pr-3 hover:bg-[var(--background2)] transition-all duration-300 cursor-pointer"
     >
 
