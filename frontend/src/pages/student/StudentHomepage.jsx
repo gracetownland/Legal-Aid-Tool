@@ -173,7 +173,7 @@ export const StudentHomepage = () => {
 
   return (
     <ThemeProvider theme={theme}>
-      <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+      <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh", }}>
         {/* Header */}
         <AppBar position="fixed" color="primary">
           <StudentHeader />
@@ -206,7 +206,7 @@ export const StudentHomepage = () => {
               }}
             >
               {cases.length > 0 && (
-                <Typography variant="h5" sx={{ textAlign: "left", fontWeight: 600, marginLeft: 3, marginTop: 5, color: "#808080", fontSize: "1.8rem" }}>
+                <Typography variant="h5" sx={{ textAlign: "left", fontWeight: 600, marginLeft: 3, marginTop: 5, color: "var(--header-text)", fontSize: "1.8rem" }}>
                   Latest Cases
                 </Typography>
               )}
