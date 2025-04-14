@@ -10,6 +10,8 @@ import EditOffIcon from '@mui/icons-material/EditOff';
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import ReactMarkdown from "react-markdown";
+import SendIcon from "@mui/icons-material/Send";
+import FeedbackIcon from '@mui/icons-material/Feedback';
 
 const CaseOverview = () => {
   const { caseId } = useParams();
@@ -37,6 +39,29 @@ const CaseOverview = () => {
   const handleSnackbarClose = () => {
     setSnackbar((prev) => ({ ...prev, open: false }));
   };
+
+    const handleSendForReview = async () => {
+      try {
+        const session = await fetchAuthSession();
+        const token = session.tokens.idToken;
+        const cognito_id = token.payload.sub;
+  
+        const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}student/review_case?case_id=${caseId}&cognito_id=${cognito_id}`, {
+          method: "PUT",
+          headers: {
+            Authorization: token,
+            "Content-Type": "application/json",
+          }
+        });
+  
+        if (!response.ok) throw new Error("Failed to send for review");
+  
+        setSnackbar({ open: true, message: "Case sent for review successfully!", severity: "success" });
+      } catch (error) {
+        console.error("Error sending case for review:", error);
+        setSnackbar({ open: true, message: "Failed to send case for review.", severity: "error" });
+      }
+    };
 
   useEffect(() => {
     if (caseData) {
@@ -256,6 +281,40 @@ const CaseOverview = () => {
                   </CardContent>
                 </Card>
 
+                <Stack direction="row" spacing={2} mb={3}>
+  {userRole === "instructor" ? (
+    <></>
+  ) : (
+    <Button
+      variant="contained"
+      color="primary"
+      startIcon={<SendIcon />}
+      onClick={handleSendForReview}
+      sx={{
+        textTransform: "none",
+        fontFamily: 'Inter',
+        fontWeight: 450,
+        px: 3,
+        color: "white",
+        backgroundColor: "var(--secondary)",
+        "&:hover": {
+          backgroundColor: "var(--primary)",
+        },
+        py: 1.5,
+        borderRadius: 10,
+        transition: "0.2s ease",
+        boxShadow: "none",
+        "&:hover": {
+          boxShadow: "0px 2px 10px rgba(0,0,0,0.15)",
+          transform: "translateY(-1px)"
+        }
+      }}
+    >
+      Send Case for Review
+    </Button>
+  )}
+</Stack>
+
                 <CardContent>
                   <Grid container spacing={3} sx={{ textAlign: "left" }}>
                     {["case_type", "jurisdiction"].map((key, index) => (
@@ -300,9 +359,9 @@ const CaseOverview = () => {
         open={snackbar.open}
         autoHideDuration={4000}
         onClose={handleSnackbarClose}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
-        <Alert onClose={handleSnackbarClose} severity={snackbar.severity} sx={{ width: "100%" }}>
+        <Alert onClose={handleSnackbarClose} severity={snackbar.severity} variant="filled" sx={{ width: "100%" }}>
           {snackbar.message}
         </Alert>
       </Snackbar>

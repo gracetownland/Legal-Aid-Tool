@@ -16,7 +16,7 @@
   --primary: #3d4f6d;
   --secondary: #4d5a79;
   --accent: #1c187a;
-  --bot-text: #e8f1ff;
+  --bot-text: --background;
   --sender-text: #f0f0f0;
   --input: #c4c4c4;
   --placeholder-text: #696873;
@@ -50,12 +50,12 @@
     --primary: #617694;
     --secondary: #647b9c;
     --accent: #3949ff;
-    --bot-text: #284b69;
+    --bot-text: --background;
     --sender-text: #424141;
     --input: #5c5c5c;
     --placeholder-text: #8e8e8e;
     --border: #5c5c5c;
-    --feedback: #8476ff;
+    --feedback: #769aff;
 
     color: var(--text);
     background-color: var(--background);
