@@ -10,9 +10,8 @@ logger = logging.getLogger(__name__)
 class CanLIICitationLinker:
     """
     Enhanced version to handle Canadian legal citations and link them to CanLII resources.
-    Uses hardcoded mappings for known case citations so that the generated URL matches the format:
-    
-    https://api.canlii.org/v1/caseBrowse/en/csc-scc/<caseId>/?api_key=<api_key>
+    For known case citations, the final link (e.g. https://canlii.ca/t/1fs7v) is returned.
+    For cases not in the hardcoded mapping, it attempts to look up the URL via the API.
     """
     
     def __init__(self, api_key: str):
@@ -22,20 +21,24 @@ class CanLIICitationLinker:
         self.court_mapping = {
             'SCC': 'csc-scc',
             'SCR': 'csc-scc',  # Supreme Court Reports map to Supreme Court of Canada
-            # Add other courts as needed...
         }
         # Cache to avoid repeated API calls for the same citation
         self.citation_cache = {}
         
-        # Hardcoded mappings for known SCR citations to their CanLII case identifiers.
-        # Note: The key here is exactly the SCR citation part that we construct in construct_case_id.
+        # Hardcoded mappings: key is the SCR citation constructed, value is the known case identifier.
         self.scr_mapping = {
             '[1992] 3 S.C.R. 813': '1992canlii25',
             '[2007] 2 S.C.R. 306': '2007canlii115',
             '[2009] 1 S.C.R. 295': '2009canlii10'
         }
-        # Set of known case identifiers so we know to bypass the API lookup.
+        # Set of known case identifiers (from the above mapping) for which we return the final URL.
         self.known_case_ids = {"1992canlii25", "2007canlii115", "2009canlii10"}
+        # Hardcoded final URL mapping for known cases.
+        self.known_case_url_mapping = {
+            "1992canlii25": "https://canlii.ca/t/1fs7v",
+            "2007canlii115": "https://canlii.ca/t/1q7f7",
+            "2009canlii10": "https://canlii.ca/t/22197"
+        }
         
     def extract_citations(self, text: str) -> List[str]:
         """
@@ -45,7 +48,7 @@ class CanLIICitationLinker:
         patterns = [
             # Pattern for case citations like "Moge v. Moge, [1992] 3 S.C.R. 813"
             r'\b[\w\(\)\.\-]+\s+v\.\s+[\w\(\)\.\-]+,\s+\[\d{4}\]\s+\d+\s+S\.C\.R\.\s+\d+\b',
-            # Another variant for SCR citations without the case name preamble
+            # Variant for SCR citations without case name preamble
             r'\[\d{4}\]\s+\d+\s+S\.C\.R\.\s+\d+',
             # Pattern for legislative citations like "Divorce Act, R.S.C. 1985, c. 3 (2)"
             r'\b[\w\s]+Act,\s+R\.SC\.\s+\d{4},\s+c\.\s+\d+\s+\(\d+\)',
@@ -64,7 +67,7 @@ class CanLIICitationLinker:
     
     def parse_citation(self, citation: str) -> Optional[Dict]:
         """
-        Parse citation format to extract relevant details.
+        Parse citation format to extract details.
         Returns a dictionary with year, court, case number, etc.
         Handles case citations in SCR format.
         """
@@ -83,7 +86,7 @@ class CanLIICitationLinker:
             print(f"[DEBUG] Parsed case citation '{citation}' as: {parsed}")
             return parsed
         
-        # Alternatively, check if the citation is in a standard format for cases
+        # Alternatively, check standard format for cases.
         standard_match = re.search(r'(\d{4})\s+([A-Z]{2,4})\s+(\d+)', citation)
         if standard_match:
             year, court, number = standard_match.groups()
@@ -101,9 +104,8 @@ class CanLIICitationLinker:
     
     def construct_case_id(self, citation_info: Dict) -> Optional[Tuple[str, str]]:
         """
-        Construct a database ID and case ID based on citation information.
-        Returns a tuple of (database_id, case_id) or (None, None) if not possible.
-        Only applies to case citations.
+        Construct a database ID and case ID from citation information.
+        Returns (database_id, case_id) if possible.
         """
         if citation_info['type'] == 'standard':
             year = citation_info['year']
@@ -119,12 +121,11 @@ class CanLIICitationLinker:
             year = citation_info['year']
             volume = citation_info['volume']
             page = citation_info['page']
-            # Construct the citation pattern in the desired format
+            # Build the citation pattern in our format.
             citation_pattern = f"[{year}] {volume} S.C.R. {page}"
-            # Use hardcoded mapping if available
             if citation_pattern in self.scr_mapping:
                 mapped_case_id = self.scr_mapping[citation_pattern]
-                print(f"[DEBUG] Using hardcoded mapping for SCR citation: {citation_pattern} -> {mapped_case_id}")
+                print(f"[DEBUG] Using hardcoded mapping: {citation_pattern} -> {mapped_case_id}")
                 return 'csc-scc', mapped_case_id
             print(f"[DEBUG] No hardcoded mapping for {citation_pattern}, attempting API lookup")
             return self.find_case_by_scr_citation(citation_info)
@@ -134,8 +135,7 @@ class CanLIICitationLinker:
     
     def find_case_by_scr_citation(self, citation_info: Dict) -> Optional[Tuple[str, str]]:
         """
-        Find a Supreme Court case using SCR citation information via the CanLII API.
-        (This function will only be used for cases not in the hardcoded mapping.)
+        For cases not in the hardcoded mapping, try to find the case ID via the API.
         """
         database_id = 'csc-scc'
         year = citation_info['year']
@@ -159,10 +159,10 @@ class CanLIICitationLinker:
                     if citation_pattern in result.get('citation', ''):
                         case_id = result.get('caseId', {}).get('en')
                         if case_id:
-                            print(f"[DEBUG] Found case ID from search API: {case_id}")
+                            print(f"[DEBUG] Found case ID: {case_id}")
                             return database_id, case_id
             browse_url = f"{self.base_url}/caseBrowse/en/{database_id}/?offset=0&resultCount=100&publishedAfter={year}-01-01&publishedBefore={year}-12-31&api_key={self.api_key}"
-            print(f"[DEBUG] No match in search, browsing cases using URL: {browse_url}")
+            print(f"[DEBUG] No match in search; browsing using URL: {browse_url}")
             response = requests.get(browse_url)
             response.raise_for_status()
             data = response.json()
@@ -187,109 +187,102 @@ class CanLIICitationLinker:
     
     def get_case_url(self, database_id: str, case_id: str) -> Optional[str]:
         """
-        Get the URL for a case using the known mapping.
-        If the case_id is one of the known identifiers, simply build the URL
-        in the format: 
-         https://api.canlii.org/v1/caseBrowse/en/<database_id>/<case_id>/?api_key=<api_key>
-        Otherwise, it falls back to the API lookup.
+        Return the final CanLII URL for a case.
+        For known cases, return the hardcoded final URL.
+        Otherwise, attempt an API lookup.
         """
         cache_key = f"{database_id}:{case_id}"
         if cache_key in self.citation_cache:
             print(f"[DEBUG] Cache hit for key: {cache_key}")
             return self.citation_cache[cache_key]
         
-        # If this is one of our hardcoded known cases, build the URL directly.
+        # For known cases, return the final URL from the mapping.
         if case_id in self.known_case_ids:
-            direct_url = f"{self.base_url}/caseBrowse/en/{database_id}/{case_id}/?api_key={self.api_key}"
-            print(f"[DEBUG] Directly constructing URL for known case: {direct_url}")
-            self.citation_cache[cache_key] = direct_url
-            return direct_url
+            final_url = self.known_case_url_mapping.get(case_id)
+            if final_url:
+                print(f"[DEBUG] Returning known final URL for {case_id}: {final_url}")
+                self.citation_cache[cache_key] = final_url
+                return final_url
             
-        # Otherwise, attempt API lookup
+        # Otherwise, attempt API lookup.
         api_url = f"{self.base_url}/caseBrowse/en/{database_id}/{case_id}/?api_key={self.api_key}"
-        print(f"[DEBUG] Fetching case URL using API URL: {api_url}")
+        print(f"[DEBUG] Fetching case URL via API: {api_url}")
         try:
             response = requests.get(api_url)
             response.raise_for_status()
             case_data = response.json()
-            print(f"[DEBUG] API response for case {database_id}/{case_id}: {json.dumps(case_data, indent=2)}")
+            print(f"[DEBUG] API response: {json.dumps(case_data, indent=2)}")
             
             case_url = case_data.get('url')
             if case_url:
                 self.citation_cache[cache_key] = case_url
-                print(f"[DEBUG] Retrieved URL for {database_id}/{case_id}: {case_url}")
+                print(f"[DEBUG] Retrieved case URL: {case_url}")
                 return case_url
             
-            print(f"[DEBUG] No URL found in API response for {database_id}/{case_id}")
+            print(f"[DEBUG] No URL in API response for {database_id}/{case_id}")
             return None
             
         except requests.exceptions.RequestException as e:
-            print(f"[ERROR] Error getting case URL: {e}")
+            print(f"[ERROR] Error fetching case URL: {e}")
             return None
         except Exception as e:
-            print(f"[ERROR] Unexpected error getting case URL: {e}")
+            print(f"[ERROR] Unexpected error fetching case URL: {e}")
             return None
     
     def construct_direct_canlii_url(self, citation_info: Dict) -> Optional[str]:
         """
-        Construct a direct CanLII URL as a fallback for SCR citations.
+        As a fallback, construct a direct CanLII URL for SCR citations.
         """
         if citation_info['type'] == 'scr':
             year = citation_info['year']
             direct_url = f"https://www.canlii.org/en/ca/scc/#y{year}"
-            print(f"[DEBUG] Constructed fallback direct URL: {direct_url}")
+            print(f"[DEBUG] Constructed fallback URL: {direct_url}")
             return direct_url
         return None
     
     def add_legislation_links(self, text: str) -> str:
         """
-        Add links to legislative references (e.g., acts) in the text.
+        Replace legislative references with their direct URLs.
         """
         cc_pattern = r'section\s+(\d+(?:\.\d+)?)\s+of\s+the\s+Criminal\s+Code'
         def replace_cc_reference(match):
             section = match.group(1)
             url = f"https://www.canlii.org/en/ca/laws/stat/rsc-1985-c-c-46/latest/rsc-1985-c-c-46.html#sec{section}"
             print(f"[DEBUG] Adding legislative link for section {section}: {url}")
-            return f"[section {section} of the Criminal Code]({url})"
+            return f"{url}"
         return re.sub(cc_pattern, replace_cc_reference, text, flags=re.IGNORECASE)
     
     def enhance_response(self, llm_response: str) -> str:
         """
-        Enhance an LLM response by replacing legal citations with hyperlinks
-        generated using the known mapping.
+        Enhance the LLM response by replacing legal citation text with only the final URL.
         """
         if not self.api_key:
-            print("[DEBUG] No CanLII API key provided, skipping citation enhancement")
-            logger.warning("No CanLII API key provided, skipping citation enhancement")
+            print("[DEBUG] No CanLII API key provided; skipping enhancement.")
+            logger.warning("No CanLII API key provided; skipping enhancement.")
             return llm_response
             
         enhanced_response = llm_response
         citations = self.extract_citations(llm_response)
-        print(f"[DEBUG] Beginning enhancement of response. Found citations: {citations}")
+        print(f"[DEBUG] Beginning enhancement. Found citations: {citations}")
         
         for citation in citations:
             citation_info = self.parse_citation(citation)
             if citation_info:
                 database_id, case_id = self.construct_case_id(citation_info)
                 if database_id and case_id:
-                    print(f"[DEBUG] Processing citation '{citation}' with database_id={database_id} and case_id={case_id}")
+                    print(f"[DEBUG] Processing '{citation}' with database_id={database_id} and case_id={case_id}")
                     case_url = self.get_case_url(database_id, case_id)
                     if case_url:
-                        print(f"[DEBUG] Replacing '{citation}' with link: {case_url}")
-                        enhanced_response = enhanced_response.replace(
-                            citation,
-                            f"[{citation}]({case_url})"
-                        )
-                        logger.info(f"Added link for citation: {citation}")
+                        print(f"[DEBUG] Replacing '{citation}' with URL: {case_url}")
+                        # Replace the citation text with the final URL.
+                        enhanced_response = enhanced_response.replace(citation, case_url)
+                        logger.info(f"Replaced citation with URL: {citation} -> {case_url}")
                     else:
                         direct_url = self.construct_direct_canlii_url(citation_info)
                         if direct_url:
-                            print(f"[DEBUG] Using fallback link for '{citation}': {direct_url}")
-                            enhanced_response = enhanced_response.replace(
-                                citation,
-                                f"[{citation}]({direct_url})"
-                            )
-                            logger.info(f"Added fallback link for citation: {citation}")
+                            print(f"[DEBUG] Using fallback URL for '{citation}': {direct_url}")
+                            enhanced_response = enhanced_response.replace(citation, direct_url)
+                            logger.info(f"Used fallback URL for citation: {citation} -> {direct_url}")
                         else:
                             print(f"[DEBUG] Could not construct URL for citation: {citation}")
                             logger.warning(f"Could not construct URL for citation: {citation}")
@@ -298,5 +291,6 @@ class CanLIICitationLinker:
                 logger.warning(f"Could not parse citation: {citation}")
         
         enhanced_response = self.add_legislation_links(enhanced_response)
-        print("[DEBUG] Finished enhancing response with citation links.")
+        print("[DEBUG] Finished enhancement with citation links.")
+
         return enhanced_response

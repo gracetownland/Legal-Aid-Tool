@@ -275,6 +275,7 @@ def handler(event, context):
     query_params = event.get("queryStringParameters", {})
     case_id = query_params.get("case_id", "")
     audio_flag = query_params.get("audio_flag", "")
+    print("audio_flag", audio_flag) 
     if not case_id:
         return {
             'statusCode': 400,
@@ -301,7 +302,7 @@ def handler(event, context):
             'body': json.dumps('Error fetching system prompt')
         }
     
-    if audio_flag == "YAy":
+    if audio_flag == "true":
         case_audio_description = get_audio_details(case_id)
         if case_audio_description is None:    
             return {
@@ -402,7 +403,7 @@ def handler(event, context):
 
     try:
         logger.info("Generating response from the LLM.")
-        if audio_flag == "yay":
+        if audio_flag == "true":
             response = get_audio_response(
                 query=student_query,
                 llm=llm,
