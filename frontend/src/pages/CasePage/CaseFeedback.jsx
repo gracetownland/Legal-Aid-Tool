@@ -92,10 +92,10 @@ const FeedbackPage = () => {
                 messages.map((msg) => (
                   <Box key={msg.message_id} mb={2} style={{ border: "1px solid var(--border)", borderRadius: "8px", padding: "0px", backgroundColor: "var(--background)" }}>
                     <Stack direction="row" spacing={1} justifyContent="space-between" alignItems="center">
-                    <Typography variant="caption" color="#808080" pt={1} pl={1} pr={1} pb={0.5}>
+                    <Typography variant="caption" color="var(--text)" pt={1} pl={1} pr={1} pb={0.5}>
                       From: {msg.first_name} {msg.last_name}
                     </Typography>
-                    <Typography variant="caption" color="#808080" pt={1} pl={1} pr={1} pb={0.5}>
+                    <Typography variant="caption" color="var(--text)" pt={1} pl={1} pr={1} pb={0.5}>
                     {new Date(msg.time_sent).toLocaleTimeString(undefined, {
                       hour: "2-digit",
                       minute: "2-digit",

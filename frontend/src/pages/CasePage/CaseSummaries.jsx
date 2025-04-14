@@ -400,7 +400,7 @@ const SummariesPage = () => {
   
   return (
     <Box display="flex" flexDirection="column" minHeight="100vh">
-      <Box position="fixed" top={0} left={0} width="100%" zIndex={1000} bgcolor="white">
+      <Box position="fixed" top={0} left={0} width="100%" zIndex={1000} bgcolor="var(--background)">
         {userRole === "instructor" ? <InstructorHeader /> : <StudentHeader />}
       </Box>
       <Box display="flex" pt="80px">
@@ -415,17 +415,38 @@ const SummariesPage = () => {
             )}
             </Stack>
             {summaries.length > 0 ? (
-              <TableContainer component={Paper}>
-                <Table>
+              <TableContainer
+                component={Paper}
+                sx={{
+                  backgroundColor: "var(--background)",
+                  color: "var(--text)",
+                  border: "1px solid var(--border)",
+                  borderRadius: 2,
+                  boxShadow: "none",
+                }}
+              >
+                <Table sx={{ borderCollapse: "collapse" }}>
                   <TableHead>
-                    <TableRow>
-                      <TableCell>Time Created</TableCell>
+                    <TableRow sx={{ borderBottom: "1px solid var(--border)" }}>
+                      <TableCell
+                        sx={{
+                          color: "var(--text)",
+                          borderBottom: "1px solid var(--border)",
+                          width: "100%",
+                        }}
+                      >
+                        Time Created
+                      </TableCell>
+                      <TableCell sx={{ borderBottom: "1px solid var(--border)" }} />
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {summaries.map((summary) => (
-                      <TableRow key={summary.summary_id}>
-                        <TableCell>
+                      <TableRow
+                        key={summary.summary_id}
+                        sx={{ borderBottom: "1px solid var(--border)" }}
+                      >
+                        <TableCell sx={{ color: "var(--text)", borderBottom: "1px solid var(--border)" }}>
                           {new Date(summary.time_created).toLocaleString("en-US", {
                             month: "long",
                             day: "numeric",
@@ -435,19 +456,45 @@ const SummariesPage = () => {
                             hour12: true,
                           })}
                         </TableCell>
-                        <TableCell align="right">
+                        <TableCell
+                          align="right"
+                          sx={{ borderBottom: "1px solid var(--border)" }}
+                        >
                           <Stack direction="row" spacing={1} justifyContent="flex-end">
-                            <Button
-                              variant="outlined"
-                              startIcon={<DownloadIcon />}
-                              onClick={() => handleDownload(summary)}
-                            >
-                              Download
-                            </Button>
-                            <Button variant="outlined" onClick={() => handleView(summary)}>
+                          <Button
+                            variant="contained"
+                            startIcon={<DownloadIcon />}
+                            onClick={() => handleDownload(summary)}
+                            sx={{
+                              textTransform: "none",
+                              backgroundColor: "var(--secondary)",
+                              color: "white",
+                              "&:hover": {
+                                backgroundColor: "var(--primary)",
+                              },
+                              boxShadow: "none", // Optional: removes default MUI shadow
+                              borderRadius: 2, // Optional: for consistent button shape
+                              fontFamily: "Outfit", // Optional: if you're using this font
+                            }}
+                          >
+                            Download
+                          </Button>
+                            <Button variant="contained" 
+                            sx={{
+                              backgroundColor: "var(--secondary)",
+                              color: "white",
+                              textTransform: "none",
+                              "&:hover": {
+                                backgroundColor: "var(--primary)",
+                              },
+                              boxShadow: "none", // Optional: removes default MUI shadow
+                              borderRadius: 2, // Optional: for consistent button shape
+                              fontFamily: "Outfit", // Optional: if you're using this font
+                            }}
+                            onClick={() => handleView(summary)}>
                               View
                             </Button>
-                            <IconButton onClick={(e) => handleMenuOpen(e, summary.summary_id)}>
+                            <IconButton sx={{color: "var(--text)"}} onClick={(e) => handleMenuOpen(e, summary.summary_id)}>
                               <MoreVertIcon />
                             </IconButton>
                           </Stack>
@@ -490,31 +537,42 @@ const SummariesPage = () => {
       {/* View Dialog */}
       <Dialog open={viewDialogOpen} onClose={handleCloseView} maxWidth="md" fullWidth>
         <DialogTitle
-          sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", pr: 6 }}
+          sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", pr: 6, backgroundColor: 'var(--background2)', color: 'var(--text)', border: '1px solid var(--border)' }}
         >
           <Typography variant="h6" fontWeight={600}>
             Summary Preview
           </Typography>
           <Stack direction="row" spacing={1} alignItems="center">
             <Button
-              variant="outlined"
               startIcon={<DownloadIcon />}
               onClick={() => handleDownload(selectedSummary)}
+              sx={{
+                backgroundColor: "var(--secondary)",
+                color: "white",
+                textTransform: "none",
+                "&:hover": {
+                  backgroundColor: "var(--primary)",
+                },
+                boxShadow: "none",
+                borderRadius: 2, 
+                fontFamily: "Outfit",
+              }}
             >
               Download
             </Button>
             <IconButton
               aria-label="close"
               onClick={handleCloseView}
-              sx={{ position: "absolute", right: 8, top: 8 }}
+              sx={{ position: "absolute", right: 8, top: 8, color: "var(--text)" }}
             >
               <CloseIcon />
             </IconButton>
           </Stack>
         </DialogTitle>
-        <DialogContent dividers>
+        <DialogContent sx={{backgroundColor: 'var(--background)', color: 'var(--text)', border: '1px solid var(--border)', borderTop: 'none'}}>
           {selectedSummary ? (
             <StyledMarkdownContent
+              sx={{ marginTop: 2 }}
               dangerouslySetInnerHTML={{
                 __html: DOMPurify.sanitize(marked.parse(selectedSummary.content)),
               }}
