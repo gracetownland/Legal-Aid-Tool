@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   TextField,
   Button,
@@ -36,7 +36,27 @@ const Login = () => {
   const [confirmationCode, setConfirmationCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [step, setStep] = useState("requestReset");
-  const [isConfirmingSignUp, setIsConfirmingSignUp] = useState(false); // Track confirmation step
+  const [isConfirmingSignUp, setIsConfirmingSignUp] = useState(false); 
+  const [logo, setLogo] = useState("logo_dark.svg");
+
+  const updateLogoBasedOnTheme = () => {
+    const isDarkMode = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    setLogo(isDarkMode ? "/logo_dark.svg" : "/logo_light.svg");
+  };
+
+  useEffect(() => {
+    updateLogoBasedOnTheme();
+
+    const themeChangeListener = (e) => {
+      updateLogoBasedOnTheme();
+    };
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", themeChangeListener);
+
+    return () => {
+      window.matchMedia("(prefers-color-scheme: dark)").removeEventListener("change", themeChangeListener);
+    };
+  }, []);
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -177,15 +197,15 @@ const Login = () => {
   };
 
   return (
-    <Grid container sx={{ height: "100vh", backgroundColor: "var(--background)", transition: "background-color 0.3s ease" }}>
+    <div container sx={{ height: "100vh", backgroundColor: "var(--background2)", transition: "background-color 0.3s ease" }}>
       <ToastContainer />
 
-      <Grid
+      {/* <Grid
         item
         xs={false}
         sm={6}
         sx={{
-          background: "linear-gradient(to bottom right, var(--primary), var(--secondary))",
+          background: "linear-gradient(to bottom right, 'var(--background)', 'var(--secondary)')",
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
@@ -194,18 +214,21 @@ const Login = () => {
           transition: "all 0.3s ease",
         }}
       >
-        <div style={{ opacity: 0, animation: 'fadeIn 0.6s forwards', display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div style={{ opacity: 0, animation: 'fadeIn 0.6s forwards', display: 'flex', alignItems: 'center', gap: '16px'}}>
           <img src="logo_dark.svg" alt="Logo" style={{ width: "100px", height: "100px" }} />
           <Typography variant="h3" fontWeight={600} fontFamily="Outfit">
             Legal Aid Tool
           </Typography>
         </div>
-      </Grid>
+      </Grid> */}
 
-      <Grid item xs={12} sm={6} sx={{ display: "flex", justifyContent: "center", alignItems: "center", p: 4 }}>
-        <Box sx={{ width: "100%", maxWidth: 400, animation: 'slideUp 0.6s ease-out' }}>
-          <Typography variant="h5" fontWeight={600} textAlign="left" mb={3} sx={{ color: "var(--text)", fontFamily: "Outfit" }}>
-            {isReset ? "Reset Password" : isSignUp ? "Create Account" : "Sign In"}
+      <Grid item xs={12} sm={6} sx={{ display: "flex", justifyContent: "center", alignItems: "center", p: 4, transition: "all 0.3s ease", opacity: 0, animation: 'fadeIn 0.6s forwards', height: '100vh',  backgroundColor: 'var(--background2)' }}>
+        <Box sx={{ width: "100%", maxWidth: 500, animation: 'slideUp 0.6s ease-out', border: "1px solid var(--border)", borderRadius: 2, padding: 4, backgroundColor: "var(--background)" }}>
+          <Typography variant="h5" fontWeight={600} textAlign="left" mb={3} sx={{ color: "var(--text)", fontFamily: "Outfit", fontSize: 26, transition: "all 0.3s ease", }}>
+          <div style={{ opacity: 0, animation: 'fadeIn 0.6s forwards', display: 'flex', alignItems: 'center', gap: '8px'}}>
+          <img src={logo} alt="Logo" style={{ width: "50px", height: "50px" }} />
+            {isReset ? "Reset Password" : isSignUp ? "Create Account" : "Legal Aid Tool"}
+            </div>
           </Typography>
 
           {/* Conditional rendering of forms based on state */}
@@ -213,7 +236,7 @@ const Login = () => {
             {isConfirmingSignUp ? (
               <>
                 <TextField fullWidth label="Confirmation Code" margin="normal" value={confirmationCode} onChange={(e) => setConfirmationCode(e.target.value)} sx={inputStyles} />
-                <Button type="submit" fullWidth variant="contained" sx={{ mt: 2, color: "white", backgroundColor: "var(--primary)", boxShadow: 'none', borderRadius: 2, fontFamily: 'Outfit' }}>
+                <Button type="submit" fullWidth variant="contained" sx={{ mt: 2, color: "white", backgroundColor: "var(--primary)", boxShadow: 'none', borderRadius: 2, fontFamily: 'Outfit', "&:hover": {backgroundColor: "var(--secondary)", boxShadow: "none",} }}>
                 {loading ? <CircularProgress size={24} color="inherit" /> : "Confirm Sign Up" }
                 </Button>
                 <Box mt={2} textAlign="center">
@@ -224,15 +247,27 @@ const Login = () => {
               <>
                 {isReset ? (
                   <>
-                    <TextField fullWidth label="Email" variant="outlined" margin="normal" value={email} onChange={(e) => setEmail(e.target.value)} sx={inputStyles} />
+                    <TextField
+                      fullWidth
+                      label="Email"
+                      placeholder="example@ubc.ca"
+                      type="email"
+                      variant="outlined"
+                      margin="normal"
+                      autoComplete="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)} 
+                      InputProps={{ startAdornment: <InputAdornment position="start"><Email {...iconProps} /></InputAdornment> }}
+                      sx={inputStyles}
+                    />
                     {step === "confirmReset" && (
                       <>
                         <TextField fullWidth label="Confirmation Code" margin="normal" value={confirmationCode} onChange={(e) => setConfirmationCode(e.target.value)} sx={inputStyles} />
                         <TextField fullWidth label="New Password" type="password" margin="normal" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} sx={inputStyles} />
                       </>
                     )}
-                    {step === "requestReset" && <Button fullWidth onClick={handleReset} variant="contained" sx={{ mt: 2, color: "white", backgroundColor: "var(--primary)", boxShadow: 'none', borderRadius: 2, fontFamily: 'Outfit' }}>Send Reset Code</Button>}
-                    {step === "confirmReset" && <Button type="submit" fullWidth variant="contained" sx={{ mt: 2, color: "white", backgroundColor: "var(--primary)", boxShadow: 'none', borderRadius: 2, fontFamily: 'Outfit' }}>Confirm Reset</Button>}
+                    {step === "requestReset" && <Button fullWidth onClick={handleReset} variant="contained" sx={{ mt: 2, color: "white", backgroundColor: "var(--primary)", boxShadow: 'none', borderRadius: 2, fontFamily: 'Outfit', "&:hover": {backgroundColor: "var(--secondary)", boxShadow: "none",} }}>Send Reset Code</Button>}
+                    {step === "confirmReset" && <Button type="submit" fullWidth variant="contained" sx={{ mt: 2, color: "white", backgroundColor: "var(--primary)", boxShadow: 'none', borderRadius: 2, fontFamily: 'Outfit', "&:hover": {backgroundColor: "var(--secondary)", boxShadow: "none",} }}>Confirm Reset</Button>}
                     <Box mt={2} textAlign="center">
                       <Link href="#" onClick={(e) => { e.preventDefault(); setIsReset(false); }} underline="hover" sx={{ fontSize: 14, color: "var(--primary)" }}>Back to Sign In</Link>
                     </Box>
@@ -248,6 +283,7 @@ const Login = () => {
                     <TextField
                       fullWidth
                       label="Email"
+                      placeholder="example@ubc.ca"
                       type="email"
                       variant="outlined"
                       margin="normal"
@@ -271,7 +307,7 @@ const Login = () => {
                         endAdornment: (
                           <InputAdornment position="end">
                             <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" sx={{ p: 0.5, border: 'none', outline: 'none' }}>
-                              {showPassword ? <Visibility {...iconProps} /> : <VisibilityOff {...iconProps} />}
+                              {showPassword ? <Visibility {...iconProps} /> : <Visibility {...iconProps} />}
                             </IconButton>
                           </InputAdornment>
                         ),
@@ -308,7 +344,7 @@ const Login = () => {
                         </Link>
                       </Box>
                     )}
-                    <Button type="submit" fullWidth variant="contained" sx={{ mt: 2, color: "white", backgroundColor: "var(--primary)", boxShadow: 'none', borderRadius: 2, fontFamily: 'Outfit' }} disabled={loading}>
+                    <Button type="submit" fullWidth variant="contained" sx={{ mt: 2, color: "white", backgroundColor: "var(--primary)", boxShadow: 'none', borderRadius: 2, fontFamily: 'Outfit', "&:hover": {backgroundColor: "var(--secondary)", boxShadow: "none",} }} disabled={loading}>
                       {loading ? <CircularProgress size={24} color="inherit" /> : isSignUp ? "Sign Up" : "Sign In"}
                     </Button>
                     <Box textAlign="center" mt={2}>
@@ -323,7 +359,7 @@ const Login = () => {
           </Box>
         </Box>
       </Grid>
-    </Grid>
+    </div>
   );
 };
 
