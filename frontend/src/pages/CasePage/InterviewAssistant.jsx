@@ -485,7 +485,7 @@ const InterviewAssistant = () => {
                           )}
                         </Button>
 
-                        {messages.length >= 5 && (
+                        {messages.length >= 1 && (
                           <Button
                             size="small"
                             disableRipple
