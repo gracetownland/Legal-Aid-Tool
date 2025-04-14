@@ -283,8 +283,24 @@ const NewCaseForm = () => {
             </FormControl>
 
             {formData.jurisdiction.includes("Provincial") && (
-              <FormControl fullWidth sx={{ mb: 2, textAlign: "left" }}>
-                <InputLabel>Province</InputLabel>
+              <FormControl fullWidth sx={{ mb:2, textAlign: "left", borderColor: "var(--border)",
+                borderColor: "var(--border)",
+                "& .MuiOutlinedInput-root": {
+                  "& fieldset": {
+                    borderColor: "var(--border)", // Set border color
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: "var(--border)", // Set focused border color
+                  },
+                  "& input": {
+                    color: "var(--text)", // Set input text color
+                  },
+                  "& .MuiInputBase-input::placeholder": {
+                    color: "var(--placeholder-text)", // Set placeholder text color
+                  },
+                },
+              }}>
+                <InputLabel sx={{color: 'var(--placeholder-text)'}}>Province</InputLabel>
                 <Select
                   name="province"
                   value={formData.province}
