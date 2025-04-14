@@ -275,6 +275,7 @@ def handler(event, context):
     query_params = event.get("queryStringParameters", {})
     case_id = query_params.get("case_id", "")
     audio_flag = query_params.get("audio_flag", "")
+    print("audio_flag", audio_flag) 
     if not case_id:
         return {
             'statusCode': 400,
