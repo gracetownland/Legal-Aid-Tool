@@ -1,1073 +1,329 @@
 import { useState } from "react";
-
-// logo
-import heartbeatImage from "../assets/heartbeat.png";
-
-
-import './LoginStyles.css'; // Adjust the path if necessary
-
-
-// amplify
+import {
+  TextField,
+  Button,
+  Typography,
+  Box,
+  CircularProgress,
+  Link,
+  Grid,
+  IconButton,
+  InputAdornment,
+} from "@mui/material";
+import { Visibility, VisibilityOff, Email, Lock } from "@mui/icons-material";
 import {
   signIn,
   signUp,
-  confirmSignIn,
-  confirmSignUp,
-  resendSignUpCode,
+  fetchAuthSession,
   resetPassword,
   confirmResetPassword,
-  fetchAuthSession,
-  fetchUserAttributes
+  confirmSignUp,
 } from "aws-amplify/auth";
-// MUI
-import {
-  Button,
-  CssBaseline,
-  TextField,
-  Link,
-  Paper,
-  Grid,
-  Box,
-  Typography,
-} from "@mui/material";
-
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-// login assets
-import PageContainer from "./Container";
-// cognito verifier
-import { CognitoJwtVerifier } from "aws-jwt-verify";
-// MUI theming
-import { createTheme, ThemeProvider } from "@mui/material/styles";
-const theme = createTheme({
-  palette: {
-    mode: 'light',
-    primary: {
-      main: '#546bdf',
-      contrastText: '#050315',
-    },
-    secondary: {
-      main: '#c5d6f0',
-      contrastText: '#050315',
-    },
-    divider: '#1c187a',
-    text: {
-      primary: 'rgb(5, 3, 21)',
-      secondary: 'rgba(5, 3, 21, 0.6)',
-      disabled: 'rgba(5, 3, 21, 0.38)',
-      hint: 'rgb(28, 24, 122)',
-    },
-    background: {
-      default: '#fbfbfe',
-    },
-  },
-});
 
-export const Login = () => {
-  // auth account variables
-  const [newSignUp, setNewSignUp] = useState(false);
-  const [username, setUsername] = useState("");
+const Login = () => {
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [isReset, setIsReset] = useState(false);
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [newPassword, setNewPassword] = useState(false);
-  const [newUserPassword, setNewUserPassword] = useState(false);
-  // auth status variables
-  const [signUpConfirmation, setSignUpConfirmation] = useState(false);
-  const [forgotPassword, setForgotPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [passwordError, setPasswordError] = useState("");
-  const [confirmationError, setConfirmationError] = useState("");
   const [confirmationCode, setConfirmationCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [step, setStep] = useState("requestReset");
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+  const [isConfirmingSignUp, setIsConfirmingSignUp] = useState(false); // Track confirmation step
 
-
-  const verifyJwtToken = async (token) => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
     try {
-      const verifier = CognitoJwtVerifier.create({
-        userPoolId: import.meta.env.VITE_COGNITO_USER_POOL_ID,
-        tokenUse: "id", // Can be either 'id' or 'access'
-        clientId: import.meta.env.VITE_COGNITO_USER_POOL_CLIENT_ID,
-      });
-      // Verify the token
-      const payload = await verifier.verify(token);
-
-      // Check if 'groups' property is present
-      if (payload["cognito:groups"]) {
-        console.log("Groups:");
-      } else {
-        console.log("No groups found in the token.");
-      }
-
-      return payload;
-    } catch (error) {
-      console.error("Token verification failed:", error);
-      throw new Error("Unauthorized jwt token");
-    }
-  };
-
-  // existing user sign in
-  const handleSignIn = async (event) => {
-    event.preventDefault();
-    console.log(import.meta.env.VITE_COGNITO_USER_POOL_CLIENT_ID);
-console.log(import.meta.env.VITE_COGNITO_USER_POOL_ID);
-
-    try {
-      setLoading(true);
-      console.log("Signing in with username and password;", username, password);
-
-      try {
-        const userInfo = await fetchUserAttributes();
-        console.log("👤 Cognito User Info:", userInfo);
-      } catch (error) {
-        console.error("❌ Could not fetch user data:", error);
-      }
-
-      const user = await signIn({
-        username: username,
-        password: password
-      });
-      
-      console.log("SignIn Response:", user); 
-      console.log(
-        "USER SUCCESSFULLY LOGGED IN:",
-        user.isSignedIn,
-        user.nextStep.signInStep
-      );
-      if (!user.isSignedIn) {
-        if (
-          user.nextStep.signInStep ===
-          "CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED"
-        ) {
-          setNewUserPassword(true);
+      if (isSignUp) {
+        if (password !== confirmPassword) {
+          toast.error("Passwords do not match");
           setLoading(false);
-        } else if (user.nextStep.signInStep === "CONFIRM_SIGN_UP") {
-          setSignUpConfirmation(true);
-          setLoading(false);
+          return;
         }
-      } else {
-        setNewSignUp(false);
-        window.location.reload();
-      }
-    } catch (error) {
-      toast.error(`Error logging in: ${error}`, {
-        position: "top-center",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-      });
-      console.log("Error logging in:", error);
-      setLoading(false);
-    }
-  };
-
-  // user signs up
-  const handleSignUp = async (event) => {
-    event.preventDefault();
-
-    // Check for empty fields
-    if (!username || !password || !confirmPassword || !firstName || !lastName) {
-      toast.error("All fields are required", {
-        position: "top-center",
-        autoClose: 3000,
-        theme: "colored",
-      });
-      return;
-    }
-
-    // Password validation: match, length, uppercase, lowercase, and number
-    if (password !== confirmPassword) {
-      setPasswordError("Passwords do not match");
-      toast.error("Passwords do not match", { theme: "colored" });
-      return;
-    }
-
-    if (password.length < 8) {
-      setPasswordError("Password must be at least 8 characters long");
-      toast.error("Password must be at least 8 characters long", { theme: "colored" });
-      return;
-    }
-
-    if (!/[a-z]/.test(password)) {
-      setPasswordError("Password must contain at least one lowercase letter");
-      toast.error("Password must contain at least one lowercase letter", { theme: "colored" });
-      return;
-    }
-
-    if (!/[A-Z]/.test(password)) {
-      setPasswordError("Password must contain at least one uppercase letter");
-      toast.error("Password must contain at least one uppercase letter", { theme: "colored" });
-      return;
-    }
-
-    if (!/[0-9]/.test(password)) {
-      setPasswordError("Password must contain at least one number");
-      toast.error("Password must contain at least one number", { theme: "colored" });
-      return;
-    }
-
-    setPasswordError(""); // Clear any previous errors
-
-    try {
-      setLoading(true);
-      console.log("signing up");
-
-      const { isSignUpComplete, nextStep } = await signUp({
-        username: username,
-        password: password,
-        attributes: {
-          email: username,
-        },
-      });
-
-      console.log("signed up successfully:", isSignUpComplete, nextStep);
-
-      setNewSignUp(false);
-      if (!isSignUpComplete && nextStep?.signUpStep === "CONFIRM_SIGN_UP") {
-        setSignUpConfirmation(true); // Transition to confirmation UI
-        toast.success("Account created. Check your email for the confirmation code.", {
-          theme: "colored",
+        await signUp({
+          username: email,
+          password,
+          attributes: {
+            email,
+            given_name: firstName,
+            family_name: lastName,
+          },
         });
-      }
-    } catch (error) {
-      const errorMessage =
-        error.message.includes("PreSignUp failed with error")
-          ? "Your email domain is not allowed. Please use a valid email address."
-          : `Error signing up: ${error.message}`;
-      toast.error(errorMessage, {
-        position: "top-center",
-        autoClose: 3000,
-        theme: "colored",
-      });
-      console.log("Error signing up:", error);
-      setLoading(false);
-      console.log()
-      setError(error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-
-
-  // user gets new password
-  const handleNewUserPassword = async (event) => {
-    event.preventDefault();
-    const newPassword = event.target.newPassword.value;
-    const confirmNewPassword = event.target.confirmNewPassword.value;
-
-    if (newPassword !== confirmNewPassword) {
-      setPasswordError("Passwords do not match!");
-      toast.error(`Passwords do not match!`, {
-        position: "top-center",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-      });
-      return;
-    }
-    setPasswordError("");
-    try {
-      setLoading(true);
-      console.log("Setting new password for user:", username);
-      const attributes = {};
-      const user = await confirmSignIn({
-        challengeResponse: newPassword,
-        options: {
-          userAttributes: attributes,
-        },
-      });
-      console.log("User logged in:", user.isSignedIn, user.nextStep.signInStep);
-      if (user.isSignedIn) {
-        window.location.reload();
-      }
-    } catch (error) {
-      toast.error(`Error: ${error}`, {
-        position: "top-center",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-      });
-      console.log("Error setting new password:", error);
-      setLoading(false);
-      setNewUserPassword(false);
-    }
-  };
-
-  // user signup confirmation
-  const handleConfirmSignUp = async (event) => {
-    event.preventDefault();
-    const confirmationCode = event.target.confirmationCode.value;
-    try {
-      setLoading(true);
-      await confirmSignUp({
-        username: username,
-        confirmationCode: confirmationCode,
-      });
-
-      console.log("code", confirmationCode);
-
-      // Automatically log in the user
-      const user = await signIn({
-        username: username,
-        password: password,
-      });
-
-      console.log("handle auto sign in", user.isSignedIn);
-
-      if (user.isSignedIn) {
-        // Send user data to backend
-        const session = await fetchAuthSession();
-        const token = session.tokens.idToken
-
-        const response = await fetch(
-          `${import.meta.env.VITE_API_ENDPOINT
-          }student/create_user?user_email=${encodeURIComponent(
-            username
-          )}&username=${encodeURIComponent(
-            username
-          )}&first_name=${encodeURIComponent(
-            firstName
-          )}&last_name=${encodeURIComponent(
-            lastName
-          )}`,
-          {
+        toast.success("Sign up successful. Check your email to confirm.");
+        setIsConfirmingSignUp(true); // Set the step to confirmation after sign-up
+      } else {
+        const user = await signIn({ username: email, password });
+        if (user.isSignedIn) {
+          const session = await fetchAuthSession();
+          const token = session.tokens.idToken;
+          console.log("Token:", token);
+          const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}/student/create_user?user_email=${encodeURIComponent(email)}&username=${encodeURIComponent(email)}&first_name=${encodeURIComponent(firstName)}&last_name=${encodeURIComponent(lastName)}`, {
             method: "POST",
             headers: {
               Authorization: token,
               "Content-Type": "application/json",
             },
-          }
-        );
+          });
+          const data = await response.json();
+          console.log("Response from backend:", data);
+          window.location.reload();
+        }
+      }
+    } catch (err) {
+      toast.error(err.message || "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleConfirmSignUp = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await confirmSignUp({
+        username: email,
+        confirmationCode,
+      });
+      toast.success("Account confirmed successfully.");
+      setIsConfirmingSignUp(false); // After confirmation, switch back to sign-in
+      // Auto login after confirmation
+      const user = await signIn({ username: email, password });
+      if (user.isSignedIn) {
+        const session = await fetchAuthSession();
+        const token = session.tokens.idToken;
+        console.log("Token:", token);
+        // Fetch user data after auto-login
+        const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}/student/create_user?user_email=${encodeURIComponent(email)}&username=${encodeURIComponent(email)}&first_name=${encodeURIComponent(firstName)}&last_name=${encodeURIComponent(lastName)}`, {
+          method: "POST",
+          headers: {
+            Authorization: token,
+            "Content-Type": "application/json",
+          },
+        });
         const data = await response.json();
         console.log("Response from backend:", data);
-
-        setLoading(false);
-        setNewSignUp(false);
         window.location.reload();
-      } else {
-        setLoading(false);
-        setError("Automatic login failed. Please try signing in manually.");
       }
-    } catch (error) {
-      toast.error(`Error: ${error}`, {
-        position: "top-center",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-      });
-      console.log("Error confirming sign-up:", error);
-      setLoading(false);
-      setConfirmationError(error.message);
-    }
-  };
-
-  const resendConfirmationCode = async () => {
-    try {
-      setLoading(true);
-      await resendSignUpCode({ username: username });
-      setLoading(false);
-      setConfirmationError("");
-    } catch (error) {
-      toast.error(`Error: ${error}`, {
-        position: "top-center",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-      });
-      console.log("Error resending confirmation code:", error);
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
       setLoading(false);
     }
   };
 
-  // user reset password
-  async function handleResetPassword(username) {
+  const handleReset = async () => {
     try {
-      const output = await resetPassword({ username });
-      handleResetPasswordNextSteps(output);
-    } catch (error) {
-      toast.error(`Error Resetting Password`, {
-        position: "top-center",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-      });
-      setMessage("");
-    }
-  }
-
-  function handleResetPasswordNextSteps(output) {
-    const { nextStep } = output;
-    switch (nextStep.resetPasswordStep) {
-      case "CONFIRM_RESET_PASSWORD_WITH_CODE":
-        // eslint-disable-next-line no-case-declarations
-        const codeDeliveryDetails = nextStep.codeDeliveryDetails;
-        console.log(
-          `Confirmation code was sent to ${codeDeliveryDetails.deliveryMedium}`
-        );
-        setMessage(
-          `Confirmation code sent to ${codeDeliveryDetails.deliveryMedium}`
-        );
+      const output = await resetPassword({ username: email });
+      const step = output.nextStep.resetPasswordStep;
+      if (step === "CONFIRM_RESET_PASSWORD_WITH_CODE") {
+        toast.success("Check your email for the confirmation code.");
         setStep("confirmReset");
-        break;
-      case "DONE":
-        setMessage("Successfully reset password.");
-        setStep("done");
-        console.log("Successfully reset password.");
-        break;
+      } else if (step === "DONE") {
+        toast.success("Password reset already completed.");
+        setIsReset(false);
+        setStep("requestReset");
+      }
+    } catch (err) {
+      toast.error(err.message);
     }
-  }
+  };
 
-  async function handleConfirmResetPassword(event) {
-    event.preventDefault();
+  const handleConfirmReset = async (e) => {
+    e.preventDefault();
     try {
-      await confirmResetPassword({
-        username,
-        confirmationCode,
-        newPassword,
-      });
-      console.log("username", username);
-      setMessage("Password successfully reset.");
-      setStep("done");
-      setError("");
-    } catch (error) {
-      toast.error(`Error: ${error}`, {
-        position: "top-center",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "colored",
-      });
-      console.log(error);
-      console.log(username);
-      console.log(confirmationCode);
-      setError(error.message);
+      await confirmResetPassword({ username: email, confirmationCode, newPassword });
+      toast.success("Password reset successfully.");
+      setIsReset(false);
+      setStep("requestReset");
+      setEmail("");
+      setConfirmationCode("");
+      setNewPassword("");
+    } catch (err) {
+      toast.error(err.message);
     }
-  }
+  };
+
+  const inputStyles = {
+    transition: 'all 0.3s ease',
+    input: {
+      WebkitBoxShadow: '0 0 0 1000px var(--background) inset',
+      WebkitTextFillColor: 'var(--text)',
+    },
+    '& .MuiOutlinedInput-notchedOutline': {
+      borderColor: 'var(--border)',
+    },
+    '&:hover .MuiOutlinedInput-notchedOutline': {
+      borderColor: 'var(--border)',
+    },
+    '& .MuiInputBase-root': {
+      backgroundColor: 'var(--background)',
+      color: 'var(--text)',
+    },
+    '& .MuiInputLabel-root': {
+      color: 'var(--text)',
+    },
+  };
+
+  const iconProps = {
+    sx: { color: 'var(--placeholder-text)', fontSize: 20 },
+  };
 
   return (
-    <ThemeProvider theme={theme}>
-      <PageContainer>
-        <Grid container component="main" sx={{ height: "100vh" }}>
-          <CssBaseline />
-          <Grid
-            item
-            xs={false}
-            sm={3}
-            md={5}
-            className="animatedGradient"
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: "20px",
-              backgroundColor: 'var(--secondary)',
-            }}
-          >
+    <Grid container sx={{ height: "100vh", backgroundColor: "var(--background)", transition: "background-color 0.3s ease" }}>
+      <ToastContainer />
 
+      <Grid
+        item
+        xs={false}
+        sm={6}
+        sx={{
+          background: "linear-gradient(to bottom right, var(--primary), var(--secondary))",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          color: "white",
+          p: 4,
+          transition: "all 0.3s ease",
+        }}
+      >
+        <div style={{ opacity: 0, animation: 'fadeIn 0.6s forwards', display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <img src="logo_dark.svg" alt="Logo" style={{ width: "100px", height: "100px" }} />
+          <Typography variant="h3" fontWeight={600} fontFamily="Outfit">
+            Legal Aid Tool
+          </Typography>
+        </div>
+      </Grid>
 
-          <div style={{ textAlign: 'center', marginTop: '20px' }}>
-            <Typography
-              variant="h4"
-              sx={{
-                color: 'white',
-                fontWeight: 'bold',
-                fontSize: 'clamp(1rem, 2.5vw, 2.5rem)', // More aggressive scaling: shrinks to 1rem on small screens
-                lineHeight: '1.2', // Slightly tighter line spacing for smaller windows
-                marginTop: '10px',
-                textAlign: 'center',
-                fontFamily: '"Inter", sans-serif', // Add Inter font here
-              }}
-            >
-              Welcome to
-              <br />
-              Legal Aid Tool!
-              <br />
-            </Typography>
-          </div>
+      <Grid item xs={12} sm={6} sx={{ display: "flex", justifyContent: "center", alignItems: "center", p: 4 }}>
+        <Box sx={{ width: "100%", maxWidth: 400, animation: 'slideUp 0.6s ease-out' }}>
+          <Typography variant="h5" fontWeight={600} textAlign="left" mb={3} sx={{ color: "var(--text)", fontFamily: "Outfit" }}>
+            {isReset ? "Reset Password" : isSignUp ? "Create Account" : "Sign In"}
+          </Typography>
 
-
-
-          </Grid>
-
-          {/* existing user sign in */}
-          {!loading &&
-            !newUserPassword &&
-            !newSignUp &&
-            !signUpConfirmation &&
-            !forgotPassword && (
-              <Grid
-                item
-                xs={12}
-                sm={9}
-                md={7}
-                component={Paper}
-                square
-                sx={{
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  height: "100%",
-                  backgroundColor: 'var(--background)'
-                }}
-              >
-                <Box
-                  sx={{
-                    my: 8,
-                    mx: 4,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                  }}
-                >
-                  <Typography component="h1" variant="h5" sx={{color: 'var(--text)'}}>
-                    Sign in
-                  </Typography>
-                  <Box
-                    component="form"
-                    noValidate
-                    onSubmit={handleSignIn}
-                    sx={{ mt: 1 }}
-                  >
+          {/* Conditional rendering of forms based on state */}
+          <Box component="form" onSubmit={isReset && step === "confirmReset" ? handleConfirmReset : isConfirmingSignUp ? handleConfirmSignUp : handleSubmit}>
+            {isConfirmingSignUp ? (
+              <>
+                <TextField fullWidth label="Confirmation Code" margin="normal" value={confirmationCode} onChange={(e) => setConfirmationCode(e.target.value)} sx={inputStyles} />
+                <Button type="submit" fullWidth variant="contained" sx={{ mt: 2, color: "white", backgroundColor: "var(--primary)", boxShadow: 'none', borderRadius: 2, fontFamily: 'Outfit' }}>
+                {loading ? <CircularProgress size={24} color="inherit" /> : "Confirm Sign Up" }
+                </Button>
+                <Box mt={2} textAlign="center">
+                  <Link href="#" onClick={(e) => { e.preventDefault(); setIsConfirmingSignUp(false); }} underline="hover" sx={{ fontSize: 14, color: "var(--primary)" }}>Back to Sign In</Link>
+                </Box>
+              </>
+            ) : (
+              <>
+                {isReset ? (
+                  <>
+                    <TextField fullWidth label="Email" variant="outlined" margin="normal" value={email} onChange={(e) => setEmail(e.target.value)} sx={inputStyles} />
+                    {step === "confirmReset" && (
+                      <>
+                        <TextField fullWidth label="Confirmation Code" margin="normal" value={confirmationCode} onChange={(e) => setConfirmationCode(e.target.value)} sx={inputStyles} />
+                        <TextField fullWidth label="New Password" type="password" margin="normal" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} sx={inputStyles} />
+                      </>
+                    )}
+                    {step === "requestReset" && <Button fullWidth onClick={handleReset} variant="contained" sx={{ mt: 2, color: "white", backgroundColor: "var(--primary)", boxShadow: 'none', borderRadius: 2, fontFamily: 'Outfit' }}>Send Reset Code</Button>}
+                    {step === "confirmReset" && <Button type="submit" fullWidth variant="contained" sx={{ mt: 2, color: "white", backgroundColor: "var(--primary)", boxShadow: 'none', borderRadius: 2, fontFamily: 'Outfit' }}>Confirm Reset</Button>}
+                    <Box mt={2} textAlign="center">
+                      <Link href="#" onClick={(e) => { e.preventDefault(); setIsReset(false); }} underline="hover" sx={{ fontSize: 14, color: "var(--primary)" }}>Back to Sign In</Link>
+                    </Box>
+                  </>
+                ) : (
+                  <>
+                    {isSignUp && (
+                      <>
+                        <TextField fullWidth label="First Name" variant="outlined" margin="normal" value={firstName} onChange={(e) => setFirstName(e.target.value)} sx={inputStyles} />
+                        <TextField fullWidth label="Last Name" variant="outlined" margin="normal" value={lastName} onChange={(e) => setLastName(e.target.value)} sx={inputStyles} />
+                      </>
+                    )}
                     <TextField
-                    margin="normal"
-                    required
-                    fullWidth
-                    id="email"
-                    label="Email Address"
-                    name="email"
-                    autoComplete="email"
-                    autoFocus
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    inputProps={{ maxLength: 40 }}
-                    InputProps={{
-                      style: { color: 'var(--text)' }, // Text color inside input
-                    }}
-                    InputLabelProps={{
-                      style: { color: 'var(--text)' }, // Label color
-                    }}
-                    sx={{
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'var(--text)', // Default border color
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'var(--text)', // Hover border color
-                      },
-                    }}
-                  />
-
-                    <TextField
-                      margin="normal"
-                      required
                       fullWidth
-                      name="password"
+                      label="Email"
+                      type="email"
+                      variant="outlined"
+                      margin="normal"
+                      autoComplete="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      InputProps={{ startAdornment: <InputAdornment position="start"><Email {...iconProps} /></InputAdornment> }}
+                      sx={inputStyles}
+                    />
+                    <TextField
+                      fullWidth
                       label="Password"
-                      type="password"
-                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      variant="outlined"
+                      margin="normal"
                       autoComplete="current-password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      inputProps={{ maxLength: 50 }}
                       InputProps={{
-                        style: { color: 'var(--text)' }, // Text color inside input
+                        startAdornment: <InputAdornment position="start"><Lock {...iconProps} /></InputAdornment>,
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" sx={{ p: 0.5, border: 'none', outline: 'none' }}>
+                              {showPassword ? <Visibility {...iconProps} /> : <VisibilityOff {...iconProps} />}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
                       }}
-                      InputLabelProps={{
-                        style: { color: 'var(--text)' }, // Label color
-                      }}
-                      sx={{
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'var(--text)', // Default border color
-                        },
-                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'var(--text)', // Hover border color
-                        },
-                      }}
+                      sx={inputStyles}
                     />
-                    <Button
-                    type="submit"
-                    fullWidth
-                    variant="contained"
-                    color="primary"
-                    sx={{
-                      mt: 3,
-                      mb: 2,
-                      color: "var(--text-button)", // Default text color
-                      "&:hover": {
-                        backgroundColor: "var(--secondary)",
-                        color: "#fff", // Change this to your preferred hover color
-                      },
-                      backgroundColor: 'var(--primary)'
-                    }}
-                    onClick={handleSignIn} // Remove the arrow function, just pass the function reference
-                  >
-                    Sign In
-                  </Button>
-                    <Grid container>
-                      <Grid item xs={6}>
-                        <Link
-                          href="#"
-                          variant="body2"
-                          onClick={() => setForgotPassword(true)}
-                          sx={{color: "var(--primary)"}}
-                        >
-                          Forgot password?
-                        </Link>
-                      </Grid>
-                      <Grid item xs={6}>
-                        <Link
-                          href="#"
-                          variant="body2"
-                          onClick={() => setNewSignUp(true)}
-                          sx={{color: "var(--primary)"}}
-                        >
-                          {"Create your account"}
-                        </Link>
-                      </Grid>
-                    </Grid>
-                  </Box>
-                </Box>
-              </Grid>
-            )}
-          {newSignUp && (
-            <Grid
-              item
-              xs={12}
-              sm={9}
-              md={7}
-              component={Paper}
-              square
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                height: "100%",
-              }}
-            >
-              <Box
-                sx={{
-                  my: 8,
-                  mx: 4,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                }}
-              >
-                <Typography component="h1" variant="h5" paddingBottom={3}>
-                  Create your account
-                </Typography>
-                <Box sx={{ mt: 1, width: "100%" }}>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6}>
+                    {isSignUp && (
                       <TextField
-                        autoComplete="given-name"
-                        name="firstName"
-                        required
                         fullWidth
-                        id="firstName"
-                        label="First Name"
-                        autoFocus
-                        value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
-                        inputProps={{ maxLength: 30 }}
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        required
-                        fullWidth
-                        id="lastName"
-                        label="Last Name"
-                        name="lastName"
-                        autoComplete="family-name"
-                        value={lastName}
-                        onChange={(e) => setLastName(e.target.value)}
-                        inputProps={{ maxLength: 30 }}
-                      />
-                    </Grid>
-                    <Grid item xs={12}>
-                      <TextField
-                        required
-                        fullWidth
-                        id="email"
-                        label="Email Address"
-                        name="email"
-                        autoComplete="email"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        inputProps={{ maxLength: 40 }}
-                      />
-                    </Grid>
-                    <Grid item xs={12}>
-                      <TextField
-                        required
-                        fullWidth
-                        name="password"
-                        label="Password"
-                        type="password"
-                        id="password"
-                        autoComplete="new-password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        inputProps={{ maxLength: 50 }}
-                      />
-                    </Grid>
-                    <Grid item xs={12}>
-                      <TextField
-                        required
-                        fullWidth
-                        name="confirmPassword"
-                        label="Confirm password"
-                        type="password"
-                        id="confirmPassword"
+                        label="Confirm Password"
+                        type={showConfirmPassword ? "text" : "password"}
+                        variant="outlined"
+                        margin="normal"
                         autoComplete="new-password"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        inputProps={{ maxLength: 50 }}
+                        InputProps={{
+                          startAdornment: <InputAdornment position="start"><Lock {...iconProps} /></InputAdornment>,
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <IconButton onClick={() => setShowConfirmPassword(!showConfirmPassword)} edge="end" sx={{ p: 0.5, border: 'none', outline: 'none' }}>
+                                {showConfirmPassword ? <VisibilityOff {...iconProps} /> : <Visibility {...iconProps} />}
+                              </IconButton>
+                            </InputAdornment>
+                          ),
+                        }}
+                        sx={inputStyles}
                       />
-                    </Grid>
-                  </Grid>
-                  <Typography
-                    variant="body2"
-                    color="textSecondary"
-                    align="center"
-                    paddingBottom={2}
-                    marginTop={2}
-                  >
-                    Providing personal information is optional and entirely at your
-                    discretion. You can use this app without sharing any personal
-                    details beyond those necessary for account setup.
-                  </Typography>
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    color="primary"
-                    onClick={handleSignUp}
-                    sx={{ mt: 3, mb: 2 }}
-                  >
-                    Sign Up
-                  </Button>
-                  <Grid container>
-                    <Grid item xs>
-                      <Link
-                        href="#"
-                        variant="body2"
-                        onClick={() => setNewSignUp(false)}
-                      >
-                        Already have an account? {"Sign in"}
-                      </Link>
-                    </Grid>
-                  </Grid>
-                </Box>
-              </Box>
-            </Grid>
-          )}
-
-          {/* new user change password  */}
-          {!loading && newUserPassword && (
-            <Box
-              sx={{
-                my: 8,
-                mx: 4,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-              }}
-            >
-              <Typography component="h1" variant="h5" paddingBottom={3}>
-                New User
-              </Typography>
-              <p className="text-sm">
-                Please enter a new password for your account.
-              </p>
-              <div className="flex flex-col items-center justify-center">
-                <form onSubmit={handleNewUserPassword}>
-                  <input
-                    className="input input-bordered mt-1 h-10 w-full text-xs"
-                    name="newPassword"
-                    placeholder="New Password"
-                    type="password"
-                    required
-                  />
-                  <input
-                    className="input input-bordered mt-1 h-10 w-full text-xs"
-                    name="confirmNewPassword"
-                    placeholder="Confirm New Password"
-                    type="password"
-                    required
-                  />
-                  {passwordError && (
-                    <div className="block text-m mb-1 mt-6 text-red-600">
-                      {passwordError}
-                    </div>
-                  )}
-                  <Button
-                    type="submit"
-                    fullWidth
-                    variant="contained"
-                    color="primary"
-                    sx={{ mt: 3, mb: 2 }}
-                  >
-                    Submit New Password
-                  </Button>
-                </form>
-              </div>
-            </Box>
-          )}
-          {/* new user confirm signup  */}
-          {!loading && signUpConfirmation && (
-            <Box
-              sx={{
-                my: 8,
-                mx: 2,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                margin: "0 auto", // Center the content horizontally
-                justifyContent: "center", // Center the content vertically
-
-              }}
-            >
-              <Typography component="h1" variant="h5" paddingBottom={3}>
-                Account not verified
-              </Typography>
-              <p className="text-sm">
-                Please enter the confirmation code sent to your email.
-              </p>
-              <div className="flex flex-col items-center justify-center">
-                <form onSubmit={handleConfirmSignUp}>
-                  <input
-                    className="input input-bordered mt-1 h-10 w-full text-xs bg-gray-200 border border-gray-400 rounded pl-2"
-                    name="confirmationCode"
-                    placeholder="Confirmation Code"
-                    type="password"
-                    maxLength={15}
-                    required
-                  />
-                  {confirmationError && (
-                    <div className="block text-m mb-1 mt-6 text-red-600">
-                      {confirmationError}
-                    </div>
-                  )}
-                  <Button
-                    type="submit"
-                    fullWidth
-                    variant="contained"
-                    color="primary"
-                    sx={{ mt: 3, mb: 2 }}
-                  >
-                    Submit
-                  </Button>
-                  <Button
-                    type="button"
-                    fullWidth
-                    variant="contained"
-                    color="primary"
-                    sx={{ mt: 3, mb: 2 }}
-                    onClick={resendConfirmationCode}
-                  >
-                    Resend Code
-                  </Button>
-                </form>
-              </div>
-            </Box>
-          )}
-          {/* forgot password?  */}
-          {!loading && forgotPassword && (
-            <Grid
-              item
-              xs={12}
-              sm={12}
-              md={7}
-              component={Paper}
-              square
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                height: "100vh", // Center vertically and horizontally
-              }}
-            >
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  width: "100%",
-                  maxWidth: "500px", // Adjust for a clean form size
-                  padding: 4, // Spacing around content
-                }}
-              >
-                {/* Title */}
-                <Typography
-                  component="h1"
-                  variant="h5"
-                  sx={{
-                    mb: 3,
-                    textAlign: "center",
-                    fontSize: "1.8rem", // Match font size with Sign In
-                  }}
-                >
-                  Reset Password
-                </Typography>
-
-                {/* Request Reset */}
-                {step === "requestReset" && (
-                  <>
-                    <TextField
-                      label="Email Address"
-                      type="email"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      fullWidth
-                      margin="normal"
-                      inputProps={{ maxLength: 40 }}
-                      sx={{
-                        fontSize: "1rem", // Ensure input matches font size
-                      }}
-                    />
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={() => handleResetPassword(username)}
-                      fullWidth
-                      sx={{
-                        mt: 3,
-                        mb: 2,
-                        py: 1.2, // Vertical padding for height consistency
-                        fontSize: "1rem", // Match button text font size
-                      }}
-                    >
-                      Send Reset Code
+                    )}
+                    {!isSignUp && (
+                      <Box textAlign="right" mt={1}>
+                        <Link href="#" underline="hover" onClick={(e) => { e.preventDefault(); setIsReset(true); }} sx={{ fontSize: 13, color: 'var(--primary)' }}>
+                          Forgot password?
+                        </Link>
+                      </Box>
+                    )}
+                    <Button type="submit" fullWidth variant="contained" sx={{ mt: 2, color: "white", backgroundColor: "var(--primary)", boxShadow: 'none', borderRadius: 2, fontFamily: 'Outfit' }} disabled={loading}>
+                      {loading ? <CircularProgress size={24} color="inherit" /> : isSignUp ? "Sign Up" : "Sign In"}
                     </Button>
+                    <Box textAlign="center" mt={2}>
+                      <Link href="#" onClick={(e) => { e.preventDefault(); setIsSignUp(prev => !prev); }} underline="hover" sx={{ fontSize: 14, color: "var(--primary)" }}>
+                        {isSignUp ? "Already have an account? Sign In" : "Don't have an account? Sign Up"}
+                      </Link>
+                    </Box>
                   </>
                 )}
-
-                {/* Confirm Reset */}
-                {step === "confirmReset" && (
-                  <Box component="form" noValidate onSubmit={handleConfirmResetPassword}>
-                    <TextField
-                      label="Confirmation Code"
-                      value={confirmationCode}
-                      onChange={(e) => setConfirmationCode(e.target.value)}
-                      fullWidth
-                      margin="normal"
-                      inputProps={{ maxLength: 15 }}
-                      sx={{ fontSize: "1rem" }}
-                    />
-                    <TextField
-                      label="New Password"
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      fullWidth
-                      margin="normal"
-                      inputProps={{ maxLength: 50 }}
-                      sx={{ fontSize: "1rem" }}
-                    />
-                    <Button
-                      type="submit"
-                      variant="contained"
-                      color="primary"
-                      fullWidth
-                      sx={{
-                        mt: 3,
-                        mb: 2,
-                        py: 1.2,
-                        fontSize: "1rem",
-                        fontWeight: "bold",
-                      }}
-                    >
-                      Reset Password
-                    </Button>
-                  </Box>
-                )}
-
-                {/* Success Message */}
-                {step === "done" && (
-                  <Typography
-                    color="primary"
-                    sx={{ mt: 3, textAlign: "center", fontSize: "1.2rem" }}
-                  >
-                    Password has been successfully reset.
-                  </Typography>
-                )}
-
-                {/* Error Message */}
-                {error && (
-                  <Typography
-                    color="error"
-                    sx={{ mt: 2, textAlign: "center", fontSize: "1rem" }}
-                  >
-                    {error}
-                  </Typography>
-                )}
-
-                {/* Remember Password Link */}
-                <Link
-                  href="#"
-                  variant="body2"
-                  onClick={() => setForgotPassword(false)}
-                  sx={{
-                    mt: 3,
-                    textAlign: "center",
-                    display: "block",
-                    fontSize: "1rem",
-                    fontWeight: "bold",
-                    color: "primary.main", // Match link color
-                  }}
-                >
-                  Remember your Password? <strong>Sign in</strong>
-                </Link>
-              </Box>
-            </Grid>
-          )}
-        </Grid>
-      </PageContainer>
-      <ToastContainer
-        position="top-center"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="colored"
-      />
-    </ThemeProvider>
+              </>
+            )}
+          </Box>
+        </Box>
+      </Grid>
+    </Grid>
   );
 };
 

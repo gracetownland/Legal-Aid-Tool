@@ -7,6 +7,8 @@ import {
   FormControl,
   FormLabel,
   FormGroup,
+  RadioGroup,
+  Radio,
   FormControlLabel,
   Checkbox,
   Select,
@@ -421,9 +423,11 @@ const handleSubmitWithAudio = async () => {
           sx={{
             mt: 8,
             p: 4,
-            backgroundColor: "white",
-            borderRadius: 2,
+            backgroundColor: "var(--background)",
+            color: "var(--text)",
+            borderRadius: 3,
             width: "80%",
+            border: "1px solid var(--border)",
           }}
         >
           {step === "initial" && (

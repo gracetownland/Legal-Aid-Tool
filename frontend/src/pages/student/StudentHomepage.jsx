@@ -143,7 +143,15 @@ export const StudentHomepage = () => {
             );
           });
         })
-        .then((response) => response.json())
+        .then((response) => {
+          if (response.status === 404) {
+            setLoading(false);
+            setCases([]); // Set cases to an empty array if no cases are found
+            return; // Stop further execution
+          }
+  
+          return response.json(); // Parse response JSON if not 404
+        })
         .then((data) => {
           // Sort cases by last_updated (most recent first)
           const sortedCases = data.sort((a, b) => new Date(b.last_updated) - new Date(a.last_updated));
@@ -153,7 +161,6 @@ export const StudentHomepage = () => {
         })
         .catch((error) => {
           console.error("Error fetching cases:", error);
-          setError("Failed to load cases.");
         });
     };
 
@@ -239,10 +246,15 @@ export const StudentHomepage = () => {
                       <Typography
                         variant="body1"
                         sx={{
+                          position: "absolute",
+                          top: "50%",
+                          left: "50%",
+                          transform: "translate(-50%, -50%)",
                           color: '#808080',
                           textAlign: "center",
                           mt: 2,
                           fontSize: "1.5rem",
+                          fontFamily: "Outfit",
                         }}
                       >
                         No cases yet, start a new one
@@ -320,7 +332,7 @@ export const StudentHomepage = () => {
                                     mb: 1,
                                     color:
                                       caseItem.status === "Review Feedback"
-                                        ? "green"
+                                        ? "var(--feedback)"
                                         : "grey",
                                   }}
                                 >
