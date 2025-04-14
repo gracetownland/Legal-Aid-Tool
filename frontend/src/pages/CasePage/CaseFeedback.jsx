@@ -9,6 +9,7 @@ import InstructorHeader from "../../components/InstructorHeader";
 import { fetchAuthSession } from "aws-amplify/auth";
 import SendIcon from "@mui/icons-material/Send";
 import FeedbackIcon from '@mui/icons-material/Feedback';
+import Divider from "@mui/material/Divider";
 
 const FeedbackPage = () => {
   const { caseId } = useParams();
@@ -89,11 +90,28 @@ const FeedbackPage = () => {
             >
               {messages.length > 0 ? (
                 messages.map((msg) => (
-                  <Box key={msg.id} mb={2}>
-                    <Typography variant="body1" sx={{ whiteSpace: "pre-wrap" }}>{msg.message_content}</Typography>
-                    <Typography variant="caption" color="#808080">
-                      Sent by: {msg.first_name} {msg.last_name}
+                  <Box key={msg.message_id} mb={2} style={{ border: "1px solid var(--border)", borderRadius: "8px", padding: "0px", backgroundColor: "var(--background)" }}>
+                    <Stack direction="row" spacing={1} justifyContent="space-between" alignItems="center">
+                    <Typography variant="caption" color="var(--text)" pt={1} pl={1} pr={1} pb={0.5}>
+                      From: {msg.first_name} {msg.last_name}
                     </Typography>
+                    <Typography variant="caption" color="var(--text)" pt={1} pl={1} pr={1} pb={0.5}>
+                    {new Date(msg.time_sent).toLocaleTimeString(undefined, {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}, {" "}
+                     
+                    {new Date(msg.time_sent).toLocaleDateString(undefined, {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    })} 
+                    </Typography>
+                    
+                    </Stack>
+                    <Divider sx={{ borderColor: "var(--border)", width: '100%' }} />
+                    <Typography variant="body1" sx={{ whiteSpace: "pre-wrap", padding: '10px' }}>{msg.message_content}</Typography>
+                    
                   </Box>
                 ))
               ) : (
