@@ -376,10 +376,11 @@ const handleSubmitWithAudio = async () => {
     
     const { tokens } = await fetchAuthSession();
     const token = tokens.idToken;
+    const cognito_id = tokens.idToken.payload.sub;
     
     try {
       const init_llm_response = await fetch(
-        `${import.meta.env.VITE_API_ENDPOINT}student/text_generation?case_id=${case_id}&audio_flag=true`,
+        `${import.meta.env.VITE_API_ENDPOINT}student/text_generation?case_id=${case_id}&audio_flag=true&user_id=${cognito_id}`,
         {
           method: "POST",
           headers: {
