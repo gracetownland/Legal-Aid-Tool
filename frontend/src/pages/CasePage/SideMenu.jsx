@@ -41,8 +41,10 @@ const SideMenu = () => {
         });
   
         const data = await res.json();
+
+        console.log(data.messages)
         
-        if (data.caseData.status === "Review Feedback") {
+        if (data.messages.filter((msg)=> msg.is_read === false).length > 0) {
           setIsUnreadFeedback(true);
         }
       };

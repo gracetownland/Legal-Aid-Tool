@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Box, Typography, Button, Stack, TextField, Card, CardContent, Snackbar, Alert, Container
 } from "@mui/material";
@@ -17,6 +17,7 @@ const FeedbackPage = () => {
   const [messages, setMessages] = useState([]);
   const [feedback, setFeedback] = useState("");
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+  const messageRefs = useRef({});
 
   const handleSnackbarClose = () => setSnackbar((prev) => ({ ...prev, open: false }));
 
@@ -39,6 +40,88 @@ const FeedbackPage = () => {
     fetchCaseData();
   }, [caseId]);
 
+
+  useEffect(() => {
+    if (!messages.length) return;
+  
+    const timeoutMap = new Map();
+    
+  
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const messageId = entry.target.dataset.messageId;
+  
+          // If it's visible and the tab is active
+          if (entry.isIntersecting && document.visibilityState === "visible") {
+            const timeoutId = setTimeout(() => {
+              if (
+                entry.isIntersecting &&
+                document.visibilityState === "visible"
+              ) {
+                console.log(`Message ${messageId} has been in view for 2 seconds`);
+                
+                
+                readMessage(messageId);
+
+              }
+            }, 2000);
+  
+            timeoutMap.set(messageId, timeoutId);
+            entry.target.dataset.timeoutId = timeoutId;
+          } else {
+            // Clear if they scrolled away or tab is hidden
+            const id = timeoutMap.get(messageId);
+            if (id) clearTimeout(id);
+          }
+        });
+      },
+      { threshold: 1.0 }
+    );
+  
+    messages.forEach((msg) => {
+      const el = messageRefs.current[msg.message_id];
+      if (el) {
+        el.dataset.messageId = msg.message_id;
+        observer.observe(el);
+      }
+    });
+
+    const readMessage = async (messageId) => {
+      try {
+        const session = await fetchAuthSession();
+        const token = session.tokens.idToken;
+        fetch(`${import.meta.env.VITE_API_ENDPOINT}student/read_message?message_id=${messageId}`, {
+          method: "PUT",
+          headers: {
+            Authorization: token,
+            "Content-Type": "application/json",
+          },
+        });
+      } catch (error) {
+        console.error("Error reading message:", error);
+      }
+    }
+  
+    // Listen for tab switch
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        for (const id of timeoutMap.values()) {
+          clearTimeout(id);
+        }
+      }
+    };
+  
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+  
+    return () => {
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      for (const id of timeoutMap.values()) {
+        clearTimeout(id);
+      }
+    };
+  }, [messages]);
 
 
   const handleSubmitFeedback = async () => {
@@ -90,7 +173,7 @@ const FeedbackPage = () => {
             >
               {messages.length > 0 ? (
                 messages.map((msg) => (
-                  <Box key={msg.message_id} mb={2} style={{ border: "1px solid var(--border)", borderRadius: "8px", padding: "0px", backgroundColor: "var(--background)" }}>
+                  <Box key={msg.message_id} ref={(el)=>(messageRefs.current[msg.message_id] = el)} mb={2} style={{ border: "1px solid var(--border)", borderRadius: "8px", padding: "0px", backgroundColor: "var(--background)" }}>
                     <Stack direction="row" spacing={1} justifyContent="space-between" alignItems="center">
                     <Typography variant="caption" color="var(--text)" pt={1} pl={1} pr={1} pb={0.5}>
                       From: {msg.first_name} {msg.last_name}
