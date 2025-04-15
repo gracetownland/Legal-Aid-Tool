@@ -324,7 +324,6 @@ const InterviewAssistant = () => {
           sx={{
             display: "flex",
             flexDirection: "column",
-            justifyContent: "space-between",
             padding: 2,
             width: "100%",
           }}
