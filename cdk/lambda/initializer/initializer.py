@@ -59,7 +59,9 @@ def handler(event, context):
                 "last_name" varchar,
                 "time_account_created" timestamp,
                 "roles" varchar[],
-                "last_sign_in" timestamp DEFAULT now()
+                "last_sign_in" timestamp DEFAULT now(),
+                "activity_counter" integer DEFAULT 0,
+                "last_activity" timestamp DEFAULT now()
             );
 
             CREATE TABLE IF NOT EXISTS "messages" (
