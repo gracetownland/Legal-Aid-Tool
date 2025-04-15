@@ -221,7 +221,7 @@ const ViewAllCases = () => {
                         fontWeight: 500,
                         mt: 1,
                         mb: 1,
-                        color: caseItem.status === "Review Feedback" ? "green" : "grey",
+                        color: caseItem.status === "Review Feedback" ? "orange" : (caseItem.status === "Sent to Review" ? "var(--feedback)" : "var(--text-secondary)"),
                       }}
                     >
                       {caseItem.status}

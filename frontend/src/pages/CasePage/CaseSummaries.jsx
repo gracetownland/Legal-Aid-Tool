@@ -414,7 +414,7 @@ const SummariesPage = () => {
               Summaries 
               </Typography>
               <Typography variant="h4" fontWeight={400} fontSize={20} mb={0} fontFamily="Outfit" textAlign="left">
-              for case: "{caseData.case_title}"
+              For Case: "{caseData.case_title}"
               </Typography>
               </div>
             )}
@@ -478,7 +478,7 @@ const SummariesPage = () => {
                                 backgroundColor: "var(--primary)",
                               },
                               boxShadow: "none", // Optional: removes default MUI shadow
-                              borderRadius: 2, // Optional: for consistent button shape
+                              borderRadius: 5, // Optional: for consistent button shape
                               fontFamily: "Outfit", // Optional: if you're using this font
                             }}
                           >
@@ -493,7 +493,7 @@ const SummariesPage = () => {
                                 backgroundColor: "var(--primary)",
                               },
                               boxShadow: "none", // Optional: removes default MUI shadow
-                              borderRadius: 2, // Optional: for consistent button shape
+                              borderRadius: 5, // Optional: for consistent button shape
                               fontFamily: "Outfit", // Optional: if you're using this font
                             }}
                             onClick={() => handleView(summary)}>
@@ -559,7 +559,8 @@ const SummariesPage = () => {
                   backgroundColor: "var(--primary)",
                 },
                 boxShadow: "none",
-                borderRadius: 2, 
+                padding: 1,
+                borderRadius: 5, 
                 fontFamily: "Outfit",
               }}
             >

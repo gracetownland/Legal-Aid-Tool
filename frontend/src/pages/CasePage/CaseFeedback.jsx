@@ -164,7 +164,7 @@ const FeedbackPage = () => {
           <div>
           <Typography variant="h4" fontWeight={600} fontFamily="Outfit">Feedback</Typography>
           <Typography variant="h4" fontWeight={400} fontFamily="Outfit" fontSize={20} mb={1} textAlign="left">
-                        for case: "{caseData.case_title}"
+                        For Case: "{caseData.case_title}"
           </Typography>
                         </div>
           {userRole === "student" && (
