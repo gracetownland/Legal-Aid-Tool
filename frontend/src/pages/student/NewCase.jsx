@@ -293,7 +293,7 @@ const NewCaseForm = () => {
                     borderColor: "var(--border)", // Set focused border color
                   },
                   "& input": {
-                    color: "var(--text)", // Set input text color
+                    color: "var(--text)",
                   },
                   "& .MuiInputBase-input::placeholder": {
                     color: "var(--placeholder-text)", // Set placeholder text color
@@ -305,6 +305,7 @@ const NewCaseForm = () => {
                   name="province"
                   value={formData.province}
                   onChange={handleChange}
+                  sx={{color: 'var(--text)'}}
                 >
                   {[
                     "Alberta",
@@ -331,7 +332,7 @@ const NewCaseForm = () => {
             <div style={{display: "flex", flexDirection: "row", gap: "1rem"}}>
 
             
-<p style={{marginTop: 10, color: 'grey'}}>Statute Applicable?</p>
+<p style={{marginTop: 10, color: 'var(--text)'}}>Statute Applicable?</p>
 <RadioGroup
   name="statute"
   value={formData.statute}
