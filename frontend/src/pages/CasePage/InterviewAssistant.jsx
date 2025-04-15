@@ -286,7 +286,7 @@ const InterviewAssistant = () => {
       } catch (error) {
         console.error("Error:", error);
         setIsAItyping(false);
-        return "Error getting response.";
+        return error;
       }
     }
 
