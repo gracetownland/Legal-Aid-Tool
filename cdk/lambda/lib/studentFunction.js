@@ -385,11 +385,22 @@ exports.handler = async (event) => {
             if (event.queryStringParameters && event.queryStringParameters.message_id) {
               const message_id = event.queryStringParameters.message_id;
               try {
-                const read = await sqlConnection`
+                // Mark the message as read
+                await sqlConnection`
                   UPDATE messages SET is_read = true WHERE message_id = ${message_id};
-                `; 
-
-                  response.body = JSON.stringify(read);
+                `;
+          
+                // Update case status only if current status is 'Review Feedback'
+                await sqlConnection`
+                  UPDATE cases
+                  SET status = 'In Progress'
+                  WHERE case_id = (
+                    SELECT case_id FROM messages WHERE message_id = ${message_id}
+                  )
+                  AND status = 'Review Feedback';
+                `;
+          
+                response.body = JSON.stringify({ success: true });
               } catch (err) {
                 response.statusCode = 500;
                 console.log(err);
@@ -399,7 +410,7 @@ exports.handler = async (event) => {
               response.statusCode = 400;
               response.body = JSON.stringify({ error: "Message ID is required" });
             }
-            break;  
+            break;
     
             case "GET /student/notifications":
               if (event.queryStringParameters && event.queryStringParameters.user_id) {
