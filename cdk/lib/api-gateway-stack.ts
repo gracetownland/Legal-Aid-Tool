@@ -1132,6 +1132,22 @@ export class ApiGatewayStack extends cdk.Stack {
       sourceArn: `arn:aws:execute-api:${this.region}:${this.account}:${this.api.restApiId}/*/*/student*`,
     });
 
+
+    textGenLambdaDockerFunc.addToRolePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: [
+          "bedrock:CreateGuardrail",
+          "bedrock:CreateGuardrailVersion",
+          "bedrock:DeleteGuardrail", // Permission to create guardrails
+          "bedrock:ListGuardrails",  // (Optional) To list existing guardrails
+          "bedrock:InvokeGuardrail",
+          "bedrock:ApplyGuardrail"  // (Optional) To invoke the guardrail for filtering
+        ],
+        resources: ["*"], // Replace with specific resource ARNs if available
+      })
+    );
+
     textGenLambdaDockerFunc.role?.attachInlinePolicy(
       new iam.Policy(this, "S3ReadWritePolicy", {
         statements: [
