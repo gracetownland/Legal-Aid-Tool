@@ -409,9 +409,14 @@ const SummariesPage = () => {
           <Stack minHeight="100vh">
             <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
             {caseData && (
-              <Typography variant="h4" fontWeight={600} mb={0} textAlign="left">
-                Case #{caseData.case_hash}
+              <div>
+              <Typography variant="h4" fontWeight={600} mb={0} fontFamily="Outfit" textAlign="left">
+              Summaries 
               </Typography>
+              <Typography variant="h4" fontWeight={400} fontSize={20} mb={0} fontFamily="Outfit" textAlign="left">
+              for case: "{caseData.case_title}"
+              </Typography>
+              </div>
             )}
             </Stack>
             {summaries.length > 0 ? (

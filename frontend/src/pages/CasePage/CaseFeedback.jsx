@@ -13,6 +13,7 @@ import Divider from "@mui/material/Divider";
 
 const FeedbackPage = () => {
   const { caseId } = useParams();
+  const [caseData, setCaseData] = useState({});
   const [userRole, setUserRole] = useState("student");
   const [messages, setMessages] = useState([]);
   const [feedback, setFeedback] = useState("");
@@ -34,6 +35,7 @@ const FeedbackPage = () => {
 
       const data = await res.json();
       setMessages(data.messages || []);
+      setCaseData(data.caseData || {});
       console.log("messages: ", data.messages[0].message_content);
     };
 
@@ -159,8 +161,12 @@ const FeedbackPage = () => {
         <SideMenu />
 
         <Container sx={{ flexGrow: 1, p: 4, maxWidth: "900px", mx: "auto", textAlign: "left" }}>
-          <Typography variant="h4" fontWeight={600} gutterBottom>Feedback</Typography>
-
+          <div>
+          <Typography variant="h4" fontWeight={600} fontFamily="Outfit">Feedback</Typography>
+          <Typography variant="h4" fontWeight={400} fontFamily="Outfit" fontSize={20} mb={1} textAlign="left">
+                        for case: "{caseData.case_title}"
+          </Typography>
+                        </div>
           {userRole === "student" && (
             <Box
               sx={{
