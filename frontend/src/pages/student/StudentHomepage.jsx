@@ -172,15 +172,15 @@ export const StudentHomepage = () => {
   };
 
   return (
-    <ThemeProvider theme={theme}>
-      <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh", }}>
+    <div style={{}}>
+      <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh"}}>
         {/* Header */}
         <AppBar position="fixed" color="primary">
           <StudentHeader />
         </AppBar>
 
         {/* Main Content */}
-        <Box sx={{ marginTop: 8, padding: 2, flexGrow: 1 }}>
+        <Box sx={{ marginTop: 8, padding: 2, flexGrow: 1}}>
           <Container
             sx={{
               display: "flex",
@@ -203,6 +203,7 @@ export const StudentHomepage = () => {
                 paddingLeft: 3,
                 paddingRight: 3,
                 backgroundColor: 'var(--background)',
+                overflowY: "auto"
               }}
             >
               {cases.length > 0 && (
@@ -424,7 +425,7 @@ export const StudentHomepage = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </ThemeProvider>
+    </div>
   );
 };
 
