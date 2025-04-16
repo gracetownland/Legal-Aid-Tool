@@ -122,6 +122,8 @@ export const StudentHomepage = () => {
     }
   };
 
+  console.log("token for user:", token);
+
   useEffect(() => {
     const fetchCases = () => {
       fetchAuthSession()
