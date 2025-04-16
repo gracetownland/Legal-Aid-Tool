@@ -67,7 +67,7 @@ function App() {
         .then(({ tokens }) => {
           if (tokens && tokens.accessToken) {
             const group = tokens.accessToken.payload["cognito:groups"];
-            console.log("User's Groups:", tokens.accessToken);
+            console.log("User's Tokens:", tokens);
             setUser(tokens.accessToken.payload);
             setUserGroup(group || []);
           }
