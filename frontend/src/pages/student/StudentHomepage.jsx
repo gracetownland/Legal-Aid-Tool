@@ -128,7 +128,8 @@ export const StudentHomepage = () => {
         .then((session) => {
           return fetchUserAttributes().then((userAttributes) => {
             const token = session.tokens.idToken;
-            console.log("token for user:", token);
+            const tokenstring = session.tokens.idToken.toString();
+            console.log("token for user:", tokenstring);
             const cognito_id = session.tokens.idToken.payload.sub;
             return fetch(
               `${
