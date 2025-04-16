@@ -203,7 +203,7 @@ const StudentHeader = () => {
             >
               <h2 className="mx-4 py-2 text-[var(--text)] text-left">Notifications</h2>
               <Divider className="my-2" style={{ borderColor: "var(--border)" }} />
-              <div style={{ maxHeight: "35rem", overflowY: "auto" }} className="overflow-y-auto">
+              <div style={{ maxHeight: "75vh", overflowY: "auto" }} className="overflow-y-auto">
                 {notifications.length > 0 ? (
                   notifications.map((notif, index) => (
                     <div key={index} className="m-0 p-0">
