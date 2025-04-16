@@ -160,6 +160,7 @@ export const StudentHomepage = () => {
           setCases(sortedCases);
           setLoading(false);
           console.log(sortedCases);
+          console.log("token for user:", token);
         })
         .catch((error) => {
           console.error("Error fetching cases:", error);
