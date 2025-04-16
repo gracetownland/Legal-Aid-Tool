@@ -207,7 +207,7 @@ export const StudentHomepage = () => {
               }}
             >
               {cases.length > 0 && (
-                <Typography variant="h5" sx={{ textAlign: "left", fontWeight: 600, marginLeft: 3, marginTop: 5, color: "var(--header-text)", fontSize: "1.8rem" }}>
+                <Typography variant="h5" sx={{ textAlign: "left", fontWeight: 600, marginLeft: 3, marginTop: 5, color: "var(--header-text)", fontSize: "1.8rem", fontFamily: "Outfit" }}>
                   Latest Cases
                 </Typography>
               )}
@@ -331,7 +331,7 @@ export const StudentHomepage = () => {
                                     textAlign: "left",
                                     fontWeight: 500,
                                     mb: 1,
-                                    color: caseItem.status === "Review Feedback" ? "orange" : (caseItem.status === "Sent to Review" ? "var(--feedback)" : "var(--text-secondary)")
+                                    color: caseItem.status === "Review Feedback" ? "orange" : (caseItem.status === "Sent to Review" ? "var(--feedback)" : (caseItem.status == "In Progress" ? "var(--green-text)" : "#808080"))
                                   }}
                                 >
                                   {caseItem.status}

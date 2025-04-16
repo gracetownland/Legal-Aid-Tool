@@ -21,6 +21,7 @@
   --sender-text: #f0f0f0;
   --input: #c4c4c4;
   --placeholder-text: #696873;
+  --green-text: #2e9832;
   --border: #cccccc;
   --feedback: #3b58ff;
 
@@ -43,6 +44,7 @@
   :root {
     --text: #ffffff;
     --text-secondary: #aaaaaa;
+    --green-text: #65ff6a;
     --text-button: #0e0e0e;
     --background: #2c2c2c;
     --background2: #171717;
