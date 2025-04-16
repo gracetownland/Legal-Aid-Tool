@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { signOut } from "aws-amplify/auth";
 import { UserContext } from "../App";
 import HomeIcon from "@mui/icons-material/Home";
+import AssignmentIcon from "@mui/icons-material/Assignment";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 
 const InstructorHeader = () => {
@@ -90,6 +91,14 @@ const InstructorHeader = () => {
         >
           <HomeIcon fontSize="large" />
           <span className="mt-1">Home</span>
+        </button>
+
+        <button
+          onClick={() => navigate("/all-cases")}
+          className="flex flex-col items-center bg-transparent text-[var(--header-text)] hover:text-gray-600 focus:outline-none transition-all duration-200"
+        >
+          <AssignmentIcon fontSize="large" />
+          <span className="mt-1">All Cases</span>
         </button>
 
         {/* Optionally, you can include a "View as Student" button here if needed:

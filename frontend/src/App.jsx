@@ -24,6 +24,9 @@ import PrelimSummary from "./pages/CasePage/PrelimSummary";
 import AdminChangeSystemPrompt  from "./pages/admin/AdminChangeSystemPrompt";
 import SummariesPage from "./pages/CasePage/CaseSummaries";
 import CaseFeedback from "./pages/CasePage/CaseFeedback";
+import AllCasesPage from "./pages/instructor/InstructorAllCases";
+// import Transcriptions from "./pages/student/Transcriptions";
+
 
 export const UserContext = createContext();
 
@@ -92,6 +95,14 @@ function App() {
     }
   };
 
+  const getAllCases = () => {
+    if (userGroup && userGroup.includes("instructor")) {
+        return <AllCasesPage />;
+    } else {
+      return <ViewAllCases />;
+    } 
+  };
+
   return (
     <UserContext.Provider
       value={ user }
@@ -104,6 +115,8 @@ function App() {
           />
           <Route path="/new-case" element={<NewCaseForm />} />
           <Route path="/cases" element={<ViewAllCases />} />
+          <Route path="/all-cases" element={getAllCases()} />
+          {/* <Route path="/transcriptions" element={<Transcriptions />} /> */}
           <Route path="/home/*" element={getHomePage()} />
           <Route path="/case/:caseId/interview-assistant" element={<InterviewAssistant />} />
           <Route path="/case/:caseId/overview/*" element={<CaseOverview />} />
