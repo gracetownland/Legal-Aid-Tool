@@ -1,353 +1,282 @@
 import os
 import json
-import boto3
 import logging
 import hashlib
 import base64
 import uuid
 import time
 import psycopg2
+import boto3
 from botocore.exceptions import ClientError
 
-# Setup logging
+# Configure logging for the Lambda function
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Environment variables (assumed to be set in your environment)
-DB_SECRET_NAME = os.environ["SM_DB_CREDENTIALS"]
-REGION = os.environ["REGION"]
-RDS_PROXY_ENDPOINT = os.environ["RDS_PROXY_ENDPOINT"]
+# Environment variables (to be set in Lambda configuration)
+DB_SECRET_NAME = os.environ["SM_DB_CREDENTIALS"]  # Secrets Manager secret name for DB credentials
+REGION = os.environ["REGION"]                   # AWS region for SSM and Bedrock calls
+RDS_PROXY_ENDPOINT = os.environ["RDS_PROXY_ENDPOINT"]  # RDS Proxy endpoint for DB connections
 
-# AWS Clients
+# AWS service clients
 secrets_manager_client = boto3.client("secretsmanager")
 ssm_client = boto3.client("ssm", region_name=REGION)
 bedrock_runtime = boto3.client("bedrock-runtime", region_name=REGION)
 
-# Cached resources
+# Global DB connection cache
 connection = None
 
-##########################################
-# Utility Functions for Secrets & DB
-##########################################
 
-def get_secret(secret_name, expect_json=True):
-    global connection
+def get_secret(secret_name: str, expect_json: bool = True) -> dict:
+    """
+    Retrieve a secret from AWS Secrets Manager and parse as JSON if requested.
+
+    Args:
+        secret_name: Name of the secret in Secrets Manager.
+        expect_json: Whether to JSON-decode the secret string.
+
+    Returns:
+        The parsed secret (dict if JSON, else raw string).
+
+    Raises:
+        Exception if the secret retrieval or parsing fails.
+    """
     try:
-        response = secrets_manager_client.get_secret_value(SecretId=secret_name)["SecretString"]
-        secret = json.loads(response) if expect_json else response
-    except Exception as e:
-        logger.error(f"Error fetching secret {secret_name}: {e}")
+        response = secrets_manager_client.get_secret_value(SecretId=secret_name)
+        raw = response["SecretString"]
+        return json.loads(raw) if expect_json else raw
+    except ClientError as e:
+        logger.error(f"Failed to retrieve secret {secret_name}: {e}")
         raise
-    return secret
+    except json.JSONDecodeError as e:
+        logger.error(f"Secret {secret_name} is not valid JSON: {e}")
+        raise
+
 
 def connect_to_db():
+    """
+    Establish or reuse a connection to the RDS database via the RDS proxy.
+
+    Uses credentials from Secrets Manager.
+    """
     global connection
     if connection is None or connection.closed:
+        # Load DB credentials
+        secret = get_secret(DB_SECRET_NAME)
+        params = {
+            'dbname': secret['dbname'],
+            'user': secret['username'],
+            'password': secret['password'],
+            'host': RDS_PROXY_ENDPOINT,
+            'port': secret['port']
+        }
+        # Build psycopg2 connection string
+        conn_str = ' '.join(f"{k}={v}" for k, v in params.items())
         try:
-            secret = get_secret(DB_SECRET_NAME)
-            connection_params = {
-                'dbname': secret["dbname"],
-                'user': secret["username"],
-                'password': secret["password"],
-                'host': RDS_PROXY_ENDPOINT,
-                'port': secret["port"]
-            }
-            connection_string = " ".join([f"{key}={value}" for key, value in connection_params.items()])
-            connection = psycopg2.connect(connection_string)
-            logger.info("Connected to the database!")
+            connection = psycopg2.connect(conn_str)
+            logger.info("Connected to RDS via proxy")
         except Exception as e:
-            logger.error(f"Failed to connect to database: {e}")
+            logger.error(f"Database connection error: {e}")
             if connection:
                 connection.rollback()
                 connection.close()
             raise
     return connection
 
+
 def hash_uuid(uuid_str: str) -> str:
     """
-    Generate a short Base64-encoded hash from a UUID string.
+    Generate a short Base64-based hash from a UUID string.
 
-    Steps:
-      1. Compute SHA-256 hash of the UUID string.
-      2. Encode the hash in URL-safe Base64.
-      3. Return the first 6 characters for compact ID.
+    - Compute SHA-256 digest of the UUID string.
+    - Encode in URL-safe Base64.
+    - Truncate to 6 characters for compactness.
+
+    Args:
+        uuid_str: The UUID string to hash.
+    Returns:
+        A 6-character URL-safe Base64 hash.
     """
-    sha_digest = hashlib.sha256(uuid_str.encode('utf-8')).digest()
-    base64_hash = base64.urlsafe_b64encode(sha_digest).decode('utf-8')
-    return base64_hash[:6]  # Adjust length as needed
+    sha = hashlib.sha256(uuid_str.encode('utf-8')).digest()
+    b64 = base64.urlsafe_b64encode(sha).decode('utf-8')
+    return b64[:6]
 
-
-##########################################
-# Guardrail Setup Function
-##########################################
 
 def setup_guardrail(guardrail_name: str) -> tuple[str, str]:
     """
-    Ensure a guardrail with a given name is created and published if it doesn't exist.
-    Returns a tuple (guardrail_id, guardrail_version).
+    Ensure a Bedrock guardrail exists (create if missing), and publish a version.
+
+    Guardrails enforce policies on content (like blocking PII, profanity, financial advice).
+
+    Args:
+        guardrail_name: Name identifier for the guardrail policy.
+    Returns:
+        A tuple of (guardrail_id, guardrail_version).
     """
     bedrock_client = boto3.client("bedrock", region_name=REGION)
     guardrail_id = None
     guardrail_version = None
-    guardrail_name_exists = False
 
+    # List existing guardrails to check for a match by name
     paginator = bedrock_client.get_paginator('list_guardrails')
     for page in paginator.paginate():
-        for guardrail in page.get('guardrails', []):
-            if guardrail['name'] == guardrail_name:
-                logger.info(f"Found guardrail: {guardrail_name}")
-                guardrail_id = guardrail['id']
-                guardrail_version = guardrail.get('version')
-                guardrail_name_exists = True
+        for gr in page.get('guardrails', []):
+            if gr['name'] == guardrail_name:
+                logger.info(f"Found existing guardrail: {guardrail_name}")
+                guardrail_id = gr['id']
+                guardrail_version = gr.get('version')
                 break
-        if guardrail_name_exists:
+        if guardrail_id:
             break
 
-    if not guardrail_name_exists:
-        logger.info(f"Creating new guardrail: {guardrail_name}")
-        response = bedrock_client.create_guardrail(
+    # Create guardrail if not found
+    if not guardrail_id:
+        logger.info(f"Creating guardrail: {guardrail_name}")
+        resp = bedrock_client.create_guardrail(
             name=guardrail_name,
-            description='Block financial advice, offensive content, and PII',
+            description='Enforce no financial advice, offensive or PII content.',
             topicPolicyConfig={
                 'topicsConfig': [
-                    {
-                        'name': 'FinancialAdvice',
-                        'definition': 'Providing personalized advice on managing financial assets or investments.',
-                        'examples': [
-                            'Which mutual fund should I invest in for retirement?',
-                            'Can you advise on the best way to reduce my debt?'
-                        ],
-                        'type': 'DENY'
-                    },
-                    {
-                        'name': 'OffensiveContent',
-                        'definition': 'Content that includes hate speech, discriminatory remarks, or explicit material.',
-                        'examples': [
-                            'Tell me a joke about [a specific race or religion].',
-                            'Share an offensive meme targeting [a specific group].'
-                        ],
-                        'type': 'DENY'
-                    },
-                    {
-                        'name': 'Profanity',
-                        'definition': 'Use of profane or obscene words or phrases.',
-                        'examples': [
-                            'fuck',
-                            'shit',
-                            'f*** off',
-                            'go f**k yourself'
-                        ],
-                        'type': 'DENY'
-                    }
+                    # DENY financial advice questions
+                    {'name': 'FinancialAdvice', 'definition': 'Any request for personalized financial guidance.', 'type':'DENY'},
+                    # DENY hate speech or explicit content
+                    {'name': 'OffensiveContent', 'definition': 'Hate or explicit material.', 'type':'DENY'},
+                    # DENY profanity
+                    {'name': 'Profanity', 'definition': 'Use of swear words.', 'type':'DENY'}
                 ]
             },
             sensitiveInformationPolicyConfig={
                 'piiEntitiesConfig': [
-                    {'type': 'EMAIL', 'action': 'BLOCK'},
-                    {'type': 'PHONE', 'action': 'BLOCK'},
-                    {'type': 'NAME', 'action': 'BLOCK'}
+                    {'type': 'EMAIL','action': 'BLOCK'},
+                    {'type': 'PHONE','action': 'BLOCK'},
+                    {'type': 'NAME','action': 'BLOCK'}
                 ]
             },
-            blockedInputMessaging='Sorry, I cannot respond to that.',
-            blockedOutputsMessaging='Sorry, I cannot respond to that.'
+            blockedInputMessaging='Sorry, I cannot process that content.',
+            blockedOutputsMessaging='Sorry, I cannot process that content.'
         )
-
-        logger.info("Waiting 5 seconds for guardrail status to become READY...")
+        guardrail_id = resp['guardrailId']
+        # Wait briefly for guardrail to become ready
         time.sleep(5)
-        guardrail_id = response['guardrailId']
-        logger.info(f"Guardrail ID: {guardrail_id}")
-
-        version_response = bedrock_client.create_guardrail_version(
+        # Publish version
+        ver_resp = bedrock_client.create_guardrail_version(
             guardrailIdentifier=guardrail_id,
-            description='Published version',
+            description='Initial published version',
             clientRequestToken=str(uuid.uuid4())
         )
-        guardrail_version = version_response['version']
-        logger.info(f"Guardrail Version: {guardrail_version}")
+        guardrail_version = ver_resp['version']
+        logger.info(f"Guardrail created: {guardrail_id} v{guardrail_version}")
 
     return guardrail_id, guardrail_version
 
-##########################################
-# New Case Handler Function
-##########################################
 
 def handler(event, context) -> dict:
     """
-    Processes a POST /student/new_case event:
-      - Validates user input with Bedrock guardrails.
-      - Retrieves the user from the DB using cognito_id.
-      - Inserts a new case and generates a SHA-256 hash for the case ID.
-      - Returns a JSON response with case_id and case_hash.
-      
-    Args:
-        event (dict): The incoming event containing query parameters and JSON body.
-    
-    Returns:
-        dict: A response dictionary with statusCode and a JSON-formatted body.
+    Lambda handler for POST /student/new_case:
+      1. Validates input via Bedrock guardrails.
+      2. Retrieves user by Cognito ID from DB.
+      3. Inserts new case record and computes a short hash.
+      4. Returns JSON with case_id and case_hash.
     """
-    conn = None
     try:
-        logger.info("Received event: %s", json.dumps(event, indent=2))
-        
-        # Extract the user id from query parameters
-        cognito_id = event.get("queryStringParameters", {}).get("user_id")
+        logger.info(f"Event received: {json.dumps(event)}")
+
+        # 1. Extract and validate user_id
+        cognito_id = event.get('queryStringParameters', {}).get('user_id')
         if not cognito_id:
-            return {
-                'statusCode': 400,
-                "headers": {
-                    "Content-Type": "application/json",
-                    "Access-Control-Allow-Headers": "*",
-                    "Access-Control-Allow-Origin": "*",
-                    "Access-Control-Allow-Methods": "*",
-                },
-                "body": json.dumps({"error": "Missing user_id in query parameters"})
-            }
-        
-        # Parse the JSON body
-        body = json.loads(event.get("body", "{}"))
-        case_title = body.get("case_title")
-        case_type = body.get("case_type")
-        jurisdiction = body.get("jurisdiction")
-        case_description = body.get("case_description")
-        
-        # Combine the inputs for guardrail validation
-        user_input = f"{case_title} {case_type} {jurisdiction} {case_description}"
-        
-        # Setup or retrieve guardrail
+            return _response(400, {'error': 'Missing user_id'})
+
+        # 2. Parse request body
+        body = json.loads(event.get('body', '{}'))
+        case_title = body.get('case_title')
+        case_type = body.get('case_type')
+        jurisdiction = body.get('jurisdiction')
+        case_desc = body.get('case_description')
+        combined = f"{case_title} {case_type} {jurisdiction} {case_desc}"
+
+        # 3. Setup or fetch guardrail
         guardrail_id, guardrail_version = setup_guardrail('comprehensive-guardrails')
-        
-        # Apply guardrail check using the Bedrock runtime client
-        guard_response = bedrock_runtime.apply_guardrail(
+        # 4. Apply guardrail to the combined user input
+        guard_resp = bedrock_runtime.apply_guardrail(
             guardrailIdentifier=guardrail_id,
             guardrailVersion=guardrail_version,
-            source="INPUT",
-            content=[{"text": {"text": user_input, "qualifiers": ["guard_content"]}}]
+            source='INPUT',
+            content=[{'text': {'text': combined, 'qualifiers': ['guard_content']}}]
         )
-        
-        # Check if guardrail intervention occurred
-        if guard_response.get("action") == "GUARDRAIL_INTERVENED":
-            error_message = None
-            # Add debug logging to see the full guardrail response
-            logger.info(f"Guardrail response: {json.dumps(guard_response)}")
-            
-            for assessment in guard_response.get("assessments", []):
-                # Topic policy checks
-                if "topicPolicy" in assessment:
-                    for topic in assessment["topicPolicy"].get("topics", []):
-                        if topic.get("name") == "FinancialAdvice" and topic.get("action") == "BLOCKED":
-                            error_message = ("Sorry, I cannot process your case because it contains financial content. "
-                                            "Kindly remove the relevant content and try again.")
-                            break
-                        elif topic.get("name") == "OffensiveContent" and topic.get("action") == "BLOCKED":
-                            error_message = ("Sorry, I cannot process your case because it contains offensive content. "
-                                            "Kindly remove the relevant content and try again.")
-                            break
-                        elif topic.get("name") == "Profanity" and topic.get("action") == "BLOCKED":
-                            error_message = ("Sorry, I cannot process your case because it contains profanity. "
-                                            "Kindly remove the inappropriate language and try again.")
-                            break
-                    if error_message:
-                        break
-                # Sensitive information policy checks
-                if not error_message and "sensitiveInformationPolicy" in assessment:
-                    for pii in assessment["sensitiveInformationPolicy"].get("piiEntities", []):
-                        if pii.get("action") == "BLOCKED":
-                            error_message = ("Sorry, I cannot process your case because it contains sensitive information (Personal Information). "
-                                            "Kindly remove the relevant content and try again.")
-                            break
-                    if error_message:
-                        break
-            if not error_message:
-                error_message = ("Sorry, I cannot process your case because it contains restricted content. "
-                                "Kindly remove the relevant content and try again.")
-                    
-            return {
-                'statusCode': 400,
-                "headers": {
-                    "Content-Type": "application/json",
-                    "Access-Control-Allow-Headers": "*",
-                    "Access-Control-Allow-Origin": "*",
-                    "Access-Control-Allow-Methods": "*",
-                },
-                "body": json.dumps({"error": error_message})
-            }
-        
-        # Proceed with database operations
+        # 5. If guardrail intervenes, return a descriptive error
+        if guard_resp.get('action') == 'GUARDRAIL_INTERVENED':
+            logger.info(f"Guardrail intervention: {guard_resp}")
+            return _handle_guardrail_error(guard_resp)
+
+        # 6. Connect to DB and fetch user record
         conn = connect_to_db()
         cur = conn.cursor()
-        
-        # Retrieve the user record using cognito_id
-        cur.execute('SELECT user_id FROM "users" WHERE cognito_id = %s', (cognito_id,))
-        user = cur.fetchone()
-        if not user:
+        cur.execute('SELECT user_id FROM "users" WHERE cognito_id=%s', (cognito_id,))
+        row = cur.fetchone()
+        if not row:
             cur.close()
-            return {
-                'statusCode': 404,
-                "headers": {
-                    "Content-Type": "application/json",
-                    "Access-Control-Allow-Headers": "*",
-                    "Access-Control-Allow-Origin": "*",
-                    "Access-Control-Allow-Methods": "*",
-                },
-                "body": json.dumps({"error": "User not found"})
-            }
-        user_id = user[0]
-        logger.info("Retrieved user_id: %s", user_id)
-        
-        # Insert the new case into the database
-        insert_query = """
-            INSERT INTO "cases" (user_id, case_title, case_type, jurisdiction, case_description, status, last_updated)
-            VALUES (%s, %s, %s, %s, %s, 'In Progress', CURRENT_TIMESTAMP)
-            RETURNING case_id
-        """
-        cur.execute(insert_query, (user_id, case_title, case_type, jurisdiction, case_description))
-        new_case = cur.fetchone()
-        if not new_case:
-            cur.close()
-            conn.rollback()
-            return {
-                'statusCode': 500,
-                "headers": {
-                    "Content-Type": "application/json",
-                    "Access-Control-Allow-Headers": "*",
-                    "Access-Control-Allow-Origin": "*",
-                    "Access-Control-Allow-Methods": "*",
-                },
-                "body": json.dumps({"error": "Failed to create new case"})
-            }
-        case_id = new_case[0]
-        
-        # Generate a SHA-256 hash of the case_id
+            return _response(404, {'error': 'User not found'})
+        user_id = row[0]
+
+        # 7. Insert the new case and retrieve generated case_id
+        insert_sql = '''INSERT INTO "cases"(user_id, case_title, case_type, jurisdiction, case_description, status, last_updated)
+                        VALUES (%s,%s,%s,%s,%s,'In Progress',CURRENT_TIMESTAMP) RETURNING case_id'''
+        cur.execute(insert_sql, (user_id, case_title, case_type, jurisdiction, case_desc))
+        case_id = cur.fetchone()[0]
+
+        # 8. Compute and store a short case_hash
         case_hash = hash_uuid(str(case_id))
-        
-        # Update the case with the generated case_hash
-        update_query = 'UPDATE "cases" SET case_hash = %s WHERE case_id = %s'
-        cur.execute(update_query, (case_hash, case_id))
-        
-        # Commit the transaction
+        cur.execute('UPDATE "cases" SET case_hash=%s WHERE case_id=%s', (case_hash, case_id))
         conn.commit()
         cur.close()
-        
-        return {
-        "statusCode": 200,
-        "headers": {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Headers": "*",
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "*",
-        },
-        "body": json.dumps({"case_id": case_id, "case_hash": case_hash})
-    }
-    
+
+        # 9. Return success response
+        return _response(200, {'case_id': case_id, 'case_hash': case_hash})
+
     except Exception as err:
-        logger.error("Error in post_student_new_case: %s", err)
-        return {
-            'statusCode': 500,
-            "headers": {
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Headers": "*",
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "*",
-            },
-            'body': json.dumps('Error getting response')
-        }
+        logger.error(f"Error in handler: {err}", exc_info=True)
+        return _response(500, {'error': 'Internal server error'})
+
+
+def _response(status: int, body: dict) -> dict:
+    """
+    Helper to build HTTP responses with CORS headers.
+    """
+    return {
+        'statusCode': status,
+        'headers': {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Headers': '*',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': '*',
+        },
+        'body': json.dumps(body)
+    }
+
+
+def _handle_guardrail_error(guard_resp: dict) -> dict:
+    """
+    Map Bedrock guardrail assessments to user-friendly error messages.
+    """
+    # Default message
+    message = 'Sorry, your input contains disallowed content.'
+
+    for assessment in guard_resp.get('assessments', []):
+        # Check topic policy violations
+        if 'topicPolicy' in assessment:
+            for topic in assessment['topicPolicy'].get('topics', []):
+                if topic['action'] == 'BLOCKED':
+                    if topic['name'] == 'FinancialAdvice':
+                        message = 'Cannot process financial advice content.'
+                    elif topic['name'] == 'OffensiveContent':
+                        message = 'Cannot process offensive content.'
+                    elif topic['name'] == 'Profanity':
+                        message = 'Please remove profanity.'
+                    break
+        # Check PII violations
+        if 'sensitiveInformationPolicy' in assessment:
+            for pii in assessment['sensitiveInformationPolicy'].get('piiEntities', []):
+                if pii['action'] == 'BLOCKED':
+                    message = 'Please remove personal information.'
+                    break
+    return _response(400, {'error': message})
