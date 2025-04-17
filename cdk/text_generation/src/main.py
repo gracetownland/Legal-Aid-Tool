@@ -9,7 +9,7 @@ import uuid
 from langchain_aws import BedrockEmbeddings
 
 from helpers.vectorstore import get_vectorstore_retriever
-from helpers.chat import get_bedrock_llm, get_initial_student_query, get_student_query, create_dynamodb_history_table, get_response, update_session_name, get_audio_response
+from helpers.chat import get_bedrock_llm, get_initial_student_query, get_student_query, create_dynamodb_history_table, get_response
 from helpers.canlii import CanLIICitationLinker
 # Set up basic logging
 logging.basicConfig(level=logging.INFO)
@@ -331,16 +331,14 @@ def get_case_details(case_id):
 def handler(event, context):
     logger.info("Text Generation Lambda function is called!")
     initialize_constants()
-    case_audio_description = None
-    api_key = "yvMWSx8fZH5hSWVjSoSUp7o7pdIS6xW89H6WtZ35"
+    
+    
     # api_key = os.environ.get("CANLII_API_KEY", "")  # Make sure to set this environment variable
-    citation_linker = CanLIICitationLinker(api_key)
+    # citation_linker = CanLIICitationLinker(api_key)
     
     query_params = event.get("queryStringParameters", {})
     case_id = query_params.get("case_id", "")
-    audio_flag = query_params.get("audio_flag", "")
-    user_id = query_params.get("user_id", "")
-    print("audio_flag", audio_flag) 
+    
     if not case_id:
         return {
             'statusCode': 400,
@@ -367,20 +365,6 @@ def handler(event, context):
             'body': json.dumps('Error fetching system prompt')
         }
     
-    if audio_flag == "true":
-        case_audio_description = get_audio_details(case_id)
-        print("audio_description: ", case_audio_description)
-        if case_audio_description is None:    
-            return {
-                'statusCode': 400,
-                "headers": {
-                    "Content-Type": "application/json",
-                    "Access-Control-Allow-Headers": "*",
-                    "Access-Control-Allow-Origin": "*",
-                    "Access-Control-Allow-Methods": "*",
-                },
-                'body': json.dumps('Error fetching audio details')
-            }
     # add_audio_to_db(case_id, case_audio_description)
     case_title, case_type, jurisdiction, case_description = get_case_details(case_id)
     if case_title is None or case_type is None or jurisdiction is None or case_description is None:
@@ -496,50 +480,20 @@ def handler(event, context):
         }
 
     try:
-        logger.info("Generating response from the LLM.")
-        if audio_flag == "true":
-            response = get_audio_response(
-                query=student_query,
-                llm=llm,
-                history_aware_retriever=history_aware_retriever,
-                table_name=TABLE_NAME,
-                case_id=case_id,
-                system_prompt=system_prompt,
-                case_audio_description=case_audio_description
-            )
-        else:
-            response = get_response(
-                query=student_query,
-                case_title=case_title,
-                llm=llm,
-                history_aware_retriever=history_aware_retriever,
-                table_name=TABLE_NAME,
-                case_id=case_id,
-                system_prompt=system_prompt,
-                case_type=case_type,
-                jurisdiction=jurisdiction,
-                case_description=case_description
-            )
+        response = get_response(
+            query=student_query,
+            case_title=case_title,
+            llm=llm,
+            history_aware_retriever=history_aware_retriever,
+            table_name=TABLE_NAME,
+            case_id=case_id,
+            system_prompt=system_prompt,
+            case_type=case_type,
+            jurisdiction=jurisdiction,
+            case_description=case_description
+        )
         print("response: ", response)
-        logger.info("Enhancing response with citation links.")
-        # try:
-        #     if isinstance(response, dict):
-        #         llm_response = response.get("llm_output", "")  # Assuming the text is in llm_output field
-        #     else:
-        #         llm_response = response  # If it's already a string
-                
-        #     enhanced_response = citation_linker.enhance_response(llm_response)
-            
-        #     if isinstance(response, dict):
-        #         response["llm_output"] = enhanced_response  # Update the text in the dictionary
-        #     else:
-        #         response = enhanced_response  # Replace the string
-        #     print("response after canlii: ", response)
-        #     logger.info("Successfully enhanced response with citation links.")
-        # except Exception as e:
-        #     logger.error(f"Error enhancing response with citation links: {e}")
-        #     # Continue with the original response if enhancement fails
-            
+        
     except Exception as e:
         logger.error(f"Error getting response: {e}")
         return {

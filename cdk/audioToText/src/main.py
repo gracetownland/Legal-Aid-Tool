@@ -6,7 +6,8 @@ import logging
 import boto3
 import psycopg2
 import urllib.request
-
+import httpx
+import json
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
@@ -19,12 +20,59 @@ DB_SECRET_NAME = os.environ["SM_DB_CREDENTIALS"]
 REGION = os.environ["REGION"]
 RDS_PROXY_ENDPOINT = os.environ["RDS_PROXY_ENDPOINT"]
 AUDIO_BUCKET = os.environ.get("AUDIO_BUCKET")
-
+APPSYNC_API_URL = os.environ.get("APPSYNC_API_URL")
 secrets_manager_client = boto3.client("secretsmanager")
 ssm_client = boto3.client("ssm", region_name=REGION)
 # Cached resources
 connection = None
 db_secret = None
+
+
+def invoke_event_notification(case_id, message, cognito_token):
+    """
+    Publish a notification event to AppSync via HTTPX using Cognito authentication.
+    Expects a valid Cognito JWT token (from the student user pool) to be passed in.
+    """
+    try:
+        query = """
+        mutation sendNotification($message: String!, $caseId: String!) {
+            sendNotification(message: $message, caseId: $caseId) {
+                message
+                caseId
+            }
+        }
+        """
+        # Use the provided Cognito token in the Authorization header.
+        # Depending on your AppSync configuration, you may need to prefix with "Bearer ".
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": cognito_token  # or "Bearer " + cognito_token if required
+        }
+
+        payload = {
+            "query": query,
+            "variables": {
+                "message": message,
+                "caseId": case_id
+            }
+        }
+        print("case_id inside sendNotification:", case_id)
+        print("payload:", payload)
+        # Send the request to AppSync
+        with httpx.Client() as client:
+            response = client.post(APPSYNC_API_URL, headers=headers, json=payload)
+            response_data = response.json()
+
+            logging.info(f"AppSync Response: {json.dumps(response_data, indent=2)}")
+            if response.status_code != 200 or "errors" in response_data:
+                raise Exception(f"Failed to send notification: {response_data}")
+
+            print(f"Notification sent successfully: {response_data}")
+            return response_data["data"]["sendNotification"]
+
+    except Exception as e:
+        logging.error(f"Error publishing event to AppSync: {str(e)}")
+        raise
 
 def get_secret(secret_name, expect_json=True):
     global db_secret
@@ -124,7 +172,7 @@ def get_cors_headers():
         "Access-Control-Allow-Credentials": "true"
     }
 
-def lambda_handler(event, context):
+def handler(event, context):
     """
     This function:
       1. Receives parameters from querystring:
@@ -153,7 +201,7 @@ def lambda_handler(event, context):
         file_name = query_params.get("file_name")
         case_id = query_params.get("case_id")
         file_type = query_params.get("file_type", "mp3").lower()
-        
+        cognito_token = query_params.get("cognito_token")
         # Log the received parameters
         logger.info(f"Received parameters: file_name={file_name}, case_id={case_id}, file_type={file_type}")
         
@@ -228,6 +276,8 @@ def lambda_handler(event, context):
                           .get("transcripts", [{}])[0].get("transcript", "")
         
         add_audio_to_db(case_id, transcript_text)
+        print("case_id:", case_id)
+        invoke_event_notification(case_id, "transcription_complete", cognito_token)
         # Return the transcription result in the API response
         return {
             "statusCode": 200,
