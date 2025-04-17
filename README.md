@@ -1,5 +1,15 @@
 # Clinical-Interview-Tool
 
+| Index                                               | Description                                             |
+| :-------------------------------------------------- | :------------------------------------------------------ |
+| [High Level Architecture](#high-level-architecture) | High level overview illustrating component interactions |
+| [Deployment](#deployment-guide)                     | How to deploy the project                               |
+| [User Guide](#user-guide)                           | The working solution                                    |
+| [Directories](#directories)                         | General project directory structure                     |
+| [API Documentation](#api-documentation)             | Documentation on the API the project uses               |
+| [Credits](#credits)                                 | Meet the team behind the solution                       |
+| [License](#license)                                 | License details                                         |
+
 ## Deployment Guide
 
 To deploy this solution, please follow the steps laid out in the [Deployment Guide](./docs/deploymentGuide.md)
