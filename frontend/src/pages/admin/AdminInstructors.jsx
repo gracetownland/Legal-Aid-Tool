@@ -186,7 +186,7 @@ export const AdminInstructors = () => {
   const handleCloseAdd = () => setOpenAddDialog(false);
 
   return (
-    <Box component="main" sx={{ flexGrow: 1, p: 2, marginTop: 0.5 }}>
+    <Box component="main" sx={{ flexGrow: 1, p: 2, marginTop: 0.5, backgroundColor: "var(--background)" }}>
       <Toolbar />
       <Paper
         sx={{
@@ -194,6 +194,10 @@ export const AdminInstructors = () => {
           overflow: "hidden",
           marginTop: 1,
           borderRadius: 2,
+          boxShadow: 'none',
+          backgroundColor: "var(--background)",
+          border: "1px solid var(--border)",
+          color: "var(--text)",
           p: 3,
           maxHeight: "85vh",
         }}
@@ -204,16 +208,17 @@ export const AdminInstructors = () => {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
+            color: "var(--text)",
           }}
         >
-          <Typography color="black" fontStyle="semibold" variant="h6">
+          <Typography fontStyle="semibold" variant="h6">
             Manage Instructors
           </Typography>
           <Button
             variant="contained"
             color="primary"
             onClick={() => setOpenAddDialog(true)}
-            sx={{ fontSize: 14, color: "white", backgroundColor: "var(--primary)" }}
+            sx={{ fontSize: 14, color: "white", backgroundColor: "var(--primary)", boxShadow: "none", borderRadius: 2 }}
           >
             Add Instructor
           </Button>
@@ -228,16 +233,16 @@ export const AdminInstructors = () => {
             InputProps={{ sx: { fontSize: 14 } }}
             InputLabelProps={{ sx: { fontSize: 14 } }}
           />
-          <Table aria-label="instructors table">
+          <Table aria-label="instructors table" style={{ color: "var(--text)" }} >
             {!loading ? (
               <>
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ width: "30%", fontSize: 14 }}>
+                    <TableCell sx={{ width: "30%", fontSize: 14, color: 'var(--text)' }}>
                       First Name
                     </TableCell>
-                    <TableCell sx={{ fontSize: 14 }}>Last Name</TableCell>
-                    <TableCell sx={{ fontSize: 14 }}>Email</TableCell>
+                    <TableCell sx={{ fontSize: 14, color: 'var(--text)' }}>Last Name</TableCell>
+                    <TableCell sx={{ fontSize: 14, color: 'var(--text)' }}>Email</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -249,13 +254,13 @@ export const AdminInstructors = () => {
                         onClick={() => handleRowClick(row)}
                         style={{ cursor: "pointer" }}
                       >
-                        <TableCell sx={{ fontSize: 14 }}>
+                        <TableCell sx={{ fontSize: 14, color: 'var(--text)' }}>
                           {titleCase(row.user)}
                         </TableCell>
-                        <TableCell sx={{ fontSize: 14 }}>
+                        <TableCell sx={{ fontSize: 14, color: 'var(--text)' }}>
                           {titleCase(row.last)}
                         </TableCell>
-                        <TableCell sx={{ fontSize: 14 }}>{row.email}</TableCell>
+                        <TableCell sx={{ fontSize: 14, color: 'var(--text)' }}>{row.email}</TableCell>
                       </TableRow>
                     ))}
                 </TableBody>
@@ -273,7 +278,7 @@ export const AdminInstructors = () => {
                   page={page}
                   onPageChange={handleChangePage}
                   onRowsPerPageChange={handleChangeRowsPerPage}
-                  sx={{ fontSize: 14, minWidth: 400 }}
+                  sx={{ fontSize: 14, minWidth: 400, color: 'var(--text)' }}
                 />
               </TableRow>
             </TableFooter>
@@ -281,63 +286,106 @@ export const AdminInstructors = () => {
         </TableContainer>
       </Paper>
 
-      {/* Add Instructor Dialog */}
+{/* Add instructor dialog */}
       <Dialog
-        open={openAddDialog}
-        onClose={handleCloseAdd}
-        PaperProps={{
-          component: "form",
-          onSubmit: (event) => {
-            event.preventDefault();
-            const formData = new FormData(event.currentTarget);
-            const email = formData.get("email");
-            handleAddInstructor(email);
-          },
-        }}
-      >
-        <DialogTitle>Add an Instructor</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Please enter the email of the instructor here
-          </DialogContentText>
-          <TextField
-            autoFocus
-            required
-            margin="dense"
-            id="name"
-            name="email"
-            label="Email Address"
-            type="email"
-            fullWidth
-            variant="standard"
-            inputProps={{ maxLength: 40 }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseAdd}>Cancel</Button>
-          <Button type="submit">Submit</Button>
-        </DialogActions>
-      </Dialog>
+  open={openAddDialog}
+  onClose={handleCloseAdd}
+  sx={{
+    "& .MuiDialog-container": {
+      "& .MuiPaper-root": {
+        width: "100%",
+        maxHeight: 500,
+      }
+    }
+  }}
+  PaperProps={{
+    component: "form",
+    sx: {
+      backgroundColor: "var(--background)",
+      boxShadow: "none",
+      border: "1px solid var(--border)",
+    },
+    onSubmit: (event) => {
+      event.preventDefault();
+      const formData = new FormData(event.currentTarget);
+      const email = formData.get("email");
+      handleAddInstructor(email);
+    },
+  }}
+>
+  <DialogTitle style={{ color: "var(--text)", backgroundColor: "var(--background)" }}>
+    Add an Instructor
+  </DialogTitle>
 
-      {/* Instructor Details Dialog */}
-      <Dialog
-        open={openInstructorDetails}
-        onClose={handleCloseInstructorDetails}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogContent>
-          {selectedInstructor && (
-            <InstructorDetails
-              instructorData={selectedInstructor}
-              onBack={() => {
-                handleCloseInstructorDetails();
-                refreshInstructors(); // Refresh after updating or deleting
-              }}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+  <DialogContent style={{ color: "var(--text)", backgroundColor: "var(--background)" }}>
+    <DialogContentText style={{ color: "var(--text)", backgroundColor: "var(--background)" }}>
+      Please enter the email of the instructor here
+    </DialogContentText>
+
+    <TextField
+      autoFocus
+      required
+      margin="dense"
+      id="name"
+      name="email"
+      label="Email Address"
+      type="email"
+      fullWidth
+      variant="standard"
+      inputProps={{ maxLength: 40 }}
+      sx={{
+        '& .MuiInputBase-input': {
+          color: 'var(--text)',
+        },
+        '& .MuiInputLabel-root': {
+          color: 'var(--placeholder-text)',
+        },
+        '& .MuiInput-underline:before': {
+          borderBottomColor: 'var(--border)',
+        },
+        '& .MuiInput-underline:hover:not(.Mui-disabled):before': {
+          borderBottomColor: 'var(--border)',
+        },
+        '& .MuiInput-underline:after': {
+          borderBottomColor: 'var(--border)',
+        }
+      }}
+    />
+  </DialogContent>
+
+  <DialogActions style={{ color: "var(--text)", backgroundColor: "var(--background)" }}>
+    <Button onClick={handleCloseAdd}>Cancel</Button>
+    <Button type="submit">Submit</Button>
+  </DialogActions>
+</Dialog>
+
+{/* Instructor details dialog */}
+<Dialog
+  open={openInstructorDetails}
+  onClose={handleCloseInstructorDetails}
+  maxWidth="md"
+  fullWidth
+  PaperProps={{
+    sx: {
+      backgroundColor: "var(--background)",
+      boxShadow: "none",
+      border: "1px solid var(--border)",
+      color: "var(--text)",
+    },
+  }}
+>
+  <DialogContent sx={{ backgroundColor: "var(--background)", color: "var(--text)" }}>
+    {selectedInstructor && (
+      <InstructorDetails
+        instructorData={selectedInstructor}
+        onBack={() => {
+          handleCloseInstructorDetails();
+          refreshInstructors();
+        }}
+      />
+    )}
+  </DialogContent>
+</Dialog>
 
       <ToastContainer
         position="top-center"
