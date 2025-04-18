@@ -42,6 +42,8 @@ const InterviewAssistant = () => {
     message: "",
     severity: "info",
   });
+  const [messageCounter, setMessageCounter] = useState(null);
+  const [messageLimit, setMessageLimit] = useState(Infinity);
   const [messages, setMessages] = useState([
     {
       sender: "bot",
@@ -57,6 +59,7 @@ const InterviewAssistant = () => {
 
 
 
+
   // Ref for scrolling to bottom of message container
   const messagesEndRef = useRef(null);
 
@@ -66,6 +69,34 @@ const InterviewAssistant = () => {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages, isAItyping]);
+
+  useEffect(() => {
+    const fetchMessageLimit = async () => {
+      const session = await fetchAuthSession();
+      const token = session.tokens.idToken;
+      const user_id = session.tokens.idToken.payload.sub;
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_ENDPOINT}student/message_limit?user_id=${user_id}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: token,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        if (!response.ok) throw new Error("Message limit not found");
+        const data = await response.json();
+        setMessageLimit(data.message_limit);
+        console.log("Message limit: ", data.message_limit);
+      } catch (error) {
+        console.error("Error fetching message limit:", error);
+      }
+    }
+
+    fetchMessageLimit()
+  }, [])
 
   useEffect(() => {
     const fetchCaseData = async () => {
@@ -149,6 +180,34 @@ const InterviewAssistant = () => {
     fetchMessages();
   }, [caseId]);
 
+  useEffect(() => {
+    const fetchMessageCounter = async () => {
+      const session = await fetchAuthSession();
+      const token = session.tokens.idToken;
+      const user_id = session.tokens.idToken.payload.sub;
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_ENDPOINT}student/message_counter?user_id=${user_id}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: token,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) throw new Error("Message counter not found");
+
+        const data = await response.json();
+        setMessageCounter(data.activity_counter);
+      } catch (error) {
+        console.error("Error fetching message counter:", error);
+      }
+    }
+    fetchMessageCounter();
+  }, []);
+
   // Function to start TTS
   const startTTS = (text) => {
     const newUtterance = new SpeechSynthesisUtterance(text);
@@ -203,7 +262,7 @@ const InterviewAssistant = () => {
   };
 
   const handleKeyPress = (event) => {
-    if (event.key === "Enter" && !event.shiftKey) {
+    if (event.key === "Enter" && !event.shiftKey && !isAItyping && messageCounter <= messageLimit) {
       event.preventDefault();
       handleSendMessage();
     }
@@ -257,6 +316,7 @@ const InterviewAssistant = () => {
   async function getAIResponse(userInput) {
     const session = await fetchAuthSession();
     const token = session.tokens.idToken;
+    const user_id = session.tokens.idToken.payload.sub;
 
     async function getFetchBody() {
       try {
@@ -281,6 +341,20 @@ const InterviewAssistant = () => {
         const data = await response.json();
         const res = data.llm_output.llm_output;
         console.log("Success:", data);
+
+        setMessageCounter((prevCounter) => prevCounter + 1); // Increment message counter on frontend
+        const counter_response = await fetch(
+          `${import.meta.env.VITE_API_ENDPOINT}student/message_counter?user_id=${user_id}`,
+          {
+            method: "PUT",
+            headers: {
+              Authorization: token,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!counter_response.ok) throw new Error("Message counter not found");
         setIsAItyping(false);
         return res;
       } catch (error) {
@@ -749,7 +823,7 @@ const InterviewAssistant = () => {
                   }}
                   style={{ boxShadow: "none" }}
                   onClick={handleSendMessage}
-                  disabled={isAItyping}  /* Disable if AI hasn't responded */
+                  disabled={isAItyping || (messageCounter >= messageLimit)}  /* Disable if AI hasn't responded */
                 >
                   <ArrowUpwardRoundedIcon sx={{ color: "white" }} />
                 </Button>
