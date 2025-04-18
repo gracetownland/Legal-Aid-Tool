@@ -232,6 +232,37 @@ exports.handler = async (event) => {
           });
       }
         break;
+
+        case "GET /instructor/name":
+        if (
+          event.queryStringParameters &&
+          event.queryStringParameters.user_email
+        ) {
+          const user_email = event.queryStringParameters.user_email;
+          try {
+            // Retrieve roles for the user with the provided email
+            const userData = await sqlConnection`
+                  SELECT first_name
+                  FROM "users"
+                  WHERE user_email = ${user_email};
+                `;
+            console.log(userData);
+            if (userData.length > 0) {
+              response.body = JSON.stringify({ name: userData[0].first_name });
+            } else {
+              response.statusCode = 404;
+              response.body = JSON.stringify({ error: "User not found" });
+            }
+          } catch (err) {
+            response.statusCode = 500;
+            console.log(err);
+            response.body = JSON.stringify({ error: "Internal server error" });
+          }
+        } else {
+          response.statusCode = 400;
+          response.body = JSON.stringify({ error: "User email is required" });
+        }
+        break;
         case "GET /instructor/view_students":
   if (
     event.queryStringParameters != null &&

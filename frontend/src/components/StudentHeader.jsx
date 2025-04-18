@@ -6,6 +6,7 @@ import AssignmentIcon from "@mui/icons-material/Assignment";
 import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import PersonIcon from '@mui/icons-material/Person';
 import Notification from "./Notification";
 // Amplify
 import { signOut, fetchAuthSession, fetchUserAttributes } from "aws-amplify/auth";

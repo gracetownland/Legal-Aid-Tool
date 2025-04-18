@@ -380,6 +380,103 @@ exports.handler = async (event) => {
           break;
 
 
+        case "GET /student/message_counter":
+          if (event.queryStringParameters && event.queryStringParameters.user_id) {
+            const user_id = event.queryStringParameters.user_id;
+            try {
+              const activityData = await sqlConnection`
+                SELECT activity_counter, last_activity FROM "users" WHERE user_id = ${user_id};
+              `;
+              if (activityData.length > 0) {
+                let activity_counter = parseInt(activityData[0].activity_counter, 10);
+                const last_activity = activityData[0].last_activity;
+                if (activity_counter > 0) {
+                  const currentTime = new Date();
+                  const lastActivityTime = new Date(last_activity);
+                  const timeDifference = Math.abs(currentTime - lastActivityTime);
+                  const hoursDifference = Math.floor(timeDifference / (1000 * 60 * 60));
+                  
+                  // Check if 24 hours have passed since the last activity
+                  if (hoursDifference >= 24) {
+                    await sqlConnection`
+                      UPDATE "users" SET activity_counter = 0 WHERE user_id = ${user_id};
+                    `;
+                    
+                    activity_counter = 0;
+                  }
+                  
+                }
+                response.body = JSON.stringify({ activity_counter });
+              }
+              else {
+                response.statusCode = 404;
+                response.body = JSON.stringify({ error: "User not found" });
+              }
+
+              
+            } catch (err) {
+              response.statusCode = 500;
+              console.log(err);
+              response.body = JSON.stringify({ error: "Internal server error" });
+            }
+          } else {
+            response.statusCode = 400;
+            response.body = JSON.stringify({ error: "User ID is required" });
+          }
+          break;
+
+
+          case "PUT /student/message_counter":
+            if (event.queryStringParameters && event.queryStringParameters.user_id) {
+              const user_id = event.queryStringParameters.user_id;
+              try {
+                const activityData = await sqlConnection`
+                  SELECT activity_counter, last_activity FROM "users" WHERE user_id = ${user_id};
+                `;
+          
+                if (activityData.length > 0) {
+                  let activity_counter = parseInt(activityData[0].activity_counter, 10);
+                  const last_activity = new Date(activityData[0].last_activity);
+                  const now = new Date();
+                  const hoursSinceLast = (now - last_activity) / (1000 * 60 * 60);
+          
+                  if (hoursSinceLast >= 24) {
+                    // Reset counter and last_activity
+                    await sqlConnection`
+                      UPDATE "users" SET activity_counter = 1, last_activity = CURRENT_TIMESTAMP WHERE user_id = ${user_id};
+                    `;
+                    activity_counter = 1;
+                    // HARDCODED TO 10 RIGHT NOW, CHANGE TO BE FROM SECRETS MANAGER OR PARAM STORE
+                  } else if (activity_counter < 10) {
+                    // Increment counter
+                    await sqlConnection`
+                      UPDATE "users" SET activity_counter = activity_counter + 1 WHERE user_id = ${user_id};
+                    `;
+                    activity_counter += 1;
+                  } else {
+                    // Limit reached
+                    response.statusCode = 429;
+                    response.body = JSON.stringify({ error: "Daily message limit reached" });
+                    break;
+                  }
+          
+                  response.body = JSON.stringify({ activity_counter });
+                } else {
+                  response.statusCode = 404;
+                  response.body = JSON.stringify({ error: "User not found" });
+                }
+          
+              } catch (err) {
+                response.statusCode = 500;
+                console.log(err);
+                response.body = JSON.stringify({ error: "Internal server error" });
+              }
+            } else {
+              response.statusCode = 400;
+              response.body = JSON.stringify({ error: "User ID is required" });
+            }
+            break;
+
 
           case "PUT /student/read_message":
             if (event.queryStringParameters && event.queryStringParameters.message_id) {

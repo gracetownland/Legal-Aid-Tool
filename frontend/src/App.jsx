@@ -21,7 +21,7 @@ import AdminHomepage from "./pages/admin/AdminHomepage";
 import CaseOverview from "./pages/CasePage/CaseOverview";
 import InterviewAssistant from "./pages/CasePage/InterviewAssistant";
 import PrelimSummary from "./pages/CasePage/PrelimSummary";
-import AdminChangeSystemPrompt  from "./pages/admin/AdminChangeSystemPrompt";
+import AIControlPanel  from "./pages/admin/AdminAIControlPanel";
 import SummariesPage from "./pages/CasePage/CaseSummaries";
 import CaseFeedback from "./pages/CasePage/CaseFeedback";
 import AllCasesPage from "./pages/instructor/InstructorAllCases";
@@ -122,9 +122,9 @@ function App() {
           <Route path="/case/:caseId/overview/*" element={<CaseOverview />} />
           <Route path="/case/:caseId/summaries" element={<SummariesPage />} />
           <Route path="/case/:caseId/feedback" element={<CaseFeedback />} />
-          <Route path="/system-prompt" element={<ProtectedRoute allowedGroups={["admin", "techadmin"]} userGroup={userGroup}>
-                                                  <AdminChangeSystemPrompt />
-                                                </ProtectedRoute>} />
+          <Route path="/ai-control-panel" element={<ProtectedRoute allowedGroups={["admin", "techadmin"]} userGroup={userGroup}>
+                                                  <AIControlPanel />
+                                                </ProtectedRoute>} />                                   
         </Routes>
       </Router>
     </UserContext.Provider>
