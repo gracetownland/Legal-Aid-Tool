@@ -78,9 +78,12 @@ const InstructorHeader = () => {
   return (
     <header className="bg-[var(--header)] p-4 flex justify-between items-center h-20 fixed top-0 left-0 w-full z-50 shadow-sm">
       {/* Left Section: Logo and Title */}
-      <div className="flex items-center">
+      <div className="flex items-center" style={{ fontFamily: 'Outfit' }}>
         <img src={logo} alt="Logo" className="h-14 w-14 mr-4" />
-        <h2 className="text-xl text-[var(--text)] font-semibold">Instructor</h2>
+        <div>
+          <h2 className="text-xl text-[var(--text)] font-semibold">Legal Aid Tool</h2>
+          <p className="text-sm text-[var(--text)]">Instructor</p>
+        </div>
       </div>
 
       {/* Right Section: Navigation Buttons */}
