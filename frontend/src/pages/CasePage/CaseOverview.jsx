@@ -12,6 +12,7 @@ import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import ReactMarkdown from "react-markdown";
 import SendIcon from "@mui/icons-material/Send";
 import FeedbackIcon from '@mui/icons-material/Feedback';
+import NotFound from "../NotFound";
 
 const CaseOverview = () => {
   const { caseId } = useParams();
@@ -152,6 +153,7 @@ const CaseOverview = () => {
   }
 
   return (
+    (caseData ? 
     <>
       <Stack minHeight="100vh">
         <Box position="fixed" top={0} left={0} width="100%" zIndex={1000} bgcolor="white">
@@ -366,7 +368,11 @@ const CaseOverview = () => {
         </Alert>
       </Snackbar>
     </>
-  );
+
+    :
+
+    <NotFound/> // Error handling page
+  ));
 };
 
 export default CaseOverview;
