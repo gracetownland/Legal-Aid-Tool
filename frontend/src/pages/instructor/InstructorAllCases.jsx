@@ -139,15 +139,13 @@ const AllCasesPage = () => {
         <Paper 
           elevation={0}
           sx={{ 
-            p: 2, 
             mb: 3, 
             display: "flex", 
             gap: 2, 
             flexDirection: { xs: "column", sm: "row" },
             flexWrap: { sm: "wrap" },
             alignItems: "center",
-            backgroundColor: "var(--background)",
-            border: "1px solid var(--border)",
+            backgroundColor: "var(--background)"
           }}
         >
           <TextField
