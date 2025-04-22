@@ -796,6 +796,8 @@ const InterviewAssistant = () => {
                   alignItems: "center",
                   backgroundColor: "var(--background)",
                   borderRadius: 10,
+                  paddingBottom: "1.75em",
+                  boxShadow: "none",
                 }}
               >
                 <TextField
@@ -849,6 +851,7 @@ const InterviewAssistant = () => {
                 >
                   <ArrowUpwardRoundedIcon sx={{ color: "white" }} />
                 </Button>
+                <p style={{position: "fixed", bottom: 2, left: 50, right: 0, width: '100%', fontFamily: 'Outfit', fontSize: '0.9rem', color: "var(--placeholder-text)"}}>AI can make mistakes. Please verify important information and citations.</p>
               </Box>
             </Box>
           </Box>

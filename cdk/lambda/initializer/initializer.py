@@ -106,7 +106,8 @@ def handler(event, context):
                 "summary_id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
                 "case_id" uuid,
                 "content" text,
-                "time_created" timestamp DEFAULT now()
+                "time_created" timestamp DEFAULT now(),
+                "is_read" boolean DEFAULT false,
             );
 
             CREATE TABLE IF NOT EXISTS "audio_files" (
