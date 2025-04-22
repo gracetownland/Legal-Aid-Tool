@@ -1,6 +1,6 @@
 // const { v4: uuidv4 } = require('uuid')
 const { initializeConnection } = require("./lib.js");
-let { SM_DB_CREDENTIALS, RDS_PROXY_ENDPOINT, USER_POOL, BUCKET } = process.env;
+let { SM_DB_CREDENTIALS, RDS_PROXY_ENDPOINT, USER_POOL, BUCKET, MESSAGE_LIMIT } = process.env;
 const {
   CognitoIdentityProviderClient,
   AdminGetUserCommand,
@@ -476,6 +476,25 @@ exports.handler = async (event) => {
               response.body = JSON.stringify({ error: "User ID is required" });
             }
             break;
+
+            case "GET /student/message_limit":
+              try {
+                const { SSMClient, GetParameterCommand } = await import("@aws-sdk/client-ssm");
+
+                const ssm = new SSMClient();
+
+                const result = await ssm.send(
+                  new GetParameterCommand({ Name: MESSAGE_LIMIT })
+                );
+
+                response.statusCode = 200;
+                response.body = JSON.stringify({ value: result.Parameter.Value });
+              } catch (err) {
+                console.error("Failed to fetch message limit:", err);
+                response.statusCode = 500;
+                response.body = JSON.stringify({ error: "Internal server error" });
+              }
+              break;
 
 
           case "PUT /student/read_message":
