@@ -77,7 +77,7 @@ const InstructorDetails = ({ instructorData, onBack }) => {
       const session = await fetchAuthSession();
       const token = session.tokens.idToken;
       const response = await fetch(
-        `${import.meta.env.VITE_API_ENDPOINT}admin/instructorStudents&instructor_id=${instructor.id}`,
+        `${import.meta.env.VITE_API_ENDPOINT}admin/instructorStudents?instructor_id=${instructor.id}`,
         {
           method: "GET",
           headers: {
@@ -88,6 +88,7 @@ const InstructorDetails = ({ instructorData, onBack }) => {
       );
       if (response.ok) {
         const data = await response.json();
+        console.log(data);
         setAssignedStudents(data);
       } else {
         console.error("Failed to fetch assigned students:", response.statusText);
