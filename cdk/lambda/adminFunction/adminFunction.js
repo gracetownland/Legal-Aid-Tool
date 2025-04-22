@@ -118,9 +118,11 @@ exports.handler = async (event) => {
 
           // SQL query to fetch all students for a given instructor
           const student_ids = await sqlConnectionTableCreator`
-              SELECT *
-              FROM "instructor_students"
-              WHERE instructor_id = ${instructor_id};
+              SELECT u.user_id, u.first_name, u.last_name, u.user_email
+  FROM instructor_students AS ist
+  JOIN users AS u
+  ON ist.student_id = u.user_id
+  WHERE ist.instructor_id = ${instructor_id};
             `;
 
           response.body = JSON.stringify(student_ids);
