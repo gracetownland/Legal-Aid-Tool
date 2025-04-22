@@ -559,6 +559,14 @@ export class ApiGatewayStack extends cdk.Stack {
       enforceSSL: true,
     });
 
+
+    // Create SSM parameter for message limit
+    const messageLimitParameter = new ssm.StringParameter(this, "MessageLimitParameter", {
+      parameterName: `/${id}/LAT/MessageLimit`,
+      description: "Parameter containing the Message Limit for the AI assistant (per day)",
+      stringValue: "Infinity",
+    });
+
     
 
     const lambdaStudentFunction = new lambda.Function(this, `${id}-studentFunction`, {
@@ -572,6 +580,7 @@ export class ApiGatewayStack extends cdk.Stack {
         RDS_PROXY_ENDPOINT: db.rdsProxyEndpoint,
         USER_POOL: this.userPool.userPoolId,
         BUCKET: noteStorageBucket.bucketName,
+        MESSAGE_LIMIT: messageLimitParameter.parameterName,
       },
       functionName: `${id}-studentFunction`,
       memorySize: 512,
@@ -590,6 +599,12 @@ export class ApiGatewayStack extends cdk.Stack {
       })
     );
 
+    lambdaStudentFunction.addPermission("AllowApiGatewayInvoke", {
+      principal: new iam.ServicePrincipal("apigateway.amazonaws.com"),
+      action: "lambda:InvokeFunction",
+      sourceArn: `arn:aws:execute-api:${this.region}:${this.account}:${this.api.restApiId}/*/*/student*`,
+    });    
+
     // Allow access to DynamoDB Table for reading chat history
     lambdaStudentFunction.addToRolePolicy(
       new iam.PolicyStatement({
@@ -607,6 +622,9 @@ export class ApiGatewayStack extends cdk.Stack {
       action: "lambda:InvokeFunction",
       sourceArn: `arn:aws:execute-api:${this.region}:${this.account}:${this.api.restApiId}/*/*/student*`,
     });
+
+    // Add permission to the Lambda function to allow it to access the message limit parameter
+    messageLimitParameter.grantRead(lambdaStudentFunction);
 
     const cfnLambda_student = lambdaStudentFunction.node
       .defaultChild as lambda.CfnFunction;
@@ -664,6 +682,7 @@ export class ApiGatewayStack extends cdk.Stack {
       environment: {
         SM_DB_CREDENTIALS: db.secretPathTableCreator.secretName,
         RDS_PROXY_ENDPOINT: db.rdsProxyEndpointTableCreator,
+        MESSAGE_LIMIT: messageLimitParameter.parameterName,
       },
       functionName: `${id}-adminFunction`,
       memorySize: 512,
@@ -677,6 +696,9 @@ export class ApiGatewayStack extends cdk.Stack {
       action: "lambda:InvokeFunction",
       sourceArn: `arn:aws:execute-api:${this.region}:${this.account}:${this.api.restApiId}/*/*/admin*`,
     });
+
+    // Allow access for lambda to read and write to message limit parameter
+    messageLimitParameter.grantWrite(lambdaAdminFunction);
 
     const cfnLambda_Admin = lambdaAdminFunction.node
       .defaultChild as lambda.CfnFunction;
@@ -1872,7 +1894,7 @@ export class ApiGatewayStack extends cdk.Stack {
       visibilityConfig: {
         sampledRequestsEnabled: true,
         cloudWatchMetricsEnabled: true,
-        metricName: "virtualcareint-firewall",
+        metricName: "legalaidtool-firewall",
       },
       rules: [
         {

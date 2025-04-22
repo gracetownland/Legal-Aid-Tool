@@ -217,7 +217,35 @@ const FeedbackPage = () => {
 
           {userRole === "instructor" && (
             <Card sx={{ backgroundColor: 'var(--background)', borderRadius: 2, boxShadow: 'none', border: '1px solid var(--border)' }}>
-              
+              <Box
+  sx={{
+    mb: 3,
+    border: "1px solid var(--border)",
+    borderRadius: 2,
+    p: 2,
+    backgroundColor: "var(--background)",
+  }}
+>
+  <Typography variant="h6" fontWeight={500} mb={2}>Previous Feedback</Typography>
+  {messages.length > 0 ? (
+    messages.map((msg) => (
+      <Box key={msg.id} mb={2}>
+        <Typography variant="body1" sx={{ whiteSpace: "pre-wrap" }}>{msg.message_content}</Typography>
+        <Typography variant="caption" color="#808080">
+          Sent by: {msg.first_name} {msg.last_name}
+        </Typography>
+        {msg.is_read && (
+      <Typography variant="caption" color="green" fontStyle="italic" ml={1}>
+        ✅ Read
+      </Typography>
+    )}
+      </Box>
+    ))
+  ) : (
+    <Typography variant="body2" color="#808080">No feedback sent yet.</Typography>
+  )}
+</Box>
+
               <CardContent sx={{m: 1, color: 'var(--text)'}}>
               <p>Send your students feedback on this case here. They will be able to see your name.</p>
                 <TextField

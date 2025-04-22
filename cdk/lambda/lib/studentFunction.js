@@ -1,6 +1,6 @@
 // const { v4: uuidv4 } = require('uuid')
 const { initializeConnection } = require("./lib.js");
-let { SM_DB_CREDENTIALS, RDS_PROXY_ENDPOINT, USER_POOL, BUCKET } = process.env;
+let { SM_DB_CREDENTIALS, RDS_PROXY_ENDPOINT, USER_POOL, BUCKET, MESSAGE_LIMIT } = process.env;
 const {
   CognitoIdentityProviderClient,
   AdminGetUserCommand,
@@ -385,7 +385,7 @@ exports.handler = async (event) => {
             const user_id = event.queryStringParameters.user_id;
             try {
               const activityData = await sqlConnection`
-                SELECT activity_counter, last_activity FROM "users" WHERE user_id = ${user_id};
+                SELECT activity_counter, last_activity FROM "users" WHERE cognito_id = ${user_id};
               `;
               if (activityData.length > 0) {
                 let activity_counter = parseInt(activityData[0].activity_counter, 10);
@@ -399,7 +399,7 @@ exports.handler = async (event) => {
                   // Check if 24 hours have passed since the last activity
                   if (hoursDifference >= 24) {
                     await sqlConnection`
-                      UPDATE "users" SET activity_counter = 0 WHERE user_id = ${user_id};
+                      UPDATE "users" SET activity_counter = 0 WHERE cognito_id = ${user_id};
                     `;
                     
                     activity_counter = 0;
@@ -431,7 +431,7 @@ exports.handler = async (event) => {
               const user_id = event.queryStringParameters.user_id;
               try {
                 const activityData = await sqlConnection`
-                  SELECT activity_counter, last_activity FROM "users" WHERE user_id = ${user_id};
+                  SELECT activity_counter, last_activity FROM "users" WHERE cognito_id = ${user_id};
                 `;
           
                 if (activityData.length > 0) {
@@ -443,14 +443,14 @@ exports.handler = async (event) => {
                   if (hoursSinceLast >= 24) {
                     // Reset counter and last_activity
                     await sqlConnection`
-                      UPDATE "users" SET activity_counter = 1, last_activity = CURRENT_TIMESTAMP WHERE user_id = ${user_id};
+                      UPDATE "users" SET activity_counter = 1, last_activity = CURRENT_TIMESTAMP WHERE cognito_id = ${user_id};
                     `;
                     activity_counter = 1;
                     // HARDCODED TO 10 RIGHT NOW, CHANGE TO BE FROM SECRETS MANAGER OR PARAM STORE
                   } else if (activity_counter < 10) {
                     // Increment counter
                     await sqlConnection`
-                      UPDATE "users" SET activity_counter = activity_counter + 1 WHERE user_id = ${user_id};
+                      UPDATE "users" SET activity_counter = activity_counter + 1 WHERE cognito_id = ${user_id};
                     `;
                     activity_counter += 1;
                   } else {
@@ -476,6 +476,25 @@ exports.handler = async (event) => {
               response.body = JSON.stringify({ error: "User ID is required" });
             }
             break;
+
+            case "GET /student/message_limit":
+              try {
+                const { SSMClient, GetParameterCommand } = await import("@aws-sdk/client-ssm");
+
+                const ssm = new SSMClient();
+
+                const result = await ssm.send(
+                  new GetParameterCommand({ Name: MESSAGE_LIMIT })
+                );
+
+                response.statusCode = 200;
+                response.body = JSON.stringify({ value: result.Parameter.Value });
+              } catch (err) {
+                console.error("Failed to fetch message limit:", err);
+                response.statusCode = 500;
+                response.body = JSON.stringify({ error: "Internal server error" });
+              }
+              break;
 
 
           case "PUT /student/read_message":
