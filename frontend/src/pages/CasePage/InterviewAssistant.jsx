@@ -777,7 +777,7 @@ const InterviewAssistant = () => {
                 position: "fixed",
                 bottom: 0,
                 right: 0,
-                minHeight: "85px",
+                minHeight: "95px",
                 width: "calc(100% - 250px)",
                 minWidth: "70vw",
                 display: "flex",
@@ -851,7 +851,7 @@ const InterviewAssistant = () => {
                 >
                   <ArrowUpwardRoundedIcon sx={{ color: "white" }} />
                 </Button>
-                <p style={{position: "fixed", bottom: 1, left: 65, right: 0, width: '100%', fontFamily: 'Outfit', fontSize: '0.9rem', color: "var(--placeholder-text)"}}>AI can make mistakes. Please check important information and citations.</p>
+                <p style={{position: "fixed", bottom: 2, left: 65, right: 0, width: '100%', fontFamily: 'Outfit', fontSize: '0.9rem', color: "var(--placeholder-text)"}}>AI can make mistakes. Please check important information and citations.</p>
               </Box>
             </Box>
           </Box>
