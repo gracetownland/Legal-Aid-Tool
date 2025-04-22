@@ -265,6 +265,13 @@ const InterviewAssistant = () => {
     if (event.key === "Enter" && !event.shiftKey && !isAItyping && messageCounter <= messageLimit) {
       event.preventDefault();
       handleSendMessage();
+    } if (messageCounter >= messageLimit && event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      setSnackbar({
+        open: true,
+        message: "You have reached the maximum number of messages for today. Please try again tomorrow.",
+        severity: "error",
+      });
     }
   };
 
