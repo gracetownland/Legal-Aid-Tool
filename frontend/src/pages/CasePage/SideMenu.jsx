@@ -145,6 +145,51 @@ const SideMenu = () => {
     }}
   />
   </ListItem>
+  <ListItem
+  button
+  onClick={() => handleNavigation("Interview Assistant")}
+  selected={isActive("Interview Assistant")}
+  sx={{
+    pl: 2,
+    borderLeft: isActive("Interview Assistant") ? "4px solid var(--primary)" : "4px solid transparent",
+    backgroundColor: isActive("Interview Assistant") ? "var(--background3)" : "transparent",
+    "&:hover": {
+      backgroundColor: "var(--background3)",
+      cursor: "pointer",
+    },
+  }}
+>
+  <ListItemText
+    primary="Interview Assistant"
+    primaryTypographyProps={{
+      fontWeight: isActive("Interview Assistant") ? "bold" : "normal",
+      color: isActive("Interview Assistant") ? "var(--primary)" : "inherit",
+    }}
+  />
+</ListItem>
+
+<ListItem
+  button
+  onClick={() => handleNavigation("Summaries")}
+  selected={isActive("Summaries")}
+  sx={{
+    pl: 2,
+    borderLeft: isActive("Summaries") ? "4px solid var(--primary)" : "4px solid transparent",
+    backgroundColor: isActive("Summaries") ? "var(--background3)" : "transparent",
+    "&:hover": {
+      backgroundColor: "var(--background3)",
+      cursor: "pointer",
+    },
+  }}
+>
+  <ListItemText
+    primary="Case Summaries"
+    primaryTypographyProps={{
+      fontWeight: isActive("Summaries") ? "bold" : "normal",
+      color: isActive("Summaries") ? "var(--primary)" : "inherit",
+    }}
+  />
+</ListItem>
 
 
   <ListItem
@@ -185,51 +230,8 @@ const SideMenu = () => {
   </Box>
 </ListItem>
 
-<ListItem
-  button
-  onClick={() => handleNavigation("Summaries")}
-  selected={isActive("Summaries")}
-  sx={{
-    pl: 2,
-    borderLeft: isActive("Summaries") ? "4px solid var(--primary)" : "4px solid transparent",
-    backgroundColor: isActive("Summaries") ? "var(--background3)" : "transparent",
-    "&:hover": {
-      backgroundColor: "var(--background3)",
-      cursor: "pointer",
-    },
-  }}
->
-  <ListItemText
-    primary="Case Summaries"
-    primaryTypographyProps={{
-      fontWeight: isActive("Summaries") ? "bold" : "normal",
-      color: isActive("Summaries") ? "var(--primary)" : "inherit",
-    }}
-  />
-</ListItem>
-  <ListItem
-  button
-  onClick={() => handleNavigation("Interview Assistant")}
-  selected={isActive("Interview Assistant")}
-  sx={{
-    pl: 2,
-    borderLeft: isActive("Interview Assistant") ? "4px solid var(--primary)" : "4px solid transparent",
-    backgroundColor: isActive("Interview Assistant") ? "var(--background3)" : "transparent",
-    "&:hover": {
-      backgroundColor: "var(--background3)",
-      cursor: "pointer",
-    },
-  }}
->
-  <ListItemText
-    primary="Interview Assistant"
-    primaryTypographyProps={{
-      fontWeight: isActive("Interview Assistant") ? "bold" : "normal",
-      color: isActive("Interview Assistant") ? "var(--primary)" : "inherit",
-    }}
-  />
-</ListItem>
 
+ 
 </List>
 
 
