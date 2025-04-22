@@ -10,6 +10,7 @@ import { fetchAuthSession } from "aws-amplify/auth";
 import SendIcon from "@mui/icons-material/Send";
 import FeedbackIcon from '@mui/icons-material/Feedback';
 import Divider from "@mui/material/Divider";
+import NotFound from "../NotFound";
 
 const FeedbackPage = () => {
   const { caseId } = useParams();
@@ -150,6 +151,7 @@ const FeedbackPage = () => {
   };
 
   return (
+    (caseData ?
     <>
      
       <Box position="fixed" top={0} left={0} width="100%" zIndex={1000}>
@@ -320,6 +322,10 @@ const FeedbackPage = () => {
         </Alert>
       </Snackbar>
     </>
+
+    :
+
+    <NotFound/>)
   );
 };
 

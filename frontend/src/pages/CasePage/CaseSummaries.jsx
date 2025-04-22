@@ -32,6 +32,8 @@ import CloseIcon from "@mui/icons-material/Close";
 import DOMPurify from "dompurify";
 import DownloadIcon from "@mui/icons-material/Download";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import NotFound from "../NotFound";
+import CircularProgress from "@mui/material/CircularProgress";
 
 // Styled component for markdown content with proper heading styles
 const StyledMarkdownContent = styled('div')(({ theme }) => ({
@@ -399,6 +401,29 @@ const SummariesPage = () => {
   };
   
   return (
+    <>
+    {loading && (
+      <Box
+        sx={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          backgroundColor: "rgba(255, 255, 255, 0.85)",
+          zIndex: 2000,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          fontFamily: "Outfit",
+        }}
+      >
+        <CircularProgress sx={{ color: "var(--primary)" }} />
+      </Box>
+    )}
+    
+    {!loading && 
+      (caseData ? (
     <Box display="flex" flexDirection="column" minHeight="100vh">
       <Box position="fixed" top={0} left={0} width="100%" zIndex={1000} bgcolor="var(--background)">
         {userRole === "instructor" ? <InstructorHeader /> : <StudentHeader />}
@@ -588,8 +613,12 @@ const SummariesPage = () => {
           )}
         </DialogContent>
       </Dialog>
-    </Box>
-  );
-};
+    </Box>)
+    :
+    (<NotFound/>)
+          )};
+    </>)
+    
+  };
 
 export default SummariesPage;

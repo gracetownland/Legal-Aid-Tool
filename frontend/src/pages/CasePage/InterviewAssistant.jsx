@@ -385,6 +385,7 @@ const InterviewAssistant = () => {
   return (
     <Box
       sx={{
+        position: "relative",
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
@@ -392,12 +393,43 @@ const InterviewAssistant = () => {
         backgroundColor: "transparent",
         color: "var(--text)",
         marginTop: "75px",
+        minHeight: "100vh",
       }}
     >
+      {loading && (
+        <Box
+          sx={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            backgroundColor: "rgba(255, 255, 255, 0.85)",
+            zIndex: 999,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            fontFamily: "Outfit",
+          }}
+        >
+          <CircularProgress
+            sx={{
+              color: "var(--primary)",
+              width: "60px !important",
+              left: "55%",
+              top: "40%",
+              position: "absolute",
+              height: "60px !important",
+            }}
+          />
+        </Box>
+      )}
+  
+      {/* Everything below this runs normally after loading */}
       <Box position="fixed" top={0} left={0} width="100%" zIndex={1000} bgcolor="white">
         {userRole === "instructor" ? <InstructorHeader /> : <StudentHeader />}
       </Box>
-
+  
       <Box sx={{ display: "flex" }}>
         <SideMenu />
 
@@ -434,24 +466,7 @@ const InterviewAssistant = () => {
           </Box>
 
           {loading ? (
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                height: "500px",
-                backgroundColor: "rgba(255, 255, 255, 0.3)",
-                borderRadius: 2,
-                padding: 2,
-                position: "absolute",
-                top: 0,
-                left: 0,
-                width: "100%",
-                zIndex: 999,
-              }}
-            >
-              <CircularProgress sx={{ width: "150px", color: "var(--text)" }} />
-            </Box>
+            <></>
           ) : (
             <Box sx={{ overflowY: "auto", marginBottom: 2 }}>
               {messages.map((message, index) => {

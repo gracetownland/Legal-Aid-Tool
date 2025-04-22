@@ -306,8 +306,24 @@ const Login = () => {
                         startAdornment: <InputAdornment position="start"><Lock {...iconProps} /></InputAdornment>,
                         endAdornment: (
                           <InputAdornment position="end">
-                            <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" sx={{ p: 0.5, border: 'none', outline: 'none' }}>
-                              {showPassword ? <Visibility {...iconProps} /> : <Visibility {...iconProps} />}
+                            <IconButton
+                              onClick={() => setShowPassword(!showPassword)}
+                              edge="end"
+                              disableRipple
+                              sx={{
+                                p: 0.5,
+                                border: 'none',
+                                outline: 'none',
+                                '&:focus': {
+                                  outline: 'none',
+                                  boxShadow: 'none',
+                                },
+                                '&:hover': {
+                                  backgroundColor: 'transparent',
+                                },
+                              }}
+                            >
+                              {showPassword ? <VisibilityOff {...iconProps} /> : <Visibility {...iconProps} />}
                             </IconButton>
                           </InputAdornment>
                         ),
@@ -328,7 +344,19 @@ const Login = () => {
                           startAdornment: <InputAdornment position="start"><Lock {...iconProps} /></InputAdornment>,
                           endAdornment: (
                             <InputAdornment position="end">
-                              <IconButton onClick={() => setShowConfirmPassword(!showConfirmPassword)} edge="end" sx={{ p: 0.5, border: 'none', outline: 'none' }}>
+                              <IconButton onClick={() => setShowConfirmPassword(!showConfirmPassword)} edge="end" disableRipple
+                              sx={{
+                                p: 0.5,
+                                border: 'none',
+                                outline: 'none',
+                                '&:focus': {
+                                  outline: 'none',
+                                  boxShadow: 'none',
+                                },
+                                '&:hover': {
+                                  backgroundColor: 'transparent',
+                                },
+                              }}>
                                 {showConfirmPassword ? <VisibilityOff {...iconProps} /> : <Visibility {...iconProps} />}
                               </IconButton>
                             </InputAdornment>
