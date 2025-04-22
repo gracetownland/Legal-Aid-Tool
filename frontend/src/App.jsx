@@ -25,6 +25,7 @@ import AIControlPanel  from "./pages/admin/AdminAIControlPanel";
 import SummariesPage from "./pages/CasePage/CaseSummaries";
 import CaseFeedback from "./pages/CasePage/CaseFeedback";
 import AllCasesPage from "./pages/instructor/InstructorAllCases";
+import NotFound from "./pages/NotFound";
 // import Transcriptions from "./pages/student/Transcriptions";
 
 
@@ -124,7 +125,10 @@ function App() {
           <Route path="/case/:caseId/feedback" element={<CaseFeedback />} />
           <Route path="/ai-control-panel" element={<ProtectedRoute allowedGroups={["admin", "techadmin"]} userGroup={userGroup}>
                                                   <AIControlPanel />
-                                                </ProtectedRoute>} />                                   
+                                                </ProtectedRoute>} />        
+
+          {/* [KEEP ON BOTTOM] Catch-all route for 404 */}
+          <Route path="*" element={<NotFound />} />                           
         </Routes>
       </Router>
     </UserContext.Provider>
