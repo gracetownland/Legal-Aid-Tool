@@ -227,14 +227,7 @@ const NewCaseForm = () => {
             }}>
               <InputLabel sx={{color: 'var(--placeholder-text)'}}>Broad Area of Law</InputLabel>
               <Select
-              InputLabelProps={{
-    sx: {
-      color: "var(--placeholder-text)", // Normal label color
-      "&.Mui-focused": {
-        color: "var(--placeholder-text)", // Focused label color
-      },
-    },
-  }}
+                label="Broad Area of Law"
               sx={{color: 'var(--text)'}}
                 name="broadAreaOfLaw"
                 value={formData.broadAreaOfLaw}
@@ -252,6 +245,7 @@ const NewCaseForm = () => {
                   "Labour Law",
                   "Personal Injury Law",
                   "Tax Law",
+                  "Intellectual Property Law",
                   "Other",
                 ].map((area) => (
                   <MenuItem key={area} value={area}>
@@ -264,7 +258,7 @@ const NewCaseForm = () => {
             <FormControl fullWidth sx={{ mb: 2, textAlign: "left" }}>
               <FormLabel style={{color: 'var(--text)'}}>Jurisdiction</FormLabel>
               <FormGroup >
-                {["Federal Law", "Provincial"].map((option) => (
+                {["Federal", "Provincial"].map((option) => (
                   <FormControlLabel
                     key={option}
                     control={
@@ -283,51 +277,51 @@ const NewCaseForm = () => {
             </FormControl>
 
             {formData.jurisdiction.includes("Provincial") && (
-              <FormControl fullWidth sx={{ mb:2, textAlign: "left", borderColor: "var(--border)",
-                borderColor: "var(--border)",
-                "& .MuiOutlinedInput-root": {
-                  "& fieldset": {
-                    borderColor: "var(--border)", // Set border color
-                  },
-                  "&.Mui-focused fieldset": {
-                    borderColor: "var(--border)", // Set focused border color
-                  },
-                  "& input": {
-                    color: "var(--text)",
-                  },
-                  "& .MuiInputBase-input::placeholder": {
-                    color: "var(--placeholder-text)", // Set placeholder text color
-                  },
-                },
-              }}>
-                <InputLabel sx={{color: 'var(--placeholder-text)'}}>Province</InputLabel>
-                <Select
-                  name="province"
-                  value={formData.province}
-                  onChange={handleChange}
-                  sx={{color: 'var(--text)'}}
-                >
-                  {[
-                    "Alberta",
-                    "British Columbia",
-                    "Manitoba",
-                    "New Brunswick",
-                    "Newfoundland and Labrador",
-                    "Nova Scotia",
-                    "Ontario",
-                    "Prince Edward Island",
-                    "Quebec",
-                    "Saskatchewan",
-                    "Northwest Territories",
-                    "Nunavut",
-                    "Yukon",
-                  ].map((province) => (
-                    <MenuItem key={province} value={province}>
-                      {province}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              <FormControl fullWidth sx={{ 
+  mb: 2, 
+  textAlign: "left", 
+  "& .MuiOutlinedInput-notchedOutline": {
+    borderColor: "var(--border)", // Correct border color target
+  },
+  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+    borderColor: "var(--border)",
+  },
+  "& .MuiSelect-outlined": {
+    color: "var(--text)", // Text color inside select
+  }
+}}>
+  <InputLabel id="province-label" sx={{ color: 'var(--placeholder-text)' }}>
+    Province
+  </InputLabel>
+  <Select
+    labelId="province-label"
+    label="Province"
+    name="province"
+    value={formData.province}
+    onChange={handleChange}
+    sx={{ color: 'var(--text)' }}
+  >
+    {[
+      "Alberta",
+      "British Columbia",
+      "Manitoba",
+      "New Brunswick",
+      "Newfoundland and Labrador",
+      "Nova Scotia",
+      "Ontario",
+      "Prince Edward Island",
+      "Quebec",
+      "Saskatchewan",
+      "Northwest Territories",
+      "Nunavut",
+      "Yukon",
+    ].map((province) => (
+      <MenuItem key={province} value={province}>
+        {province}
+      </MenuItem>
+    ))}
+  </Select>
+</FormControl>
             )}
             <div style={{display: "flex", flexDirection: "row", gap: "1rem"}}>
 

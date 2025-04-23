@@ -1,6 +1,6 @@
 const { initializeConnection } = require("./libadmin.js");
 
-let { SM_DB_CREDENTIALS, RDS_PROXY_ENDPOINT } = process.env;
+let { SM_DB_CREDENTIALS, RDS_PROXY_ENDPOINT, MESSAGE_LIMIT } = process.env;
 
 // SQL conneciton from global variable at libadmin.js
 let sqlConnectionTableCreator = global.sqlConnectionTableCreator;
@@ -108,6 +108,29 @@ exports.handler = async (event) => {
           `;
 
         response.body = JSON.stringify(system_prompts);
+        break;
+
+      case "GET /admin/message_limit":
+        try {
+          console.log("Message limit name:", process.env.MESSAGE_LIMIT);
+          const { SSMClient, GetParameterCommand } = await import("@aws-sdk/client-ssm");
+      
+          const ssm = new SSMClient();
+      
+          console.log("Fetching admin message limit from SSM...");
+          const result = await ssm.send(
+            new GetParameterCommand({ Name: process.env.MESSAGE_LIMIT })
+          );
+      
+          console.log("✅ Admin message limit fetched:", result.Parameter.Value);
+      
+          response.statusCode = 200;
+          response.body = JSON.stringify({ value: result.Parameter.Value });
+        } catch (err) {
+          console.error("❌ Failed to fetch message limit:", err);
+          response.statusCode = 500;
+          response.body = JSON.stringify({ error: "Internal server error" });
+        }
         break;
       case "GET /admin/instructorStudents":
         if (

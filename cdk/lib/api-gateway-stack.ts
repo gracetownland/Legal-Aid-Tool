@@ -598,13 +598,6 @@ export class ApiGatewayStack extends cdk.Stack {
         ],
       })
     );
-
-    lambdaStudentFunction.addPermission("AllowApiGatewayInvoke", {
-      principal: new iam.ServicePrincipal("apigateway.amazonaws.com"),
-      action: "lambda:InvokeFunction",
-      sourceArn: `arn:aws:execute-api:${this.region}:${this.account}:${this.api.restApiId}/*/*/student*`,
-    });    
-
     // Allow access to DynamoDB Table for reading chat history
     lambdaStudentFunction.addToRolePolicy(
       new iam.PolicyStatement({
@@ -621,6 +614,12 @@ export class ApiGatewayStack extends cdk.Stack {
       principal: new iam.ServicePrincipal("apigateway.amazonaws.com"),
       action: "lambda:InvokeFunction",
       sourceArn: `arn:aws:execute-api:${this.region}:${this.account}:${this.api.restApiId}/*/*/student*`,
+    });
+
+    lambdaStudentFunction.addPermission("AllowTestInvoke", {
+      principal: new iam.ServicePrincipal("apigateway.amazonaws.com"),
+      action: "lambda:InvokeFunction",
+      sourceArn: `arn:aws:execute-api:${this.region}:${this.account}:${this.api.restApiId}/test-invoke-stage/*/*`,
     });
 
     // Add permission to the Lambda function to allow it to access the message limit parameter

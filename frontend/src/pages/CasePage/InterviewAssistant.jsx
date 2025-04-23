@@ -77,7 +77,7 @@ const InterviewAssistant = () => {
       const user_id = session.tokens.idToken.payload.sub;
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_API_ENDPOINT}student/message_limit?user_id=${user_id}`,
+          `${import.meta.env.VITE_API_ENDPOINT}student/message_limit`,
           {
             method: "GET",
             headers: {

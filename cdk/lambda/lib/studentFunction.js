@@ -477,15 +477,20 @@ exports.handler = async (event) => {
             }
             break;
 
-            case "GET /student/message_limit":
+            case "GET /student/message_limit_parameter":
               try {
+                console.log("Message limit name: ", MESSAGE_LIMIT);
                 const { SSMClient, GetParameterCommand } = await import("@aws-sdk/client-ssm");
 
                 const ssm = new SSMClient();
 
+                console.log("Fetching message limit from SSM parameter store...");
+
                 const result = await ssm.send(
                   new GetParameterCommand({ Name: MESSAGE_LIMIT })
                 );
+
+                console.log("Message limit fetched successfully:", result.Parameter.Value);
 
                 response.statusCode = 200;
                 response.body = JSON.stringify({ value: result.Parameter.Value });
