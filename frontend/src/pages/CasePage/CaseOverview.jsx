@@ -175,11 +175,10 @@ const CaseOverview = () => {
               </Box>
             ) : (
               <>
-
-                <div style={{ display: "flex", alignItems: "center", marginBottom: "1em", gap: "1em" }}>
-                <Typography variant="h4" fontWeight={600} mb={0} textAlign="left">
-                  Case #{caseData.case_hash}
-                </Typography>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexDirection: "row" }}>
+              <h2 style={{ display: "flex", alignItems: "center", gap: "1em", fontFamily: "Outfit", fontSize: '20pt', marginBottom: '0.5rem', fontWeight: '600' }}>Case Details</h2>
+                <div style={{ display: "flex", alignItems: "center", gap: "1em" }}>
+                
 
                 <div
                   onClick={() => setEditMode(!editMode)}
@@ -194,22 +193,30 @@ const CaseOverview = () => {
                   onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
                 >
                   {editMode ? (
+                    <div style={{display: 'flex', flexDirection: 'row', gap: '0.5em', alignItems: 'center'}}>
+                    
                     <EditOffIcon
                       style={{
-                        fontSize: '32px',
+                        fontSize: '25px',
                         transform: 'scaleX(1)',
                       }}
                     />
+                    <p>Cancel Edit Case</p>
+                    </div>
                   ) : (
+                    <div style={{display: 'flex', flexDirection: 'row', gap: '0.5em', alignItems: 'center'}}>
+                    
                     <EditIcon
                       style={{
-                        fontSize: '32px',
+                        fontSize: '25px',
                         transform: 'scaleX(1)',
                       }}
                     />
+                    <p>Edit Case</p>
+                    </div>
                   )}
                 </div>
-
+                </div>
                 </div>
                 
 
@@ -233,13 +240,13 @@ const CaseOverview = () => {
                               color: 'var(--text)', // label text
                             },
                             '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': {
-                              borderColor: 'var(--text)', // outline border
+                              borderColor: 'var(--border)', // outline border
                             },
                             '&:hover .MuiOutlinedInput-notchedOutline': {
-                              borderColor: 'var(--text)', // hover border
+                              borderColor: 'var(--border)', // hover border
                             },
                             '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                              borderColor: 'var(--text)', // focused border
+                              borderColor: 'var(--border)', // focused border
                             }
                           }}
                         />
@@ -259,25 +266,32 @@ const CaseOverview = () => {
                               color: 'var(--text)',
                             },
                             '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': {
-                              borderColor: 'var(--text)',
+                              borderColor: 'var(--border)',
                             },
                             '&:hover .MuiOutlinedInput-notchedOutline': {
-                              borderColor: 'var(--text)',
+                              borderColor: 'var(--border)',
                             },
                             '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                              borderColor: 'var(--text)',
+                              borderColor: 'var(--border)',
                             }
                           }}
                         />
-                        <Button variant="contained" color="success" sx={{ mt: 2 }} onClick={handleSaveEdit}>
+                        <Button variant="contained" color="success" sx={{ mt: 2, boxShadow: 'none', borderRadius: '2em', textTransform: 'none', fontFamily: 'Outfit' }} onClick={handleSaveEdit}>
                           Save Changes
                         </Button>
                       </>
                     ) : (
                       <>
-                        <Typography variant="h6">{caseData.case_title}</Typography>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexDirection: "row" }}>
+                        <Typography variant="h6" style={{fontFamily: "Outfit"}}>{caseData.case_title}</Typography>
+                        <Typography variant="h7" style={{fontFamily: "Outfit", color: "var(--placeholder-text)"}} fontWeight={100} mb={0} textAlign="left">
+                          Case #{caseData.case_hash}
+                        </Typography>
+                        </div>
                         <Divider sx={{ my: 2, borderColor: "var(--border)" }} />
-                        <Typography variant="body2">{caseData.case_description}</Typography>
+                        <Typography variant="body2" sx={{ whiteSpace: "normal", wordBreak: "break-word" }}>
+                          {caseData.case_description}
+                        </Typography>
                       </>
                     )}
                   </CardContent>
@@ -318,6 +332,7 @@ const CaseOverview = () => {
 </Stack>
 
                 <CardContent>
+                  
                   <Grid container spacing={3} sx={{ textAlign: "left" }}>
                     {["case_type", "jurisdiction"].map((key, index) => (
                       <Grid item xs={12} md={6} key={index}>
