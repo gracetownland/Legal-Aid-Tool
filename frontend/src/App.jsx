@@ -20,7 +20,6 @@ import InstructorHomepage from "./pages/instructor/InstructorHomepage";
 import AdminHomepage from "./pages/admin/AdminHomepage";
 import CaseOverview from "./pages/CasePage/CaseOverview";
 import InterviewAssistant from "./pages/CasePage/InterviewAssistant";
-import PrelimSummary from "./pages/CasePage/PrelimSummary";
 import AIControlPanel  from "./pages/admin/AdminAIControlPanel";
 import SummariesPage from "./pages/CasePage/CaseSummaries";
 import CaseFeedback from "./pages/CasePage/CaseFeedback";
