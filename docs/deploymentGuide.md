@@ -116,7 +116,7 @@ Moreover, you will need to upload your github username to Amazon SSM Parameter S
 
 ```bash
 aws ssm put-parameter \
-    --name "DSA-owner-name" \
+    --name "LAT-owner-name" \
     --value "<YOUR-GITHUB-USERNAME>" \
     --type String \
     --profile <YOUR-PROFILE-NAME>
@@ -128,7 +128,7 @@ aws ssm put-parameter \
 
 ```cmd
 aws ssm put-parameter ^
-    --name "DSA-owner-name" ^
+    --name "LAT-owner-name" ^
     --value "<YOUR-GITHUB-USERNAME>" ^
     --type String ^
     --profile <YOUR-PROFILE-NAME>
@@ -141,7 +141,7 @@ aws ssm put-parameter ^
 
 ```powershell
 aws ssm put-parameter `
-    --name "DSA-owner-name" `
+    --name "LAT-owner-name" `
     --value "<YOUR-GITHUB-USERNAME>" `
     --type String `
     --profile <YOUR-PROFILE-NAME>
@@ -157,7 +157,7 @@ You would have to supply a custom database username when deploying the solution 
 
 ```bash
 aws secretsmanager create-secret \
-    --name DSASecrets \
+    --name LATSecrets \
     --secret-string "{\"DB_Username\":\"<YOUR-DB-USERNAME>\"}"\
     --profile <your-profile-name>
 ```
@@ -168,7 +168,7 @@ aws secretsmanager create-secret \
 
 ```cmd
 aws secretsmanager create-secret ^
-    --name DSASecrets ^
+    --name LATSecrets ^
     --secret-string "{\"DB_Username\":\"<YOUR-DB-USERNAME>\"}"^
     --profile <your-profile-name>
 ```
@@ -192,8 +192,8 @@ For example,
 
 ```
 aws secretsmanager create-secret \
-    --name DSASecrets \
-    --secret-string '{\"DB_Username\":\"DSASecrets\"}'\
+    --name LATSecrets \
+    --secret-string '{\"DB_Username\":\"LATSecrets\"}'\
     --profile <your-profile-name>
 Note: No special characters are allowed in the secret value.
 
@@ -219,7 +219,7 @@ aws ssm put-parameter \
 
 ```cmd
 aws ssm put-parameter ^
-    --name "/DSA/AllowedEmailDomains" ^
+    --name "/LAT/AllowedEmailDomains" ^
     --value "<YOUR-ALLOWED-EMAIL-DOMAIN-LIST>" ^
     --type SecureString ^
     --profile <YOUR-PROFILE-NAME>
@@ -244,7 +244,7 @@ aws ssm put-parameter `
 For example,
 ```
 aws ssm put-parameter \
-    --name "/DSA/AllowedEmailDomains" \
+    --name "/LAT/AllowedEmailDomains" \
     --value "gmail.com,ubc.ca" \
     --type SecureString \
     --profile <YOUR-PROFILE-NAME>
