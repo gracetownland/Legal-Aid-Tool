@@ -241,11 +241,11 @@ aws ssm put-parameter `
 
 &nbsp;
 
-For example,
+For example, an email domain list we reccommend for this specific project is:
 ```
 aws ssm put-parameter \
     --name "/LAT/AllowedEmailDomains" \
-    --value "gmail.com,ubc.ca" \
+    --value "gmail.com,ubc.ca,student.ubc.ca,allard.ubc.ca" \
     --type SecureString \
     --profile <YOUR-PROFILE-NAME>
 ```
@@ -271,7 +271,7 @@ The stack prefix will be prefixed onto the physical names of the resources creat
 If you have trouble running the above command, try removing all the \ and run it in one line.
 ```
 cdk deploy --all \
- --parameters <your-stack-prefix>-Amplify:githubRepoName=Digital-Strategy-Assistant \
+ --parameters <your-stack-prefix>-Amplify:githubRepoName=Clinical-Interview-Tool \
  --context StackPrefix=<your-stack-prefix> \
  --profile <your-profile-name>
 ```
@@ -279,7 +279,7 @@ cdk deploy --all \
 For example: 
 
 ```
-cdk deploy --all --parameters DigitalStrategyAssistant-Amplify:githubRepoName=Digital-Strategy-Assistant --context StackPrefix=DigitalStrategyAssistant --profile <your-profile-name>
+cdk deploy --all --parameters LegalAidTool-Amplify:githubRepoName=Clinical-Interview-Tool --context StackPrefix=LegalAidTool --profile <your-profile-name>
 ```
 
 ## Post-Deployment
