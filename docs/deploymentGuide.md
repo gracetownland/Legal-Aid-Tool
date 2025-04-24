@@ -54,7 +54,7 @@ The relevant models are now enabled in Bedrock.
 ### Step 1: Fork & Clone The Repository
 First, you need to fork the repository. To create a fork, navigate to the [main branch](https://github.com/UBC-CIC/Clinical-Interview-Tool) of this repository. Then, in the top-right corner, click `Fork`.
 
-![](./images/fork.jpeg)
+![](./media/fork.jpeg)
 
 You will be directed to the page where you can customize owner, repository name, etc, but you do not have to change any option. Simply click `Create fork` in the bottom right corner.
 
