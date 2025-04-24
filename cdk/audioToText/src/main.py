@@ -232,10 +232,23 @@ def handler(event, context):
         with urllib.request.urlopen(transcript_uri) as r:
             data = json.loads(r.read().decode())
         transcript_text = data.get("results", {}).get("transcripts", [{}])[0].get("transcript", "")
-
+        
         # 5. Store transcript and notify clients
-        add_audio_to_db(case_id, transcript_text)
-        invoke_event_notification(case_id, "transcription_complete", cognito_token)
+add_audio_to_db(case_id, transcript_text)
+
+lambda_client = boto3.client("lambda")
+lambda_response = lambda_client.invoke(
+    FunctionName="LATstaging-Api-NotificationFunction",  # Update this if the name differs
+    InvocationType="RequestResponse",
+    Payload=json.dumps({
+        "caseId": case_id,
+        "message": "transcription_complete"
+    }).encode("utf-8"),
+)
+
+logger.info("Notification Lambda invoked")
+logger.info(lambda_response)
+
 
         # Return successful response
         return {

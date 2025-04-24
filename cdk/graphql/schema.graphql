@@ -9,7 +9,7 @@ type Query {
 }
 
 type Mutation {
-  sendNotification(message: String!, caseId: String!): Notification @aws_auth(cognito_groups: ["student"])
+  sendNotification(message: String!, caseId: String!): Notification
 }
 
 type Subscription {
