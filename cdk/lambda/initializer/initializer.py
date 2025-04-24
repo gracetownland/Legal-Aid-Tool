@@ -93,6 +93,8 @@ def handler(event, context):
                 "user_id" uuid,
                 "jurisdiction" varchar[],
                 "case_description" text,
+                "province" varchar,
+                "statute" varchar,
                 "status" varchar DEFAULT 'In progress',
                 "last_updated" timestamp DEFAULT now(),
                 "time_created" timestamp DEFAULT now(),

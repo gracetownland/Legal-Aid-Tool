@@ -57,10 +57,12 @@ const NewCaseForm = () => {
     setError(null);
 
     const caseData = {
-      case_title: "New Case", // Temporary placeholder title
+      case_title: "New Case", // Temporary placeholder title while one is generated
       case_type: formData.broadAreaOfLaw,
       jurisdiction: formData.jurisdiction,
       case_description: formData.legalMatterSummary,
+      province: formData.province,
+      statute: formData.statuteDetails,
     };
 
     try {

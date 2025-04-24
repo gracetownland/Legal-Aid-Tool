@@ -206,7 +206,8 @@ def get_audio_response(
 
 def get_response(
     query: str,
-    case_title: str,
+    province: str,
+    statute:  str,
     llm: ChatBedrock,
     history_aware_retriever,
     table_name: str,
@@ -253,6 +254,8 @@ def get_response(
         Case type: {case_type}
         Jurisdiction: {jurisdiction}
         Case description: {case_description}
+        Province (blank if not under provincial jurisdiction): {province}
+        Statute (blank if not applicable): {statute}
         <|eot_id|>
         <|start_header_id|>documents<|end_header_id|>
         {{context}}
