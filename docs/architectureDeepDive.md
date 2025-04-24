@@ -1,3 +1,13 @@
+# Architecture Deep Dive
+
+## Architecture
+
+![Archnitecture Diagram](./media/architecture.png)
+
+### Database Schema
+
+### RDS Tables
+
 ### `users` table
 
 | Column Name          | Description                                           |
