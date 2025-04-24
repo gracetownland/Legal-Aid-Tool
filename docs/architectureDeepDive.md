@@ -6,6 +6,8 @@
 
 ### Database Schema
 
+![Database Diagram](./media/database_schema.png)
+
 ### RDS Tables
 
 ### `users` table
