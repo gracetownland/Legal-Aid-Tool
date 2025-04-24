@@ -97,7 +97,7 @@ uri:
 
 4. **Modify Text and UI Icons**: Update specific text and icon configurations in each component file. Each component has its unique structure, so locate the relevant text or icon section within the component and make your changes.
 
-For example, to change the text on the student homepage, modify `frontend/src/pages/student/StudentHomepage.jsx`.
+For example, to alter the interview assistant page, modify `frontend/src/pages/CasePage/InterviewAssistant.jsx`.
 
 After making the required changes in the fork created in the [Deployment Guide](./docs/deploymentGuide.md), the amplify deployment should automatically redeploy.
 
