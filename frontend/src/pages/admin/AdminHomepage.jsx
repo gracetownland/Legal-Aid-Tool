@@ -12,7 +12,6 @@ export const AdminHomepage = () => {
   const [selectedComponent, setSelectedComponent] =
     useState("AdminInstructors");
   const [selectedInstructor, setSelectedInstructor] = useState(null);
-  const [selectedGroup, setSelectedGroup] = useState(null);
 
   // sidebar routing
   const renderComponent = () => {
