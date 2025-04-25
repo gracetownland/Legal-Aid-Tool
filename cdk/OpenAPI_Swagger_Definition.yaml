@@ -822,6 +822,8 @@ paths:
                 - case_type
                 - jurisdiction
                 - case_description
+                - province
+                - statute
               properties:
                 case_title:
                   type: string
@@ -835,6 +837,12 @@ paths:
                 case_description:
                   type: string
                   description: Detailed description of the case
+                province:
+                  type: string
+                  description: Province related to the case
+                statute:
+                  type: string
+                  description: Statute related to the case
       responses:
         "200":
           description: Case created successfully

@@ -109,7 +109,7 @@ def handler(event, context):
                 "case_id" uuid,
                 "content" text,
                 "time_created" timestamp DEFAULT now(),
-                "is_read" boolean DEFAULT false,
+                "is_read" boolean DEFAULT false
             );
 
             CREATE TABLE IF NOT EXISTS "audio_files" (

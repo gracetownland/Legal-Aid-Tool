@@ -204,7 +204,7 @@ exports.handler = async (event) => {
           console.log(event);
           console.log("Received event:", JSON.stringify(event, null, 2));
           const cognito_id = event.queryStringParameters.user_id;
-          const { case_title, case_type, jurisdiction, case_description} = JSON.parse(event.body || "{}");
+          const { case_title, case_type, jurisdiction, case_description, province, statute} = JSON.parse(event.body || "{}");
           
           const user = await sqlConnection`
             SELECT user_id FROM "users" WHERE cognito_id = ${cognito_id};
@@ -215,8 +215,8 @@ exports.handler = async (event) => {
           try {
             // SQL query to insert the new case
             const newCase = await sqlConnection`
-              INSERT INTO "cases" (user_id, case_title, case_type, jurisdiction, case_description, status, last_updated)
-              VALUES (${user[0]?.user_id}, ${case_title}, ${case_type}, ${jurisdiction}, ${case_description}, 'In Progress', CURRENT_TIMESTAMP)
+              INSERT INTO "cases" (user_id, case_title, case_type, jurisdiction, case_description, status, last_updated, province, statute)
+              VALUES (${user[0]?.user_id}, ${case_title}, ${case_type}, ${jurisdiction}, ${case_description}, 'In Progress', CURRENT_TIMESTAMP, ${province}, ${statute})
               RETURNING case_id;
             `;
 
