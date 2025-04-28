@@ -633,7 +633,7 @@ const handleSubmitWithAudio = async () => {
             />
             
             <TextField
-  label="Legal Matter Summary"
+  label="provide a brief overview of the circumstances of the case you are working on, or a summary of the legal issue you are looking at"
   name="legalMatterSummary"
   fullWidth
   variant="outlined"
