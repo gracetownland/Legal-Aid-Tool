@@ -283,7 +283,46 @@ exports.handler = async (event) => {
   }
   break;
 
+  case "GET /student/get_transcriptions":
+  if (event.queryStringParameters && event.queryStringParameters.user_id) {
+    const cognito_id = event.queryStringParameters.user_id;
 
+    try {
+      // Retrieve the user ID using the cognito_id
+      const user = await sqlConnection`
+        SELECT user_id FROM "users" where cognito_id = ${cognito_id};
+      `;
+
+      const user_id = user[0]?.user_id;
+
+      if (user_id) {
+        const data = await sqlConnection`
+          SELECT * 
+          FROM "audio_files" WHERE user_id = ${user_id};
+        `;
+
+        // Check if data is empty and handle the case
+        if (data.length === 0) {
+          response.statusCode = 404; // Not Found
+          response.body = JSON.stringify({ message: "No cases found" });
+        } else {
+          response.statusCode = 200; // OK
+          response.body = JSON.stringify(data); // Ensure the data is always valid JSON
+        }
+      } else {
+        response.statusCode = 404; // Not Found
+        response.body = JSON.stringify({ error: "User not found" });
+      }
+    } catch (err) {
+      response.statusCode = 500; // Internal server error
+      console.error(err);
+      response.body = JSON.stringify({ error: "Internal server error" });
+    }
+  } else {
+    response.statusCode = 400; // Bad Request
+    response.body = JSON.stringify({ error: "Invalid value" });
+  }
+  break;
       case "GET /student/case_page":
         if (event.queryStringParameters && event.queryStringParameters.case_id) {
           const case_id = event.queryStringParameters.case_id;
@@ -377,7 +416,46 @@ exports.handler = async (event) => {
             response.body = JSON.stringify({ error: "Invalid value" });
           }
           break;
-        
+          
+          case "POST /student/initialize_audio_file":
+            if (event.queryStringParameters) {
+              const { audio_file_id, s3_file_path, cognito_id } = event.queryStringParameters;
+          
+              try {
+                // Find user_id based on cognito_id
+                const userResult = await sqlConnection`
+                  SELECT user_id FROM "users" WHERE cognito_id = ${cognito_id};
+                `;
+          
+                if (userResult.length === 0) {
+                  response.statusCode = 404;
+                  response.body = JSON.stringify({ error: "User not found" });
+                  break;
+                }
+          
+                const user_id = userResult[0].user_id;
+          
+                // Insert into audio_files table
+                const insertResult = await sqlConnection`
+                  INSERT INTO "audio_files" (audio_file_id, user_id, s3_file_path)
+                  VALUES (${audio_file_id}, ${user_id}, ${s3_file_path})
+                  RETURNING *;
+                `;
+          
+                response.statusCode = 200;
+                response.body = JSON.stringify(insertResult[0]);
+          
+              } catch (err) {
+                response.statusCode = 500;
+                console.error(err);
+                response.body = JSON.stringify({ error: "Internal server error" });
+              }
+            } else {
+              response.statusCode = 400;
+              response.body = JSON.stringify({ error: "Missing parameters" });
+            }
+            break;
+          
         case "GET /student/get_messages":
           if (event.queryStringParameters && event.queryStringParameters.case_id) {
             const case_id = event.queryStringParameters.case_id;
