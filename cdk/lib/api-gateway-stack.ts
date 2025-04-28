@@ -799,6 +799,7 @@ export class ApiGatewayStack extends cdk.Stack {
       sourceArn: `arn:aws:appsync:${this.region}:${this.account}:apis/${this.eventApi.apiId}/*`,
     });
 
+
     const notificationLambdaDataSource = this.eventApi.addLambdaDataSource(
       "NotificationLambdaDataSource",
       notificationFunction
