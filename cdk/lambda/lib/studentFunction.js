@@ -243,7 +243,8 @@ exports.handler = async (event) => {
       break;
 
       case "GET /student/message_limit":
-          try {
+        if (event.queryStringParameters && event.queryStringParameters.user_id) {
+            try {
               console.log("Message limit name: ", MESSAGE_LIMIT);
               const { SSMClient, GetParameterCommand } = await import("@aws-sdk/client-ssm");
 
@@ -263,8 +264,12 @@ exports.handler = async (event) => {
               console.error("Failed to fetch message limit:", err);
               response.statusCode = 500;
               response.body = JSON.stringify({ error: "Internal server error" });
-            }           
-          break;
+            }
+          } else {
+            response.statusCode = 400;
+            response.body = JSON.stringify({ error: "User ID is required" });
+          }           
+            break;
 
       case "GET /student/get_cases":
   if (event.queryStringParameters && event.queryStringParameters.user_id) {
