@@ -90,3 +90,4 @@
 | `audio_text`      | Transcribed text from audio                |
 | `s3_file_path`    | File path to audio on S3                   |
 | `timestamp`       | Timestamp when the audio was uploaded      |
+

@@ -174,6 +174,14 @@ const StudentHeader = () => {
         </button>
 
         <button
+          onClick={() => navigate("/transcriptions")}
+          className="flex flex-col items-center bg-transparent text-[var(--header-text)] hover:text-gray-600 focus:outline-none transition-all duration-200"
+        >
+          <CreateNewFolderIcon fontSize="large" />
+          <span className="mt-1">Transcriptions</span>
+        </button>
+
+        <button
           onClick={() => navigate("/cases")}
           className="flex flex-col items-center bg-transparent text-[var(--header-text)] hover:text-gray-600 focus:outline-none transition-all duration-200"
         >

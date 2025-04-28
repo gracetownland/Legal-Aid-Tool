@@ -85,7 +85,7 @@ const Login = () => {
           const session = await fetchAuthSession();
           const token = session.tokens.idToken;
           console.log("Token:", token);
-          const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}/student/create_user?user_email=${encodeURIComponent(email)}&username=${encodeURIComponent(email)}&first_name=${encodeURIComponent(firstName)}&last_name=${encodeURIComponent(lastName)}`, {
+          const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}student/create_user?user_email=${encodeURIComponent(email)}&username=${encodeURIComponent(email)}&first_name=${encodeURIComponent(firstName)}&last_name=${encodeURIComponent(lastName)}`, {
             method: "POST",
             headers: {
               Authorization: token,
