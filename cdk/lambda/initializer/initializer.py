@@ -62,7 +62,7 @@ def handler(event, context):
                 "last_sign_in" timestamp DEFAULT now(),
                 "activity_counter" integer DEFAULT 0,
                 "last_activity" timestamp DEFAULT now(),
-                "read_disclaimer" boolean DEFAULT false
+                "accepted_disclaimer" boolean DEFAULT false
             );
 
             CREATE TABLE IF NOT EXISTS "messages" (
