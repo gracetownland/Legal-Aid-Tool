@@ -9,16 +9,16 @@ type Query {
 }
 
 type Mutation {
-  sendNotification(message: String!, caseId: String!): Notification
+  sendNotification(message: String!, audioFileId: String!): Notification
 }
 
 type Subscription {
-  onNotify(caseId: String!): Notification
+  onNotify(audioFileId: String!): Notification
     @aws_subscribe(mutations: ["sendNotification"])
     @aws_auth(cognito_groups: ["student"])
 }
 
 type Notification {
   message: String
-  caseId: String
+  audioFileId: String
 }

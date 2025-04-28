@@ -10,7 +10,7 @@ def lambda_handler(event, context):
     try:
         # Extract arguments from the AppSync payload
         arguments = event.get("arguments", {})
-        case_id = arguments.get("caseId", "DefaultcaseId")
+        audio_file_id = arguments.get("audioFileId", "DefaultAudioFileId")
         message = arguments.get("message", "Default message")
 
         # Log the extracted values for debugging
@@ -18,7 +18,7 @@ def lambda_handler(event, context):
 
         # Return the values back to AppSync
         return {
-            "caseId": case_id,
+            "audioFileId": audio_file_id,
             "message": message
         }
 

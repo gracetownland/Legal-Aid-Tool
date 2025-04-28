@@ -106,7 +106,7 @@ function App() {
           <Route path="/new-case" element={<NewCaseForm />} />
           <Route path="/cases" element={<ViewAllCases />} />
           <Route path="/transcriptions" element={<Transcriptions />} />
-          <Route path="/home/*" element={getHomePage()} />
+          <Route path="/home/*" element={<StudentHomepage />} />
           <Route path="/case/:caseId/interview-assistant" element={<InterviewAssistant />} />
           <Route path="/case/:caseId/overview/*" element={<CaseOverview />} />
           <Route path="/case/:caseId/summaries" element={<SummariesPage />} />

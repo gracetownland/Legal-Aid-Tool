@@ -32,7 +32,7 @@ connection = None
 db_secret = None
 
 
-def invoke_event_notification(case_id, message, cognito_token):
+def invoke_event_notification(audio_file_id, message, cognito_token):
     """
     Send a GraphQL mutation to AppSync to notify clients of an event.
     Requires a valid Cognito JWT token for authentication.
@@ -40,10 +40,10 @@ def invoke_event_notification(case_id, message, cognito_token):
     try:
         # Define the GraphQL mutation
         query = """
-        mutation sendNotification($message: String!, $caseId: String!) {
-            sendNotification(message: $message, caseId: $caseId) {
+        mutation sendNotification($message: String!, $audioFileId: String!) {
+            sendNotification(message: $message, audioFileId: $audioFileId) {
                 message
-                caseId
+                audioFileId
             }
         }
         """
@@ -57,7 +57,7 @@ def invoke_event_notification(case_id, message, cognito_token):
         # Construct the payload
         payload = {
             "query": query,
-            "variables": {"message": message, "caseId": case_id}
+            "variables": {"message": message, "audioFileId": audio_file_id}
         }
 
         # Log payload for debugging
@@ -144,25 +144,23 @@ def connect_to_db():
     return connection
 
 
-def add_audio_to_db(case_id, audio_text):
-    """
-    Insert the transcribed text into the "cases" table for the given case_id.
-    """
+def add_audio_to_db(audio_file_id, audio_text):
     conn = connect_to_db()
     try:
         cur = conn.cursor()
-        sql = 'INSERT INTO "cases" (case_id, case_description) VALUES (%s, %s);'
-        cur.execute(sql, (case_id, audio_text))
+        sql = 'UPDATE "audio_files" SET audio_text = %s WHERE audio_file_id = %s;'
+        cur.execute(sql, (audio_text, audio_file_id))
         conn.commit()
         cur.close()
-        logger.info(f"Audio text stored for case_id: {case_id}")
+        logger.info(f"Audio text stored for audio_file_id: {audio_file_id}")
         return {"statusCode": 200, "body": json.dumps({"message": "Stored successfully"})}
     except Exception as e:
-        logger.error(f"DB insert error for case_id {case_id}: {e}")
+        logger.error(f"DB update error for audio_file_id {audio_file_id}: {e}")
         if cur:
             cur.close()
         conn.rollback()
-        return {"statusCode": 500, "body": json.dumps({"error": "DB insert failed"})}
+        return {"statusCode": 500, "body": json.dumps({"error": "DB update failed"})}
+
 
 
 def get_cors_headers():
@@ -192,23 +190,23 @@ def handler(event, context):
         # 2. Extract query parameters
         qs = event.get("queryStringParameters") or {}
         file_name = qs.get("file_name")
-        case_id = qs.get("case_id")
+        audio_file_id = qs.get("audio_file_id")
         file_type = qs.get("file_type", "mp3").lower()
         cognito_token = qs.get("cognito_token")
 
         # Validate required parameters
-        if not file_name or not case_id:
-            missing = [k for k in ("file_name", "case_id") if not qs.get(k)]
+        if not file_name or not audio_file_id:
+            missing = [k for k in ("file_name", "audio_file_id") if not qs.get(k)]
             logger.error(f"Missing params: {missing}")
             return {"statusCode": 400, "headers": get_cors_headers(),
                     "body": json.dumps({"error": f"Missing parameters: {missing}"})}
 
         # Construct S3 file URI
-        media_file_uri = f"s3://{AUDIO_BUCKET}/{case_id}/{file_name}.{file_type}"
+        media_file_uri = f"s3://{AUDIO_BUCKET}/{audio_file_id}/{file_name}.{file_type}"
         logger.info(f"Starting transcription for: {media_file_uri}")
 
         # 3. Start Transcription job
-        job_name = f"transcription-{case_id}-{int(time.time())}-{random.randint(1000, 9999)}"
+        job_name = f"transcription-{audio_file_id}-{int(time.time())}-{random.randint(1000, 9999)}"
         transcribe.start_transcription_job(
             TranscriptionJobName=job_name,
             Media={"MediaFileUri": media_file_uri},
@@ -234,27 +232,21 @@ def handler(event, context):
         transcript_text = data.get("results", {}).get("transcripts", [{}])[0].get("transcript", "")
         
         # 5. Store transcript and notify clients
-add_audio_to_db(case_id, transcript_text)
+        add_audio_to_db(audio_file_id, transcript_text)
 
-lambda_client = boto3.client("lambda")
-lambda_response = lambda_client.invoke(
-    FunctionName="LATstaging-Api-NotificationFunction",  # Update this if the name differs
-    InvocationType="RequestResponse",
-    Payload=json.dumps({
-        "caseId": case_id,
-        "message": "transcription_complete"
-    }).encode("utf-8"),
-)
+        logger.info(f"About to invoke event notification with audio_file_id={audio_file_id}, file_name={file_name}")
 
-logger.info("Notification Lambda invoked")
-logger.info(lambda_response)
+
+        # This sends to AppSync → triggers `onNotify`
+        invoke_event_notification(audio_file_id, "transcription_complete", cognito_token)
+
 
 
         # Return successful response
         return {
             "statusCode": 200,
             "headers": {"Content-Type": "application/json", **get_cors_headers()},
-            "body": json.dumps({"text": transcript_text, "caseId": case_id, "jobName": job_name})
+            "body": json.dumps({"text": transcript_text, "audioFileId": audio_file_id, "jobName": job_name})
         }
 
     except Exception as e:
