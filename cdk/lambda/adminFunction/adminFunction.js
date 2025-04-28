@@ -82,23 +82,48 @@ exports.handler = async (event) => {
             response.body = JSON.stringify({ error: "Request body is missing" });
           }
           break;        
-          case "GET /admin/students":
-            try {
-              // SQL query to fetch all users who are instructors
-              const students = await sqlConnectionTableCreator`
-                SELECT user_email, first_name, last_name, user_id
-                FROM "users"
-                WHERE 'student' = ANY(roles)
-                ORDER BY last_name ASC;
+      case "GET /admin/students":
+        try {
+          // SQL query to fetch all users who are instructors
+          const students = await sqlConnectionTableCreator`
+            SELECT user_email, first_name, last_name, user_id
+            FROM "users"
+            WHERE 'student' = ANY(roles)
+            ORDER BY last_name ASC;
+          `;
+        
+          response.body = JSON.stringify(students);
+        } catch (err) {
+          console.error("Database error:", err);
+          response.statusCode = 500;
+          response.body = JSON.stringify({ error: "Failed to fetch students" });
+        }
+        break;
+        case "POST /admin/prompt": // Change to POST if inserting a new record
+          try {
+              console.log("System prompt update initiated");
+
+              // Ensure event.body exists and is valid JSON
+              if (!event.body) throw new Error("Request body is missing");
+
+              const { system_prompt } = JSON.parse(event.body);
+
+              if (!system_prompt) throw new Error("Missing 'system_prompt' in request body");
+
+              // Insert new prompt into system_prompt table
+              const insertPrompt = await sqlConnectionTableCreator`
+                  INSERT INTO "system_prompt" (prompt)
+                  VALUES (${system_prompt})
+                  RETURNING *;
               `;
-            
-              response.body = JSON.stringify(students);
-            } catch (err) {
-              console.error("Database error:", err);
+
+              response.body = JSON.stringify(insertPrompt[0]); // Return inserted record
+          } catch (err) {
               response.statusCode = 500;
-              response.body = JSON.stringify({ error: "Failed to fetch students" });
-            }
-            break;
+              console.error("Error inserting system prompt:", err);
+              response.body = JSON.stringify({ error: err.message || "Internal server error" });
+          }
+          break;
       case "GET /admin/prompt":
         // SQL query to fetch ALL past prompts
         const system_prompts = await sqlConnectionTableCreator`
