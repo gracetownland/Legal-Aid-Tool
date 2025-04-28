@@ -73,6 +73,7 @@ export class AmplifyStack extends cdk.Stack {
         VITE_COGNITO_USER_POOL_ID: apiStack.getUserPoolId(),
         VITE_COGNITO_USER_POOL_CLIENT_ID: apiStack.getUserPoolClientId(),
         VITE_API_ENDPOINT: apiStack.getEndpointUrl(),
+        VITE_GRAPHQL_WS_URL: apiStack.getEventApiUrl(),
         VITE_IDENTITY_POOL_ID: apiStack.getIdentityPoolId(),
       },
       buildSpec: BuildSpec.fromObjectToYaml(amplifyYaml),
@@ -85,5 +86,6 @@ export class AmplifyStack extends cdk.Stack {
     });
 
     amplifyApp.addBranch("main");
+    amplifyApp.addBranch("audio");
   }
 }

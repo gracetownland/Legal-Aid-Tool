@@ -23,6 +23,8 @@ import InterviewAssistant from "./pages/CasePage/InterviewAssistant";
 import AIControlPanel  from "./pages/admin/AdminAIControlPanel";
 import SummariesPage from "./pages/CasePage/CaseSummaries";
 import CaseFeedback from "./pages/CasePage/CaseFeedback";
+import Transcriptions from "./pages/student/Transcriptions";
+
 import AllCasesPage from "./pages/instructor/InstructorAllCases";
 import NotFound from "./pages/NotFound";
 // import Transcriptions from "./pages/student/Transcriptions";
@@ -115,6 +117,8 @@ function App() {
           />
           <Route path="/new-case" element={<NewCaseForm />} />
           <Route path="/cases" element={<ViewAllCases />} />
+          <Route path="/transcriptions" element={<Transcriptions />} />
+         
           <Route path="/all-cases" element={getAllCases()} />
           {/* <Route path="/transcriptions" element={<Transcriptions />} /> */}
           <Route path="/home/*" element={getHomePage()} />

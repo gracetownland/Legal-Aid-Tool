@@ -22,6 +22,7 @@ import { useNavigate } from "react-router-dom";
 import theme from "../../Theme";
 import StudentHeader from "../../components/StudentHeader";
 import { fetchAuthSession, fetchUserAttributes } from "aws-amplify/auth";
+import { v4 as uuidv4 } from 'uuid';
 
 const NewCaseForm = () => {
   const [formData, setFormData] = useState({
@@ -32,24 +33,53 @@ const NewCaseForm = () => {
     statuteDetails: "",
     legalMatterSummary: "",
   });
-
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState(null);
+  const [audioFile, setAudioFile] = useState(null); // Track the uploaded file
+  const [step, setStep] = useState("initial"); // To manage form steps
   const navigate = useNavigate();
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-
+    const { name, value } = e.target;
     setFormData((prevData) => ({
       ...prevData,
-      [name]:
-        type === "checkbox"
-          ? checked
-            ? [...prevData.jurisdiction, value]
-            : prevData.jurisdiction.filter((item) => item !== value)
-          : value,
+      [name]: value,
     }));
   };
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+  
+    const fileNameWithoutExtension = file.name.replace(/\.[^/.]+$/, "");
+    const fileTypeShort = file.type.split("/")[1];
+    const normalizedType = fileTypeShort === "mpeg" ? "mp3" : fileTypeShort;
+  
+    setAudioFile({
+      file: file,
+      name: fileNameWithoutExtension,
+      type: normalizedType,
+    });
+  
+    console.log({
+      file: file,
+      name: fileNameWithoutExtension,
+      type: normalizedType,
+    });
+  };
+  
+  const handleJurisdictionChange = (event) => {
+    const { value, checked } = event.target;
+    
+    setFormData((prevState) => ({
+      ...prevState,
+      jurisdiction: checked
+        ? [...prevState.jurisdiction, value]
+        : prevState.jurisdiction.filter((item) => item !== value),
+    }));
+  };
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -81,7 +111,10 @@ const NewCaseForm = () => {
 
       // Step 1: Create the case in the database
       console.log("Creating the case in the database...");
+
+      console.log(caseData);
       console.log(JSON.stringify(caseData));
+
       const response = await fetch(
         `${import.meta.env.VITE_API_ENDPOINT}student/case?` +
           `user_id=${encodeURIComponent(cognito_id)}`,
@@ -193,6 +226,202 @@ const NewCaseForm = () => {
       setIsSubmitting(false);
     }
   };
+
+  const handleAudioPrompt = (answer) => {
+    if (answer === "yes") {
+      setStep("uploadAudio");
+    } else {
+      setStep("form");
+    }
+  };
+
+  const generatePresignedUrl = async (case_id) => {
+    try {
+      const fileName = audioFile.name;
+      // Make sure we're using the correct file type from the original file
+      const fileType = audioFile.file.type;
+      const fileExtension = audioFile.type;
+      
+      console.log("Requesting presigned URL with:", {
+        case_id,
+        fileName,
+        fileType,
+        fileExtension
+      });
+      
+      const { tokens } = await fetchAuthSession();
+      const token = tokens.idToken;
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_API_ENDPOINT}student/generate_presigned_url?` +
+        `case_id=${encodeURIComponent(case_id)}&` +
+        `file_name=${encodeURIComponent(fileName)}&` +
+        `file_type=${encodeURIComponent(fileExtension)}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: token,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Failed to generate presigned URL: ${errorData.message || response.statusText}`);
+      }
+      
+      const data = await response.json();
+      return data.presignedurl;
+    } catch (error) {
+      console.error("Error generating presigned URL:", error);
+      throw error;
+    }
+  };
+
+  const audioToText = async (case_id) => {
+    try {
+      const fileName = audioFile.name;
+      // Make sure we're using the correct file type from the original file
+      const fileType = audioFile.file.type;
+      const fileExtension = audioFile.type;
+      
+      console.log("Transcribing with:", {
+        case_id,
+        fileName,
+        fileType,
+        fileExtension
+      });
+      
+      const { tokens } = await fetchAuthSession();
+      const token = tokens.idToken;
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_API_ENDPOINT}student/audio_to_text?` +
+        `case_id=${encodeURIComponent(case_id)}&` +
+        `file_name=${encodeURIComponent(fileName)}&` +
+        `file_type=${encodeURIComponent(fileExtension)}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: token,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Failed to generate presigned URL: ${errorData.message || response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log(data);
+      return data.text;
+    } catch (error) {
+      console.error("Error Transcribing:", error);
+      throw error;
+    }
+  };
+  // Update the uploadFile function in NewCaseForm.jsx
+const uploadFile = async (file, presignedUrl) => {
+  try {
+    // Use the actual file from the audioFile object
+    const fileToUpload = audioFile.file;
+    
+    console.log("Uploading file with content type:", fileToUpload.type);
+    
+    const response = await fetch(presignedUrl, {
+      method: "PUT",
+      headers: {
+        "Content-Type": fileToUpload.type,
+      },
+      body: fileToUpload,
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Upload failed with status: ${response.status}`);
+    }
+    
+    console.log(response);
+    console.log("Upload successful:", response);
+    return response;
+  } catch (error) {
+    console.error("Error uploading file:", error);
+    throw error;
+  }
+};
+const handleSubmitWithAudio = async () => {
+  if (isUploading) return;
+  
+  setIsUploading(true);
+  setError(null);
+  
+  try {
+    // Step 1: Generate a case ID
+    const case_id = uuidv4();
+    console.log("Generated case ID:", case_id);
+    
+    // Step 2: Generate Presigned URL
+    const presigned_url = await generatePresignedUrl(case_id);
+    console.log("Received presigned URL:", presigned_url);
+    
+    // Step 3: Upload the file
+    await uploadFile(audioFile.file, presigned_url);
+    console.log('File uploaded successfully for case:', case_id);
+    
+    try {
+      const transcribedText = await audioToText(case_id);
+      console.log("Transcription completed:", transcribedText);
+    } catch (transcriptionError) {
+      console.error("Transcription error:", transcriptionError);
+      // Log the error but don't block continuation
+    }
+    
+    // Add a 10-second wait after audio to text function
+    console.log("Waiting 120 seconds for processing...");
+    await new Promise(resolve => setTimeout(resolve, 120000));
+    console.log("Wait completed, proceeding with next steps");
+    
+    const { tokens } = await fetchAuthSession();
+    const token = tokens.idToken;
+    const cognito_id = tokens.idToken.payload.sub;
+    
+    try {
+      const init_llm_response = await fetch(
+        `${import.meta.env.VITE_API_ENDPOINT}student/text_generation?case_id=${case_id}&audio_flag=true&user_id=${cognito_id}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: token,
+          },
+          body: JSON.stringify({
+            message_content: "Please provide a brief analysis of the legal matter first to show me all of the legal case facts and relevant legal resources I can refer to, using legal vocabulary. In this analysis, show me a breif list of essential elements of proving the case, and also show me relevant legal texts that encompass the case; please cite 4-5 legal cases and or docments I can refer to, preferably reasonably recent, but if older cases are particularly relevant, they acceptable. Please also include any additional insights that could help me approach this case, such as relevant issues (if any) or anything else important. In addition to this brief analysis, list some possible next steps my client could take, and follow-up questions for me to ask my client.",
+          }),
+        }
+      );
+      
+      if (!init_llm_response.ok) {
+        console.error(`HTTP error during legal summary generation! Status: ${init_llm_response.status}`);
+        // Log error but continue execution
+      } else {
+        console.log("Legal summary generated, redirecting to interview assistant...");
+      }
+    } catch (summaryError) {
+      console.error("Error generating legal summary:", summaryError);
+      // Log error but continue execution
+    }
+    
+    // Step 4: Navigate to the next step or display success regardless of previous errors
+    navigate(`/case/${case_id}/interview-assistant`);
+  } catch (error) {
+    console.error("Upload error:", error);
+    setError(error.message || "Failed to upload audio file");
+  } finally {
+    setIsUploading(false);
+  }
+};
 
   return (
     <ThemeProvider theme={theme}>
@@ -404,7 +633,7 @@ const NewCaseForm = () => {
             />
             
             <TextField
-  label="Legal Matter Summary"
+  label="provide a brief overview of the circumstances of the case you are working on, or a summary of the legal issue you are looking at"
   name="legalMatterSummary"
   fullWidth
   variant="outlined"

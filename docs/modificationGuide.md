@@ -1,3 +1,4 @@
+
 # Project Modification Guide
 
 This guide provides instructions on how to modify and extend the project.
@@ -84,6 +85,7 @@ uri:
   Fn::Sub:` field. Also ensure that the httpMethod field is POST even if the endpoint uses a different http method.
 4. **Deploy**: Use AWS CDK to deploy changes to your infrastructure. Confirm that the new endpoint and Lambda function are correctly set up in your environment.
 
+
 ## Modifying Frontend Text, Icons, and Logo
 
 1. **Locate Components**:
@@ -112,7 +114,9 @@ After making the required changes in the fork created in the [Deployment Guide](
     this,
     "BedrockLLMParameter",
     {
+
       parameterName: "/LAT/BedrockLLMId",
+
       description: "Parameter containing the Bedrock LLM ID",
       stringValue: "meta.llama3-8b-instruct-v1:0",
     }
@@ -135,4 +139,6 @@ After making the required changes in the fork created in the [Deployment Guide](
   });
   ```
   - redeploy the application by using the cdk deploy command in the deployment guide.
+
   - The `system_prompt` in `cdk/text_generation/src/helpers/chat.py` may require updates when switching models. *Note: temporarily, this can also be changed without a redeployment for debugging purposes from the admin page on the deployed app; simply navigate to the "AI Settings" page and alter the system prompt from the UI. However this will only change the prompt for the specific deployment you alter it from.*
+

@@ -33,14 +33,14 @@ def lambda_handler(event, context):
             'body': json.dumps('Missing queries to generate pre-signed URL')
         }
 
-    case_id = query_params.get("case_id", "")
+    audio_file_id = query_params.get("audio_file_id", "")
     file_type = query_params.get("file_type", "").lower()
     file_name = query_params.get("file_name", "")
 
-    if not case_id:
+    if not audio_file_id:
         return {
             'statusCode': 400,
-            'body': json.dumps('Missing required parameter: case_id')
+            'body': json.dumps('Missing required parameter: audio_file_id')
         }
 
     if not file_name:
@@ -68,11 +68,11 @@ def lambda_handler(event, context):
         }
 
     # Modified key path to remove the "audio" subdirectory
-    key = f"{case_id}/{file_name}.{file_type}"
+    key = f"{audio_file_id}/{file_name}.{file_type}"
     content_type = allowed_audio_types[file_type]
 
     logger.info({
-        "case_id": case_id,
+        "audio_file_id": audio_file_id,
         "file_type": file_type,
         "file_name": file_name,
     })
