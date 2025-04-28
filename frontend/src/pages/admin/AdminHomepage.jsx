@@ -48,7 +48,7 @@ export const AdminHomepage = () => {
         <AdminSidebar
           setSelectedComponent={setSelectedComponent}
           setSelectedInstructor={setSelectedInstructor}
-          setSelectedGroup={setSelectedGroup}
+          // setSelectedGroup={setSelectedGroup}
         />
         {renderComponent()}
       </PageContainer>
