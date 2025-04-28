@@ -257,7 +257,8 @@ export default function AIControlPanel() {
           border: "1px solid var(--border)", 
           boxShadow: 'none',
           alignItems: 'center',          
-          padding: "10px",
+          paddingX: "35px",
+          paddingY: "20px",
           textAlign: 'left',
         }}>
            {/* History Navigation */}
