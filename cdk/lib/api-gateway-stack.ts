@@ -195,7 +195,7 @@ export class ApiGatewayStack extends cdk.Stack {
         <style>
           body {
             font-family: Outfit, sans-serif;
-            background-color: #f4f7fc;
+            background-color: #F5F5F5;
             color: #111835;
             margin: 0;
             padding: 0;
@@ -208,7 +208,7 @@ export class ApiGatewayStack extends cdk.Stack {
             margin: 0 auto;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border: 1px solid #ddd;
           }
           .header {
             text-align: center;
