@@ -254,7 +254,7 @@ def get_case_details(case_id):
             return case_title, case_type, jurisdiction, case_description, province, statute
         else:
             logger.warning(f"No details found for case_id {case_id}")
-            return None, None, None, None
+            return None, None, None, None, None, None
 
     except Exception as e:
         logger.error(f"Error fetching case details: {e}")
@@ -415,9 +415,8 @@ def handler(event, context):
         else:
             response = get_response(
                 query=student_query,
-                province=province,
-                statute=statute,
-                case_title=case_title,
+                province="none",
+                statute="none",
                 llm=llm,
                 history_aware_retriever=history_aware_retriever,
                 table_name=TABLE_NAME,

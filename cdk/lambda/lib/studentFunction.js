@@ -242,6 +242,35 @@ exports.handler = async (event) => {
         // }
       break;
 
+      case "GET /student/message_limit":
+        if (event.queryStringParameters && event.queryStringParameters.user_id) {
+            try {
+              console.log("Message limit name: ", MESSAGE_LIMIT);
+              const { SSMClient, GetParameterCommand } = await import("@aws-sdk/client-ssm");
+
+              const ssm = new SSMClient();
+
+              console.log("Fetching message limit from SSM parameter store...");
+
+              const result = await ssm.send(
+                new GetParameterCommand({ Name: MESSAGE_LIMIT })
+              );
+
+              console.log("Message limit fetched successfully:", result.Parameter.Value);
+
+              response.statusCode = 200;
+              response.body = JSON.stringify({ value: result.Parameter.Value });
+            } catch (err) {
+              console.error("Failed to fetch message limit:", err);
+              response.statusCode = 500;
+              response.body = JSON.stringify({ error: "Internal server error" });
+            }
+          } else {
+            response.statusCode = 400;
+            response.body = JSON.stringify({ error: "User ID is required" });
+          }           
+            break;
+
       case "GET /student/get_cases":
   if (event.queryStringParameters && event.queryStringParameters.user_id) {
     const cognito_id = event.queryStringParameters.user_id;
@@ -772,7 +801,7 @@ exports.handler = async (event) => {
             event.queryStringParameters.cognito_id
         ) {
             const { case_id, cognito_id } = event.queryStringParameters;
-            const { case_title, case_type, case_description, status , jurisdiction} = JSON.parse(event.body || "{}");
+            const { case_title, case_type, case_description, status, jurisdiction, province, statute } = JSON.parse(event.body || "{}");
             try {
                 // Update the patient details in the patients table
                 await sqlConnection`
@@ -783,6 +812,8 @@ exports.handler = async (event) => {
                         case_description = ${case_description},
                         status = ${status},
                         jurisdiction = ${jurisdiction} 
+                        province = ${province},
+                        statute = ${statute}
                     WHERE case_id = ${case_id}; 
                 `;
                 response.statusCode = 200;

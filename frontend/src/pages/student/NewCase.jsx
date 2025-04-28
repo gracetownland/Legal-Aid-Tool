@@ -66,7 +66,7 @@ const NewCaseForm = () => {
     };
 
     try {
-      console.log("Submitting the case...");
+      console.log("Submitting the case with data:", caseData);
 
       const { tokens } = await fetchAuthSession();
       if (!tokens || !tokens.idToken)
@@ -81,6 +81,7 @@ const NewCaseForm = () => {
 
       // Step 1: Create the case in the database
       console.log("Creating the case in the database...");
+      console.log(JSON.stringify(caseData));
       const response = await fetch(
         `${import.meta.env.VITE_API_ENDPOINT}student/case?` +
           `user_id=${encodeURIComponent(cognito_id)}`,
@@ -132,9 +133,12 @@ const NewCaseForm = () => {
         case_type: formData.broadAreaOfLaw,
         jurisdiction: formData.jurisdiction,
         case_description: formData.legalMatterSummary,
+        province: formData.province,
+        statute: formData.statuteDetails,
       };
 
       console.log("Updating the case with the generated title...");
+      
       const updateResponse = await fetch(
         `${import.meta.env.VITE_API_ENDPOINT}student/edit_case?case_id=${data.case_id}`,
         {
@@ -157,6 +161,7 @@ const NewCaseForm = () => {
 
       // Step 4: Continue with the rest of the logic (e.g., generating the legal summary)
       console.log("Generating legal matter summary...");
+      
       const init_llm_response = await fetch(
         `${import.meta.env.VITE_API_ENDPOINT}student/text_generation?case_id=${data.case_id}`,
         {
