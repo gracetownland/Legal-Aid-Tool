@@ -132,6 +132,42 @@ exports.handler = async (event) => {
           response.body = JSON.stringify({ error: "Internal server error" });
         }
         break;
+
+      case "POST /admin/message_limit":
+        try {
+          const { SSMClient, PutParameterCommand } = await import("@aws-sdk/client-ssm");
+          const ssm = new SSMClient();
+      
+          const body = JSON.parse(event.body);
+          const newValue = body?.value;
+      
+          if (typeof newValue !== "string" && typeof newValue !== "number") {
+            response.statusCode = 400;
+            response.body = JSON.stringify({ error: "Missing or invalid 'value' in request body" });
+            break;
+          }
+      
+          console.log("Updating message limit in SSM:", newValue);
+      
+          await ssm.send(
+            new PutParameterCommand({
+              Name: process.env.MESSAGE_LIMIT,
+              Value: String(newValue),
+              Overwrite: true,
+              Type: "String"
+            })
+          );
+      
+          console.log("✅ Message limit updated successfully.");
+      
+          response.statusCode = 200;
+          response.body = JSON.stringify({ success: true, value: newValue });
+        } catch (err) {
+          console.error("❌ Failed to update message limit:", err);
+          response.statusCode = 500;
+          response.body = JSON.stringify({ error: "Internal server error" });
+        }
+        break;
       case "GET /admin/instructorStudents":
         if (
           event.queryStringParameters != null &&

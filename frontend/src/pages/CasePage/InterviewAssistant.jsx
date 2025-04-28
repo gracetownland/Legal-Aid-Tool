@@ -77,7 +77,7 @@ const InterviewAssistant = () => {
       const user_id = session.tokens.idToken.payload.sub;
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_API_ENDPOINT}student/message_limit`,
+          `${import.meta.env.VITE_API_ENDPOINT}student/message_limit?user_id=${user_id}`,
           {
             method: "GET",
             headers: {
@@ -88,8 +88,7 @@ const InterviewAssistant = () => {
         );
         if (!response.ok) throw new Error("Message limit not found");
         const data = await response.json();
-        setMessageLimit(data.message_limit);
-        console.log("Message limit: ", data.message_limit);
+        setMessageLimit(data.value);
       } catch (error) {
         console.error("Error fetching message limit:", error);
       }

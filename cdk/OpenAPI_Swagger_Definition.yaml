@@ -4538,7 +4538,8 @@ paths:
   /admin/message_limit:
     options:
       summary: CORS support
-      description: Enable CORS by returning correct headers
+      description: |
+        Enable CORS by returning correct headers
       responses:
         200:
           $ref: "#/components/responses/Success"
@@ -4559,42 +4560,65 @@ paths:
             responseTemplates:
               application/json: |
                 {}
-
     get:
       tags:
         - Admin
-      summary: Get the current message limit for students set by the admin
-      operationId: admin_get_message_limit_GET
+      summary: Get message limit
+      operationId: admin_message_limit_GET
       responses:
         "200":
-          description: Message limit fetched successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  value:
-                    type: string
-                    description: Message limit value (e.g., "10", "Infinity")
-                    example: "Infinity"
+          description: Parameter retrieved successfully
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "429":
+          description: Too Many Requests
         "500":
           description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: "Internal server error"
       security:
         - adminAuthorizer: []
       x-amazon-apigateway-integration:
         uri:
           Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${adminFunction.Arn}/invocations"
         passthroughBehavior: "when_no_match"
-        httpMethod: "GET"
+        httpMethod: "POST"
         type: "aws_proxy"
+    post:
+      tags:
+        - Admin
+      summary: Assign an instructor to a student
+      operationId: admin_assign_instructor_POST
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                instructor_id:
+                  type: string
+                  description: ID of the instructor to assign
+                student_id:
+                  type: string
+                  description: ID of student to assign
+      responses:
+        "200":
+          description: Enrollment created successfully
+        "400":
+          description: Bad Request
+        "500":
+          description: Internal Server Error
+      security:
+        - adminAuthorizer: []
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${adminFunction.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
+
+
   /admin/instructorStudents:
     options:
       summary: CORS support
