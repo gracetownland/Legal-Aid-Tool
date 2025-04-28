@@ -4,10 +4,12 @@ import { useNavigate } from "react-router-dom";
 import { signOut } from "aws-amplify/auth";
 import { UserContext } from "../App";
 import HomeIcon from "@mui/icons-material/Home";
+import AssignmentIcon from "@mui/icons-material/Assignment";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import { fetchAuthSession, fetchUserAttributes } from "aws-amplify/auth";
 
 const InstructorHeader = () => {
-  const [name, setName] = useState("Instructor");
+  const [name, setName] = useState("");
   const navigate = useNavigate();
   const { setIsInstructorAsStudent } = useContext(UserContext);
   const timeoutRef = useRef(null);
@@ -26,11 +28,34 @@ const InstructorHeader = () => {
   };
 
   // get name:
-  // useEffect(() => {
-  //   const getName() => {
-  //     setName(userName);
-  //   }
-  // }, []);
+  useEffect(() => {
+    const fetchName = async () => {
+      try {
+        const session = await fetchAuthSession();
+        const userAttributes = await fetchUserAttributes();
+        const token = session.tokens.idToken;
+        const email = userAttributes.email;
+
+        const response = await fetch(
+          `${import.meta.env.VITE_API_ENDPOINT}instructor/name?user_email=${encodeURIComponent(email)}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: token,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        const data = await response.json();
+        setName(data.name);
+      } catch (error) {
+        console.error("Error fetching name:", error);
+      }
+    };
+
+    fetchName();
+  }, []);
+  
   const updateLogoBasedOnTheme = () => {
     const isDarkMode = window.matchMedia("(prefers-color-scheme: dark)").matches;
     setLogo(isDarkMode ? "/logo_dark.svg" : "/logo_light.svg");
@@ -77,9 +102,12 @@ const InstructorHeader = () => {
   return (
     <header className="bg-[var(--header)] p-4 flex justify-between items-center h-20 fixed top-0 left-0 w-full z-50 shadow-sm">
       {/* Left Section: Logo and Title */}
-      <div className="flex items-center">
+      <div className="flex items-center" style={{ fontFamily: 'Outfit' }}>
         <img src={logo} alt="Logo" className="h-14 w-14 mr-4" />
-        <h2 className="text-xl text-[var(--text)] font-semibold">Instructor</h2>
+        <div style={{ textAlign: 'left' }}>
+          <h2 className="text-xl text-[var(--text)] font-semibold">Legal Aid Tool</h2>
+          <p className="text-sm text-[var(--text)]">Instructor</p>
+        </div>
       </div>
 
       {/* Right Section: Navigation Buttons */}
@@ -90,6 +118,14 @@ const InstructorHeader = () => {
         >
           <HomeIcon fontSize="large" />
           <span className="mt-1">Home</span>
+        </button>
+
+        <button
+          onClick={() => navigate("/all-cases")}
+          className="flex flex-col items-center bg-transparent text-[var(--header-text)] hover:text-gray-600 focus:outline-none transition-all duration-200"
+        >
+          <AssignmentIcon fontSize="large" />
+          <span className="mt-1">All Cases</span>
         </button>
 
         {/* Optionally, you can include a "View as Student" button here if needed:

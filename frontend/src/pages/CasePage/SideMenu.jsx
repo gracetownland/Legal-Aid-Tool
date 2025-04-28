@@ -41,8 +41,10 @@ const SideMenu = () => {
         });
   
         const data = await res.json();
+
+        console.log(data.messages)
         
-        if (data.caseData.status === "Review Feedback") {
+        if (data.messages.filter((msg)=> msg.is_read === false).length > 0) {
           setIsUnreadFeedback(true);
         }
       };
@@ -111,9 +113,9 @@ const SideMenu = () => {
               border: "none",
               display: "flex",
               flexDirection: "column",
-              justifyContent: "space-between", // Keeps Save Icon at the bottom
-              height: "calc(100% - 80px)", // Adjust height considering the header
-              paddingBottom: "16px", // Adds spacing at the bottom
+              justifyContent: "space-between", 
+              height: "calc(100% - 80px)", 
+              paddingBottom: "16px", 
             },
           }}
           variant="permanent"
@@ -121,24 +123,87 @@ const SideMenu = () => {
         >
           <List sx={{ flexGrow: 1 }}>
 
-  <ListItem
-    button
-    onClick={() => handleNavigation("Overview")}
-    selected={isActive("Overview")}
-    sx={isActive("Overview") ? { backgroundColor: "var(--background3)" } : {}}
-  >
-    <ListItemText primary="Case Overview" />
+          <ListItem
+  button
+  onClick={() => handleNavigation("Overview")}
+  selected={isActive("Overview")}
+  sx={{
+    pl: 2,
+    borderLeft: isActive("Overview") ? "4px solid var(--primary)" : "4px solid transparent",
+    backgroundColor: isActive("Overview") ? "var(--background3)" : "transparent",
+    "&:hover": {
+      backgroundColor: "var(--background3)",
+      cursor: "pointer",
+    },
+  }}
+>
+<ListItemText
+    primary="Case Overview"
+    primaryTypographyProps={{
+      fontWeight: isActive("Overview") ? "bold" : "normal",
+      color: isActive("Overview") ? "var(--primary)" : "inherit",
+    }}
+  />
   </ListItem>
-
+  <ListItem
+  button
+  onClick={() => handleNavigation("Interview Assistant")}
+  selected={isActive("Interview Assistant")}
+  sx={{
+    pl: 2,
+    borderLeft: isActive("Interview Assistant") ? "4px solid var(--primary)" : "4px solid transparent",
+    backgroundColor: isActive("Interview Assistant") ? "var(--background3)" : "transparent",
+    "&:hover": {
+      backgroundColor: "var(--background3)",
+      cursor: "pointer",
+    },
+  }}
+>
+  <ListItemText
+    primary="Interview Assistant"
+    primaryTypographyProps={{
+      fontWeight: isActive("Interview Assistant") ? "bold" : "normal",
+      color: isActive("Interview Assistant") ? "var(--primary)" : "inherit",
+    }}
+  />
+</ListItem>
 
 <ListItem
+  button
+  onClick={() => handleNavigation("Summaries")}
+  selected={isActive("Summaries")}
+  sx={{
+    pl: 2,
+    borderLeft: isActive("Summaries") ? "4px solid var(--primary)" : "4px solid transparent",
+    backgroundColor: isActive("Summaries") ? "var(--background3)" : "transparent",
+    "&:hover": {
+      backgroundColor: "var(--background3)",
+      cursor: "pointer",
+    },
+  }}
+>
+  <ListItemText
+    primary="Case Summaries"
+    primaryTypographyProps={{
+      fontWeight: isActive("Summaries") ? "bold" : "normal",
+      color: isActive("Summaries") ? "var(--primary)" : "inherit",
+    }}
+  />
+</ListItem>
+
+
+  <ListItem
   button
   onClick={() => handleNavigation("Feedback")}
   selected={isActive("Feedback")}
   sx={{
     pl: 2,
-    ...(isActive("Feedback") && { backgroundColor: "var(--background3)" }),
-    
+    borderLeft: isActive("Feedback") ? "4px solid var(--primary)" : "4px solid transparent",
+    backgroundColor: isActive("Feedback") ? "var(--background3)" : "transparent",
+    "&:hover": {
+      backgroundColor: "var(--background3)",
+      cursor: "pointer",
+    },
   }}
 >
   <Box display="flex" alignItems="center">
@@ -155,37 +220,18 @@ const SideMenu = () => {
         }}
       />
     )}
-    <ListItemText primary="Case Feedback" />
+    <ListItemText
+    primary="Case Feedback"
+    primaryTypographyProps={{
+      fontWeight: isActive("Feedback") ? "bold" : "normal",
+      color: isActive("Feedback") ? "var(--primary)" : "inherit",
+    }}
+  />
   </Box>
 </ListItem>
-  <ListItem
-    button
-    onClick={() => handleNavigation("Summaries")}
-    selected={isActive("Summaries")}
-    sx={isActive("Summaries") ? { backgroundColor: "var(--background3)" } : {}}
-  >
-    <ListItemText primary="Case Summaries" />
-  </ListItem>
 
-  {isPrelimSummaryGenerated && (
-    <ListItem
-      button
-      onClick={() => handleNavigation("Prelim Summary")}
-      selected={isActive("Prelim Summary")}
-      sx={isActive("Prelim Summary") ? { backgroundColor: "var(--background3)" } : {}}
-    >
-      <ListItemText primary="Preliminary Summary" />
-    </ListItem>
-  )}
 
-  <ListItem
-    button
-    onClick={() => handleNavigation("Interview Assistant")}
-    selected={isActive("Interview Assistant")}
-    sx={isActive("Interview Assistant") ? { backgroundColor: "var(--background3)" } : {}}
-  >
-    <ListItemText primary="Interview Assistant" />
-  </ListItem>
+ 
 </List>
 
 

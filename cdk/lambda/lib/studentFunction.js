@@ -1,6 +1,6 @@
 // const { v4: uuidv4 } = require('uuid')
 const { initializeConnection } = require("./lib.js");
-let { SM_DB_CREDENTIALS, RDS_PROXY_ENDPOINT, USER_POOL, BUCKET } = process.env;
+let { SM_DB_CREDENTIALS, RDS_PROXY_ENDPOINT, USER_POOL, BUCKET, MESSAGE_LIMIT } = process.env;
 const {
   CognitoIdentityProviderClient,
   AdminGetUserCommand,
@@ -204,7 +204,7 @@ exports.handler = async (event) => {
           console.log(event);
           console.log("Received event:", JSON.stringify(event, null, 2));
           const cognito_id = event.queryStringParameters.user_id;
-          const { case_title, case_type, jurisdiction, case_description} = JSON.parse(event.body || "{}");
+          const { case_title, case_type, jurisdiction, case_description, province, statute} = JSON.parse(event.body || "{}");
           
           const user = await sqlConnection`
             SELECT user_id FROM "users" WHERE cognito_id = ${cognito_id};
@@ -215,8 +215,8 @@ exports.handler = async (event) => {
           try {
             // SQL query to insert the new case
             const newCase = await sqlConnection`
-              INSERT INTO "cases" (user_id, case_title, case_type, jurisdiction, case_description, status, last_updated)
-              VALUES (${user[0]?.user_id}, ${case_title}, ${case_type}, ${jurisdiction}, ${case_description}, 'In Progress', CURRENT_TIMESTAMP)
+              INSERT INTO "cases" (user_id, case_title, case_type, jurisdiction, case_description, status, last_updated, province, statute)
+              VALUES (${user[0]?.user_id}, ${case_title}, ${case_type}, ${jurisdiction}, ${case_description}, 'In Progress', CURRENT_TIMESTAMP, ${province}, ${statute})
               RETURNING case_id;
             `;
 
@@ -241,6 +241,35 @@ exports.handler = async (event) => {
         //   response.body = JSON.stringify({ error: "Case data is required" });
         // }
       break;
+
+      case "GET /student/message_limit":
+        if (event.queryStringParameters && event.queryStringParameters.user_id) {
+            try {
+              console.log("Message limit name: ", MESSAGE_LIMIT);
+              const { SSMClient, GetParameterCommand } = await import("@aws-sdk/client-ssm");
+
+              const ssm = new SSMClient();
+
+              console.log("Fetching message limit from SSM parameter store...");
+
+              const result = await ssm.send(
+                new GetParameterCommand({ Name: MESSAGE_LIMIT })
+              );
+
+              console.log("Message limit fetched successfully:", result.Parameter.Value);
+
+              response.statusCode = 200;
+              response.body = JSON.stringify({ value: result.Parameter.Value });
+            } catch (err) {
+              console.error("Failed to fetch message limit:", err);
+              response.statusCode = 500;
+              response.body = JSON.stringify({ error: "Internal server error" });
+            }
+          } else {
+            response.statusCode = 400;
+            response.body = JSON.stringify({ error: "User ID is required" });
+          }           
+            break;
 
       case "GET /student/get_cases":
   if (event.queryStringParameters && event.queryStringParameters.user_id) {
@@ -391,6 +420,7 @@ exports.handler = async (event) => {
                   JOIN users u ON m.instructor_id = u.user_id
                   WHERE c.user_id = ${user_id}
                   AND m.time_sent >= NOW() - INTERVAL '1 week'
+                  AND m.is_read = false
                   ORDER BY m.time_sent DESC;
                 `;
         
@@ -448,14 +478,187 @@ exports.handler = async (event) => {
               } catch (err) {
                 response.statusCode = 500;
                 console.error(err);
+
+
+        case "GET /student/message_counter":
+          if (event.queryStringParameters && event.queryStringParameters.user_id) {
+            const user_id = event.queryStringParameters.user_id;
+            try {
+              const activityData = await sqlConnection`
+                SELECT activity_counter, last_activity FROM "users" WHERE cognito_id = ${user_id};
+              `;
+              if (activityData.length > 0) {
+                let activity_counter = parseInt(activityData[0].activity_counter, 10);
+                const last_activity = activityData[0].last_activity;
+                if (activity_counter > 0) {
+                  const currentTime = new Date();
+                  const lastActivityTime = new Date(last_activity);
+                  const timeDifference = Math.abs(currentTime - lastActivityTime);
+                  const hoursDifference = Math.floor(timeDifference / (1000 * 60 * 60));
+                  
+                  // Check if 24 hours have passed since the last activity
+                  if (hoursDifference >= 24) {
+                    await sqlConnection`
+                      UPDATE "users" SET activity_counter = 0 WHERE cognito_id = ${user_id};
+                    `;
+                    
+                    activity_counter = 0;
+                  }
+                  
+                }
+                response.body = JSON.stringify({ activity_counter });
+              }
+              else {
+                response.statusCode = 404;
+                response.body = JSON.stringify({ error: "User not found" });
+              }
+
+              
+            } catch (err) {
+              response.statusCode = 500;
+              console.log(err);
+              response.body = JSON.stringify({ error: "Internal server error" });
+            }
+          } else {
+            response.statusCode = 400;
+            response.body = JSON.stringify({ error: "User ID is required" });
+          }
+          break;
+
+
+          case "PUT /student/message_counter":
+            if (event.queryStringParameters && event.queryStringParameters.user_id) {
+              const user_id = event.queryStringParameters.user_id;
+              try {
+                const activityData = await sqlConnection`
+                  SELECT activity_counter, last_activity FROM "users" WHERE cognito_id = ${user_id};
+                `;
+          
+                if (activityData.length > 0) {
+                  let activity_counter = parseInt(activityData[0].activity_counter, 10);
+                  const last_activity = new Date(activityData[0].last_activity);
+                  const now = new Date();
+                  const hoursSinceLast = (now - last_activity) / (1000 * 60 * 60);
+          
+                  if (hoursSinceLast >= 24) {
+                    // Reset counter and last_activity
+                    await sqlConnection`
+                      UPDATE "users" SET activity_counter = 1, last_activity = CURRENT_TIMESTAMP WHERE cognito_id = ${user_id};
+                    `;
+                    activity_counter = 1;
+                    // HARDCODED TO 10 RIGHT NOW, CHANGE TO BE FROM SECRETS MANAGER OR PARAM STORE
+                  } else if (activity_counter < 10) {
+                    // Increment counter
+                    await sqlConnection`
+                      UPDATE "users" SET activity_counter = activity_counter + 1 WHERE cognito_id = ${user_id};
+                    `;
+                    activity_counter += 1;
+                  } else {
+                    // Limit reached
+                    response.statusCode = 429;
+                    response.body = JSON.stringify({ error: "Daily message limit reached" });
+                    break;
+                  }
+          
+                  response.body = JSON.stringify({ activity_counter });
+                } else {
+                  response.statusCode = 404;
+                  response.body = JSON.stringify({ error: "User not found" });
+                }
+          
+              } catch (err) {
+                response.statusCode = 500;
+                console.log(err);
                 response.body = JSON.stringify({ error: "Internal server error" });
               }
             } else {
               response.statusCode = 400;
-              response.body = JSON.stringify({ error: "Missing parameters" });
+              response.body = JSON.stringify({ error: "User ID is required" });
             }
             break;
+
+          case "PUT /student/read_message":
+            if (event.queryStringParameters && event.queryStringParameters.message_id) {
+              const message_id = event.queryStringParameters.message_id;
+              try {
+                // Mark the message as read
+                await sqlConnection`
+                  UPDATE messages SET is_read = true WHERE message_id = ${message_id};
+                `;
           
+                // Update case status only if current status is 'Review Feedback'
+                await sqlConnection`
+                  UPDATE cases
+                  SET status = 'In Progress'
+                  WHERE case_id = (
+                    SELECT case_id FROM messages WHERE message_id = ${message_id}
+                  )
+                  AND status = 'Review Feedback';
+                `;
+          
+                response.body = JSON.stringify({ success: true });
+              } catch (err) {
+                response.statusCode = 500;
+                console.log(err);
+                response.body = JSON.stringify({ error: "Internal server error" });
+              }
+            } else {
+              response.statusCode = 400;
+              response.body = JSON.stringify({ error: "Message ID is required" });
+            }
+            break;
+    
+            case "GET /student/notifications":
+              if (event.queryStringParameters && event.queryStringParameters.user_id) {
+                const cognito_id = event.queryStringParameters.user_id;
+            
+                try {
+                  // Retrieve the user ID using the cognito_id
+                  const user = await sqlConnection`
+                    SELECT user_id FROM "users" where cognito_id = ${cognito_id};
+                  `;
+            
+                  const user_id = user[0]?.user_id;
+            
+                  if (user_id) {
+                    const data = await sqlConnection`
+                      SELECT 
+                      c.case_id,
+                      c.case_title,
+                      m.message_content,
+                      m.time_sent,
+                      u.first_name||' '||u.last_name AS instructor_name
+                      FROM cases c
+                      JOIN messages m ON c.case_id = m.case_id
+                      JOIN users u ON m.instructor_id = u.user_id
+                      WHERE c.user_id = ${user_id}
+                      AND m.time_sent >= NOW() - INTERVAL '1 week'
+                      ORDER BY m.time_sent DESC;
+                    `;
+            
+                    // Check if data is empty and handle the case
+                    if (data.length === 0) {
+                      response.statusCode = 404; // Not Found
+                      response.body = JSON.stringify({ message: "No notifications found" });
+                    } else {
+                      response.statusCode = 200; // OK
+                      response.body = JSON.stringify(data); // Ensure the data is always valid JSON
+                    }
+                  } else {
+                    response.statusCode = 404; // Not Found
+                    response.body = JSON.stringify({ error: "User not found" });
+                  }
+                } catch (err) {
+                  response.statusCode = 500; // Internal server error
+                  console.error(err);
+                  response.body = JSON.stringify({ error: "Internal server error" });
+                }
+              } else {
+                response.statusCode = 400; // Bad Request
+                response.body = JSON.stringify({ error: "Invalid value" });
+              }
+              break;
+        
         case "GET /student/get_messages":
           if (event.queryStringParameters && event.queryStringParameters.case_id) {
             const case_id = event.queryStringParameters.case_id;
@@ -644,7 +847,7 @@ exports.handler = async (event) => {
             event.queryStringParameters.cognito_id
         ) {
             const { case_id, cognito_id } = event.queryStringParameters;
-            const { case_title, case_type, case_description, status , jurisdiction} = JSON.parse(event.body || "{}");
+            const { case_title, case_type, case_description, status, jurisdiction, province, statute } = JSON.parse(event.body || "{}");
             try {
                 // Update the patient details in the patients table
                 await sqlConnection`
@@ -655,6 +858,8 @@ exports.handler = async (event) => {
                         case_description = ${case_description},
                         status = ${status},
                         jurisdiction = ${jurisdiction} 
+                        province = ${province},
+                        statute = ${statute}
                     WHERE case_id = ${case_id}; 
                 `;
                 response.statusCode = 200;

@@ -42,6 +42,8 @@ const InterviewAssistant = () => {
     message: "",
     severity: "info",
   });
+  const [messageCounter, setMessageCounter] = useState(null);
+  const [messageLimit, setMessageLimit] = useState(Infinity);
   const [messages, setMessages] = useState([
     {
       sender: "bot",
@@ -57,6 +59,7 @@ const InterviewAssistant = () => {
 
 
 
+
   // Ref for scrolling to bottom of message container
   const messagesEndRef = useRef(null);
 
@@ -66,6 +69,33 @@ const InterviewAssistant = () => {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages, isAItyping]);
+
+  useEffect(() => {
+    const fetchMessageLimit = async () => {
+      const session = await fetchAuthSession();
+      const token = session.tokens.idToken;
+      const user_id = session.tokens.idToken.payload.sub;
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_ENDPOINT}student/message_limit?user_id=${user_id}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: token,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        if (!response.ok) throw new Error("Message limit not found");
+        const data = await response.json();
+        setMessageLimit(data.value);
+      } catch (error) {
+        console.error("Error fetching message limit:", error);
+      }
+    }
+
+    fetchMessageLimit()
+  }, [])
 
   useEffect(() => {
     const fetchCaseData = async () => {
@@ -149,6 +179,34 @@ const InterviewAssistant = () => {
     fetchMessages();
   }, [caseId]);
 
+  useEffect(() => {
+    const fetchMessageCounter = async () => {
+      const session = await fetchAuthSession();
+      const token = session.tokens.idToken;
+      const user_id = session.tokens.idToken.payload.sub;
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_ENDPOINT}student/message_counter?user_id=${user_id}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: token,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) throw new Error("Message counter not found");
+
+        const data = await response.json();
+        setMessageCounter(data.activity_counter);
+      } catch (error) {
+        console.error("Error fetching message counter:", error);
+      }
+    }
+    fetchMessageCounter();
+  }, []);
+
   // Function to start TTS
   const startTTS = (text) => {
     const newUtterance = new SpeechSynthesisUtterance(text);
@@ -203,9 +261,16 @@ const InterviewAssistant = () => {
   };
 
   const handleKeyPress = (event) => {
-    if (event.key === "Enter" && !event.shiftKey) {
+    if (event.key === "Enter" && !event.shiftKey && !isAItyping && messageCounter <= messageLimit) {
       event.preventDefault();
       handleSendMessage();
+    } if (messageCounter >= messageLimit && event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      setSnackbar({
+        open: true,
+        message: "You have reached the maximum number of messages for today. Please try again tomorrow.",
+        severity: "error",
+      });
     }
   };
 
@@ -257,6 +322,7 @@ const InterviewAssistant = () => {
   async function getAIResponse(userInput) {
     const session = await fetchAuthSession();
     const token = session.tokens.idToken;
+    const user_id = session.tokens.idToken.payload.sub;
 
     async function getFetchBody() {
       try {
@@ -281,6 +347,20 @@ const InterviewAssistant = () => {
         const data = await response.json();
         const res = data.llm_output.llm_output;
         console.log("Success:", data);
+
+        setMessageCounter((prevCounter) => prevCounter + 1); // Increment message counter on frontend
+        const counter_response = await fetch(
+          `${import.meta.env.VITE_API_ENDPOINT}student/message_counter?user_id=${user_id}`,
+          {
+            method: "PUT",
+            headers: {
+              Authorization: token,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (!counter_response.ok) throw new Error("Message counter not found");
         setIsAItyping(false);
         return res;
       } catch (error) {
@@ -304,6 +384,7 @@ const InterviewAssistant = () => {
   return (
     <Box
       sx={{
+        position: "relative",
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
@@ -311,12 +392,43 @@ const InterviewAssistant = () => {
         backgroundColor: "transparent",
         color: "var(--text)",
         marginTop: "75px",
+        minHeight: "100vh",
       }}
     >
+      {loading && (
+        <Box
+          sx={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            backgroundColor: "rgba(255, 255, 255, 0.85)",
+            zIndex: 999,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            fontFamily: "Outfit",
+          }}
+        >
+          <CircularProgress
+            sx={{
+              color: "var(--primary)",
+              width: "60px !important",
+              left: "55%",
+              top: "40%",
+              position: "absolute",
+              height: "60px !important",
+            }}
+          />
+        </Box>
+      )}
+  
+      {/* Everything below this runs normally after loading */}
       <Box position="fixed" top={0} left={0} width="100%" zIndex={1000} bgcolor="white">
         {userRole === "instructor" ? <InstructorHeader /> : <StudentHeader />}
       </Box>
-
+  
       <Box sx={{ display: "flex" }}>
         <SideMenu />
 
@@ -324,7 +436,6 @@ const InterviewAssistant = () => {
           sx={{
             display: "flex",
             flexDirection: "column",
-            justifyContent: "space-between",
             padding: 2,
             width: "100%",
           }}
@@ -354,24 +465,7 @@ const InterviewAssistant = () => {
           </Box>
 
           {loading ? (
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                height: "500px",
-                backgroundColor: "rgba(255, 255, 255, 0.3)",
-                borderRadius: 2,
-                padding: 2,
-                position: "absolute",
-                top: 0,
-                left: 0,
-                width: "100%",
-                zIndex: 999,
-              }}
-            >
-              <CircularProgress sx={{ width: "150px", color: "var(--text)" }} />
-            </Box>
+            <></>
           ) : (
             <Box sx={{ overflowY: "auto", marginBottom: 2 }}>
               {messages.map((message, index) => {
@@ -485,7 +579,7 @@ const InterviewAssistant = () => {
                           )}
                         </Button>
 
-                        {messages.length >= 5 && (
+                        {messages.length >= 1 && (
                           <Button
                             size="small"
                             disableRipple
@@ -682,7 +776,7 @@ const InterviewAssistant = () => {
                 position: "fixed",
                 bottom: 0,
                 right: 0,
-                minHeight: "80px",
+                minHeight: "95px",
                 width: "calc(100% - 250px)",
                 minWidth: "70vw",
                 display: "flex",
@@ -701,6 +795,8 @@ const InterviewAssistant = () => {
                   alignItems: "center",
                   backgroundColor: "var(--background)",
                   borderRadius: 10,
+                  paddingBottom: "1.25em",
+                  boxShadow: "none",
                 }}
               >
                 <TextField
@@ -750,10 +846,11 @@ const InterviewAssistant = () => {
                   }}
                   style={{ boxShadow: "none" }}
                   onClick={handleSendMessage}
-                  disabled={isAItyping}  /* Disable if AI hasn't responded */
+                  disabled={isAItyping || (messageCounter >= messageLimit)}  /* Disable if AI hasn't responded */
                 >
                   <ArrowUpwardRoundedIcon sx={{ color: "white" }} />
                 </Button>
+                <p style={{position: "fixed", bottom: 2, left: 65, right: 0, width: '100%', fontFamily: 'Outfit', fontSize: '0.9rem', color: "var(--placeholder-text)"}}>AI can make mistakes. Please check important information and citations.</p>
               </Box>
             </Box>
           </Box>

@@ -1,6 +1,6 @@
 const { initializeConnection } = require("./libadmin.js");
 
-let { SM_DB_CREDENTIALS, RDS_PROXY_ENDPOINT } = process.env;
+let { SM_DB_CREDENTIALS, RDS_PROXY_ENDPOINT, MESSAGE_LIMIT } = process.env;
 
 // SQL conneciton from global variable at libadmin.js
 let sqlConnectionTableCreator = global.sqlConnectionTableCreator;
@@ -82,23 +82,48 @@ exports.handler = async (event) => {
             response.body = JSON.stringify({ error: "Request body is missing" });
           }
           break;        
-          case "GET /admin/students":
-            try {
-              // SQL query to fetch all users who are instructors
-              const students = await sqlConnectionTableCreator`
-                SELECT user_email, first_name, last_name, user_id
-                FROM "users"
-                WHERE 'student' = ANY(roles)
-                ORDER BY last_name ASC;
+      case "GET /admin/students":
+        try {
+          // SQL query to fetch all users who are instructors
+          const students = await sqlConnectionTableCreator`
+            SELECT user_email, first_name, last_name, user_id
+            FROM "users"
+            WHERE 'student' = ANY(roles)
+            ORDER BY last_name ASC;
+          `;
+        
+          response.body = JSON.stringify(students);
+        } catch (err) {
+          console.error("Database error:", err);
+          response.statusCode = 500;
+          response.body = JSON.stringify({ error: "Failed to fetch students" });
+        }
+        break;
+        case "POST /admin/prompt": // Change to POST if inserting a new record
+          try {
+              console.log("System prompt update initiated");
+
+              // Ensure event.body exists and is valid JSON
+              if (!event.body) throw new Error("Request body is missing");
+
+              const { system_prompt } = JSON.parse(event.body);
+
+              if (!system_prompt) throw new Error("Missing 'system_prompt' in request body");
+
+              // Insert new prompt into system_prompt table
+              const insertPrompt = await sqlConnectionTableCreator`
+                  INSERT INTO "system_prompt" (prompt)
+                  VALUES (${system_prompt})
+                  RETURNING *;
               `;
-            
-              response.body = JSON.stringify(students);
-            } catch (err) {
-              console.error("Database error:", err);
+
+              response.body = JSON.stringify(insertPrompt[0]); // Return inserted record
+          } catch (err) {
               response.statusCode = 500;
-              response.body = JSON.stringify({ error: "Failed to fetch students" });
-            }
-            break;
+              console.error("Error inserting system prompt:", err);
+              response.body = JSON.stringify({ error: err.message || "Internal server error" });
+          }
+          break;
       case "GET /admin/prompt":
         // SQL query to fetch ALL past prompts
         const system_prompts = await sqlConnectionTableCreator`
@@ -109,6 +134,65 @@ exports.handler = async (event) => {
 
         response.body = JSON.stringify(system_prompts);
         break;
+
+      case "GET /admin/message_limit":
+        try {
+          console.log("Message limit name:", process.env.MESSAGE_LIMIT);
+          const { SSMClient, GetParameterCommand } = await import("@aws-sdk/client-ssm");
+      
+          const ssm = new SSMClient();
+      
+          console.log("Fetching admin message limit from SSM...");
+          const result = await ssm.send(
+            new GetParameterCommand({ Name: process.env.MESSAGE_LIMIT })
+          );
+      
+          console.log("✅ Admin message limit fetched:", result.Parameter.Value);
+      
+          response.statusCode = 200;
+          response.body = JSON.stringify({ value: result.Parameter.Value });
+        } catch (err) {
+          console.error("❌ Failed to fetch message limit:", err);
+          response.statusCode = 500;
+          response.body = JSON.stringify({ error: "Internal server error" });
+        }
+        break;
+
+      case "POST /admin/message_limit":
+        try {
+          const { SSMClient, PutParameterCommand } = await import("@aws-sdk/client-ssm");
+          const ssm = new SSMClient();
+      
+          const body = JSON.parse(event.body);
+          const newValue = body?.value;
+      
+          if (typeof newValue !== "string" && typeof newValue !== "number") {
+            response.statusCode = 400;
+            response.body = JSON.stringify({ error: "Missing or invalid 'value' in request body" });
+            break;
+          }
+      
+          console.log("Updating message limit in SSM:", newValue);
+      
+          await ssm.send(
+            new PutParameterCommand({
+              Name: process.env.MESSAGE_LIMIT,
+              Value: String(newValue),
+              Overwrite: true,
+              Type: "String"
+            })
+          );
+      
+          console.log("✅ Message limit updated successfully.");
+      
+          response.statusCode = 200;
+          response.body = JSON.stringify({ success: true, value: newValue });
+        } catch (err) {
+          console.error("❌ Failed to update message limit:", err);
+          response.statusCode = 500;
+          response.body = JSON.stringify({ error: "Internal server error" });
+        }
+        break;
       case "GET /admin/instructorStudents":
         if (
           event.queryStringParameters != null &&
@@ -118,9 +202,11 @@ exports.handler = async (event) => {
 
           // SQL query to fetch all students for a given instructor
           const student_ids = await sqlConnectionTableCreator`
-              SELECT *
-              FROM "instructor_students"
-              WHERE instructor_id = ${instructor_id};
+              SELECT u.user_id, u.first_name, u.last_name, u.user_email
+  FROM instructor_students AS ist
+  JOIN users AS u
+  ON ist.student_id = u.user_id
+  WHERE ist.instructor_id = ${instructor_id};
             `;
 
           response.body = JSON.stringify(student_ids);

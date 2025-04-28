@@ -191,9 +191,87 @@ export class ApiGatewayStack extends cdk.Stack {
         email: true,
       },
       userVerification: {
-        emailSubject: "You need to verify your email",
+        emailSubject: "Legal Aid Tool - Confirmation Code",
         emailBody:
-          "Thank you for signing up to Legal Aid Tool. \n Your verification code is {####}",
+          `
+              <html>
+      <head>
+        <style>
+          body {
+            font-family: Outfit, sans-serif;
+            background-color: #F5F5F5;
+            color: #111835;
+            margin: 0;
+            padding: 0;
+            font-size: 16px;
+          }
+          .email-container {
+            background-color: #ffffff;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+          }
+          .header {
+            text-align: center;
+            margin-bottom: 20px;
+          }
+          .header img {
+            width: 100px;
+            height: auto;
+          }
+          .main-content {
+            text-align: center;
+            font-size: 18px;
+            color: #444;
+            margin-bottom: 30px;
+          }
+          .code {
+            display: inline-block;
+            background-color: #111835;
+            color: #ffffff;
+            font-size: 24px;
+            font-weight: bold;
+            padding: 15px 25px;
+            border-radius: 4px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+          }
+          .footer {
+            text-align: center;
+            font-size: 14px;
+            color: #888;
+          }
+          .footer a {
+            color: #546bdf;
+            text-decoration: none;
+          }
+        </style>
+        <h1>Legal Aid Tool</h1>
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600&display=swap" rel="stylesheet">
+      </head>
+      <body>
+        <div class="email-container">
+          <div class="header">
+            <h1>Legal Aid Tool</h1>
+            <!--<img src="" alt="Legal Aid Tool Logo" width="150" height="auto"/>-->
+          </div>
+          <div class="main-content">
+            <p>Thank you for signing up for Legal Aid Tool!</p>
+            <p>Verify your email by using the code below:</p>
+            <div class="code">{####}</div>
+            <p>If you did not request this verification, please ignore this email.</p>
+          </div>
+          <div class="footer">
+            <p>Please do not reply to this email.</p>
+            <p>Legal Aid Tool, 2025</p>
+          </div>
+        </div>
+      </body>
+    </html>
+          `,
         emailStyle: cognito.VerificationEmailStyle.CODE,
       },
       passwordPolicy: {
@@ -563,6 +641,14 @@ export class ApiGatewayStack extends cdk.Stack {
       enforceSSL: true,
     });
 
+
+    // Create SSM parameter for message limit
+    const messageLimitParameter = new ssm.StringParameter(this, "MessageLimitParameter", {
+      parameterName: `/${id}/LAT/MessageLimit`,
+      description: "Parameter containing the Message Limit for the AI assistant (per day)",
+      stringValue: "Infinity",
+    });
+
     
 
     const lambdaStudentFunction = new lambda.Function(this, `${id}-studentFunction`, {
@@ -576,6 +662,7 @@ export class ApiGatewayStack extends cdk.Stack {
         RDS_PROXY_ENDPOINT: db.rdsProxyEndpoint,
         USER_POOL: this.userPool.userPoolId,
         BUCKET: noteStorageBucket.bucketName,
+        MESSAGE_LIMIT: messageLimitParameter.parameterName,
       },
       functionName: `${id}-studentFunction`,
       memorySize: 512,
@@ -593,7 +680,6 @@ export class ApiGatewayStack extends cdk.Stack {
         ],
       })
     );
-
     // Allow access to DynamoDB Table for reading chat history
     lambdaStudentFunction.addToRolePolicy(
       new iam.PolicyStatement({
@@ -611,6 +697,15 @@ export class ApiGatewayStack extends cdk.Stack {
       action: "lambda:InvokeFunction",
       sourceArn: `arn:aws:execute-api:${this.region}:${this.account}:${this.api.restApiId}/*/*/student*`,
     });
+
+    lambdaStudentFunction.addPermission("AllowTestInvoke", {
+      principal: new iam.ServicePrincipal("apigateway.amazonaws.com"),
+      action: "lambda:InvokeFunction",
+      sourceArn: `arn:aws:execute-api:${this.region}:${this.account}:${this.api.restApiId}/test-invoke-stage/*/*`,
+    });
+
+    // Add permission to the Lambda function to allow it to access the message limit parameter
+    messageLimitParameter.grantRead(lambdaStudentFunction);
 
     const cfnLambda_student = lambdaStudentFunction.node
       .defaultChild as lambda.CfnFunction;
@@ -668,6 +763,7 @@ export class ApiGatewayStack extends cdk.Stack {
       environment: {
         SM_DB_CREDENTIALS: db.secretPathTableCreator.secretName,
         RDS_PROXY_ENDPOINT: db.rdsProxyEndpointTableCreator,
+        MESSAGE_LIMIT: messageLimitParameter.parameterName,
       },
       functionName: `${id}-adminFunction`,
       memorySize: 512,
@@ -681,6 +777,9 @@ export class ApiGatewayStack extends cdk.Stack {
       action: "lambda:InvokeFunction",
       sourceArn: `arn:aws:execute-api:${this.region}:${this.account}:${this.api.restApiId}/*/*/admin*`,
     });
+
+    // Allow access for lambda to read and write to message limit parameter
+    messageLimitParameter.grantWrite(lambdaAdminFunction);
 
     const cfnLambda_Admin = lambdaAdminFunction.node
       .defaultChild as lambda.CfnFunction;
@@ -1958,7 +2057,7 @@ export class ApiGatewayStack extends cdk.Stack {
       visibilityConfig: {
         sampledRequestsEnabled: true,
         cloudWatchMetricsEnabled: true,
-        metricName: "virtualcareint-firewall",
+        metricName: "legalaidtool-firewall",
       },
       rules: [
         {

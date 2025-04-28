@@ -134,15 +134,18 @@ def setup_guardrail(guardrail_name: str) -> tuple[str, str]:
         logger.info(f"Creating guardrail: {guardrail_name}")
         resp = bedrock_client.create_guardrail(
             name=guardrail_name,
-            description='Enforce no financial advice, offensive or PII content.',
+            description='Block financial advice',
             topicPolicyConfig={
                 'topicsConfig': [
-                    # DENY financial advice questions
-                    {'name': 'FinancialAdvice', 'definition': 'Any request for personalized financial guidance.', 'type':'DENY'},
-                    # DENY hate speech or explicit content
-                    {'name': 'OffensiveContent', 'definition': 'Hate or explicit material.', 'type':'DENY'},
-                    # DENY profanity
-                    {'name': 'Profanity', 'definition': 'Use of swear words.', 'type':'DENY'}
+                    {
+                        'name': 'FinancialAdvice',
+                        'definition': 'Providing personalized advice on managing financial assets or investments.',
+                        'examples': [
+                            'Which mutual fund should I invest in for retirement?',
+                            'Can you advise on the best way to reduce my debt?'
+                        ],
+                        'type': 'DENY'
+                    },
                 ]
             },
             sensitiveInformationPolicyConfig={

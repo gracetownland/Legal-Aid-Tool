@@ -530,6 +530,102 @@ paths:
         httpMethod: "POST"
         type: "aws_proxy"
 
+  /student/message_counter:
+    options:
+      summary: CORS support
+      description: |
+        Enable CORS by returning correct headers
+      responses:
+        200:
+          $ref: "#/components/responses/Success"
+      x-amazon-apigateway-integration:
+        type: mock
+        requestTemplates:
+          application/json: |
+            {
+              "statusCode" : 200
+            }
+        responses:
+          default:
+            statusCode: "200"
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key'"
+              method.response.header.Access-Control-Allow-Methods: "'*'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+            responseTemplates:
+              application/json: |
+                {}
+    get:
+      tags:
+        - Student
+      summary: Get the number of messages a user is able to send (according to the quota)
+      operationId: student_message_counter_GET
+      parameters:
+        - in: query
+          name: user_id
+          required: true
+          description: ID of user
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Number of messages in the session
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message_count:
+                    type: integer
+                    description: Number of messages in the session
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "429":
+          description: Too Many Requests
+        "500":
+          description: Internal Server Error
+      security:
+        - studentAuthorizer: []
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${studentFunction.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
+    put: 
+      tags:
+        - Student
+      summary: Update the number of messages in a session
+      operationId: student_message_counter_PUT
+      parameters:
+        - in: query
+          name: user_id
+          required: true
+          description: ID of user
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Message count updated successfully
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "429":
+          description: Too Many Requests
+        "500":
+          description: Internal Server Error
+      security:
+        - studentAuthorizer: []
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${studentFunction.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
+
   /student/delete_last_message:
     options:
       summary: CORS support
@@ -842,6 +938,63 @@ paths:
         passthroughBehavior: "when_no_match"
         httpMethod: "POST"
         type: "aws_proxy"
+
+  /student/message_limit:
+    options:
+      summary: CORS support
+      description: |
+        Enable CORS by returning correct headers
+      responses:
+        200:
+          $ref: "#/components/responses/Success"
+      x-amazon-apigateway-integration:
+        type: mock
+        requestTemplates:
+          application/json: |
+            {
+              "statusCode" : 200
+            }
+        responses:
+          default:
+            statusCode: "200"
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key'"
+              method.response.header.Access-Control-Allow-Methods: "'*'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+            responseTemplates:
+              application/json: |
+                {}
+    get:
+      tags:
+        - Student
+      summary: Get the message limit parameter
+      operationId: message_limit_GET
+      parameters:
+        - in: query
+          name: user_id
+          required: false
+          description: id of the user
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Roles Available
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "429":
+          description: Too Many Requests
+        "500":
+          description: Internal Server Error
+      security:
+        - studentAuthorizer: []
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${studentFunction.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
   
   /student/case:
     options:
@@ -891,6 +1044,8 @@ paths:
                 - case_type
                 - jurisdiction
                 - case_description
+                - province
+                - statute
               properties:
                 case_title:
                   type: string
@@ -904,6 +1059,12 @@ paths:
                 case_description:
                   type: string
                   description: Detailed description of the case
+                province:
+                  type: string
+                  description: Province related to the case
+                statute:
+                  type: string
+                  description: Statute related to the case
       responses:
         "200":
           description: Case created successfully
@@ -1868,6 +2029,63 @@ paths:
         httpMethod: "POST"
         type: "aws_proxy"
 
+  /student/read_message:
+    options:
+      summary: CORS support
+      description: |
+        Enable CORS by returning correct headers
+      responses:
+        200:
+          $ref: "#/components/responses/Success"
+      x-amazon-apigateway-integration:
+        type: mock
+        requestTemplates:
+          application/json: |
+            {
+              "statusCode" : 200
+            }
+        responses:
+          default:
+            statusCode: "200"
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key'"
+              method.response.header.Access-Control-Allow-Methods: "'*'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+            responseTemplates:
+              application/json: |
+                {}
+    put:
+      tags:
+        - Student
+      summary: Marks given message as read
+      operationId: read_message_PUT
+      parameters:
+        - in: query
+          name: message_id
+          required: true
+          description: ID of the case to be reviewed
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Message read successfully
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "429":
+          description: Too Many Requests
+        "500":
+          description: Internal Server Error
+      security:
+        - studentAuthorizer: []
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${studentFunction.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
+
   /student/get_messages:
     options:
       summary: CORS support
@@ -2085,7 +2303,6 @@ paths:
         passthroughBehavior: "when_no_match"
         httpMethod: "POST"
         type: "aws_proxy"
-
 
   /student/review_case:
     options:
@@ -2394,6 +2611,71 @@ paths:
       responses:
         "200":
           description: Groups student is a part of are returned successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  presignedurl:
+                    type: string
+                    description: Presigned URL to upload document file to S3 Bucket
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "429":
+          description: Too Many Requests
+        "500":
+          description: Internal Server Error
+      security:
+        - instructorAuthorizer: []
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${instructorFunction.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
+
+  /instructor/name:
+    options:
+      summary: CORS support
+      description: |
+        Enable CORS by returning correct headers
+      responses:
+        200:
+          $ref: "#/components/responses/Success"
+      x-amazon-apigateway-integration:
+        type: mock
+        requestTemplates:
+          application/json: |
+            {
+              "statusCode" : 200
+            }
+        responses:
+          default:
+            statusCode: "200"
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key'"
+              method.response.header.Access-Control-Allow-Methods: "'*'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+            responseTemplates:
+              application/json: |
+                {}
+    get:
+      tags:
+        - Instructor
+      summary: Get student groups
+      operationId: instructor_student_group_GET
+      parameters:
+        - in: query
+          name: name
+          required: true
+          description: name of the instructor
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successfully returned name of instructor
           content:
             application/json:
               schema:
@@ -4493,6 +4775,91 @@ paths:
         passthroughBehavior: "when_no_match"
         httpMethod: "POST"
         type: "aws_proxy"
+
+  /admin/message_limit:
+    options:
+      summary: CORS support
+      description: |
+        Enable CORS by returning correct headers
+      responses:
+        200:
+          $ref: "#/components/responses/Success"
+      x-amazon-apigateway-integration:
+        type: mock
+        requestTemplates:
+          application/json: |
+            {
+              "statusCode" : 200
+            }
+        responses:
+          default:
+            statusCode: "200"
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key'"
+              method.response.header.Access-Control-Allow-Methods: "'*'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+            responseTemplates:
+              application/json: |
+                {}
+    get:
+      tags:
+        - Admin
+      summary: Get message limit
+      operationId: admin_message_limit_GET
+      responses:
+        "200":
+          description: Parameter retrieved successfully
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "429":
+          description: Too Many Requests
+        "500":
+          description: Internal Server Error
+      security:
+        - adminAuthorizer: []
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${adminFunction.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
+    post:
+      tags:
+        - Admin
+      summary: Assign an instructor to a student
+      operationId: admin_assign_instructor_POST
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                instructor_id:
+                  type: string
+                  description: ID of the instructor to assign
+                student_id:
+                  type: string
+                  description: ID of student to assign
+      responses:
+        "200":
+          description: Enrollment created successfully
+        "400":
+          description: Bad Request
+        "500":
+          description: Internal Server Error
+      security:
+        - adminAuthorizer: []
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${adminFunction.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
+
+
   /admin/instructorStudents:
     options:
       summary: CORS support

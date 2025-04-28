@@ -59,7 +59,9 @@ def handler(event, context):
                 "last_name" varchar,
                 "time_account_created" timestamp,
                 "roles" varchar[],
-                "last_sign_in" timestamp DEFAULT now()
+                "last_sign_in" timestamp DEFAULT now(),
+                "activity_counter" integer DEFAULT 0,
+                "last_activity" timestamp DEFAULT now()
             );
 
             CREATE TABLE IF NOT EXISTS "messages" (
@@ -91,6 +93,8 @@ def handler(event, context):
                 "user_id" uuid,
                 "jurisdiction" varchar[],
                 "case_description" text,
+                "province" varchar DEFAULT 'N/A',
+                "statute" varchar DEFAULT 'N/A',
                 "status" varchar DEFAULT 'In progress',
                 "last_updated" timestamp DEFAULT now(),
                 "time_created" timestamp DEFAULT now(),
@@ -104,7 +108,8 @@ def handler(event, context):
                 "summary_id" uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
                 "case_id" uuid,
                 "content" text,
-                "time_created" timestamp DEFAULT now()
+                "time_created" timestamp DEFAULT now(),
+                "is_read" boolean DEFAULT false
             );
 
             CREATE TABLE IF NOT EXISTS "audio_files" (

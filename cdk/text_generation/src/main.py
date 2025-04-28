@@ -301,7 +301,7 @@ def get_case_details(case_id):
         cur = connection.cursor()
         logger.info("Connected to RDS instance!")
         cur.execute("""
-            SELECT case_title, case_type, jurisdiction, case_description
+            SELECT case_title, case_type, jurisdiction, case_description, province, statute
             FROM "cases"
             WHERE case_id = %s;
         """, (case_id,))
@@ -312,13 +312,13 @@ def get_case_details(case_id):
         cur.close()
 
         if result:
-            case_title, case_type, jurisdiction, case_description = result
-            logger.info(f"Patient details found for case_id {case_id}: "
-                        f"Title: {case_title} \n Case type: {case_type} \n Jurisdiction: {jurisdiction} \n Case description: {case_description}")
-            return case_title, case_type, jurisdiction, case_description
+            case_title, case_type, jurisdiction, case_description, province, statute = result
+            logger.info(f"Case details found for case_id {case_id}: "
+                        f"Title: {case_title} \n Case type: {case_type} \n Jurisdiction: {jurisdiction} \n Case description: {case_description}, Province: {province}, Statute: {statute}")
+            return case_title, case_type, jurisdiction, case_description, province, statute
         else:
             logger.warning(f"No details found for case_id {case_id}")
-            return None, None, None, None
+            return None, None, None, None, None, None
 
     except Exception as e:
         logger.error(f"Error fetching case details: {e}")
@@ -366,8 +366,8 @@ def handler(event, context):
         }
     
     # add_audio_to_db(case_id, case_audio_description)
-    case_title, case_type, jurisdiction, case_description = get_case_details(case_id)
-    if case_title is None or case_type is None or jurisdiction is None or case_description is None:
+    case_title, case_type, jurisdiction, case_description, province, statute = get_case_details(case_id)
+    if case_title is None or case_type is None or jurisdiction is None or case_description is None or province is None or statute is None:
         logger.error(f"Error fetching case details for case_id: {case_id}")
         # return {
         #     'statusCode': 400,
@@ -480,18 +480,31 @@ def handler(event, context):
         }
 
     try:
-        response = get_response(
-            query=student_query,
-            case_title=case_title,
-            llm=llm,
-            history_aware_retriever=history_aware_retriever,
-            table_name=TABLE_NAME,
-            case_id=case_id,
-            system_prompt=system_prompt,
-            case_type=case_type,
-            jurisdiction=jurisdiction,
-            case_description=case_description
-        )
+        logger.info("Generating response from the LLM.")
+        if audio_flag == "yay":
+            response = get_audio_response(
+                query=student_query,
+                llm=llm,
+                history_aware_retriever=history_aware_retriever,
+                table_name=TABLE_NAME,
+                case_id=case_id,
+                system_prompt=system_prompt,
+                case_audio_description=case_audio_description
+            )
+        else:
+            response = get_response(
+                query=student_query,
+                province="none",
+                statute="none",
+                llm=llm,
+                history_aware_retriever=history_aware_retriever,
+                table_name=TABLE_NAME,
+                case_id=case_id,
+                system_prompt=system_prompt,
+                case_type=case_type,
+                jurisdiction=jurisdiction,
+                case_description=case_description
+            )
         print("response: ", response)
         
     except Exception as e:

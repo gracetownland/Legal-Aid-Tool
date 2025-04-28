@@ -77,7 +77,7 @@ const InstructorDetails = ({ instructorData, onBack }) => {
       const session = await fetchAuthSession();
       const token = session.tokens.idToken;
       const response = await fetch(
-        `${import.meta.env.VITE_API_ENDPOINT}admin/instructorStudents&instructor_id=${instructor.id}`,
+        `${import.meta.env.VITE_API_ENDPOINT}admin/instructorStudents?instructor_id=${instructor.id}`,
         {
           method: "GET",
           headers: {
@@ -88,6 +88,7 @@ const InstructorDetails = ({ instructorData, onBack }) => {
       );
       if (response.ok) {
         const data = await response.json();
+        console.log(data);
         setAssignedStudents(data);
       } else {
         console.error("Failed to fetch assigned students:", response.statusText);
@@ -179,15 +180,25 @@ const InstructorDetails = ({ instructorData, onBack }) => {
     <>
       <Box component="main" sx={{ flexGrow: 1, p: 3, marginTop: 1, textAlign: "left" }}>
         <Toolbar />
-        <Paper sx={{ p: 2, marginBottom: 4, textAlign: "left" }}>
+        <Paper
+          sx={{
+            p: 2,
+            marginBottom: 4,
+            textAlign: "left",
+            backgroundColor: "var(--background)",
+            color: "var(--text)",
+            border: "1px solid var(--border)",
+            boxShadow: "none",
+          }}
+        >
           <Typography variant="h5" sx={{ marginBottom: 2, p: 1 }}>
             Instructor: {titleCase(instructor?.first_name)} {titleCase(instructor?.last_name)}
           </Typography>
-          <Divider sx={{ p: 1, marginBottom: 3 }} />
+          <Divider sx={{ p: 1, marginBottom: 3, borderColor: "var(--border)" }} />
           <Typography variant="h7" sx={{ marginBottom: 1, p: 1 }}>
             Email: {instructor.email}
           </Typography>
-
+  
           {/* Assigned Students Section */}
           <Typography variant="h6" sx={{ marginTop: 2, marginBottom: 1 }}>
             Assigned Students:
@@ -203,23 +214,48 @@ const InstructorDetails = ({ instructorData, onBack }) => {
               <Typography>No students assigned yet.</Typography>
             )}
           </Box>
-
+  
           <FormControl sx={{ width: "100%", marginBottom: 2, marginTop: 5 }}>
             <Autocomplete
               value={selectedStudent}
               onChange={(event, newValue) => setSelectedStudent(newValue)}
               options={students}
               getOptionLabel={(option) => `${option.first_name} ${option.last_name}`}
-              renderInput={(params) => (
-                <TextField {...params} label="Select Student" variant="outlined" />
-              )}
               isOptionEqualToValue={(option, value) => option.id === value.id}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Select Student"
+                  variant="outlined"
+                  sx={{
+                    "& .MuiInputBase-input": {
+                      color: "var(--text)",
+                      backgroundColor: "var(--background)",
+                    },
+                    "& .MuiInputLabel-root": {
+                      color: "var(--placeholder-text)",
+                    },
+                    "& .MuiOutlinedInput-root": {
+                      "& fieldset": {
+                        borderColor: "var(--border)",
+                      },
+                      "&:hover fieldset": {
+                        borderColor: "var(--border)",
+                      },
+                      "&.Mui-focused fieldset": {
+                        borderColor: "var(--border)",
+                      },
+                    },
+                  }}
+                />
+              )}
             />
           </FormControl>
         </Paper>
+  
         <Grid container spacing={2}>
           <Grid item xs={6}>
-            <Button variant="contained" onClick={onBack} sx={{ width: "30%", mx: "left" }}>
+            <Button variant="contained" onClick={onBack} sx={{ width: "30%", mx: "left", backgroundColor: 'var(--primary)', color: 'white', boxShadow:'none',borderRadius: 2  }}>
               Back
             </Button>
           </Grid>
@@ -228,13 +264,14 @@ const InstructorDetails = ({ instructorData, onBack }) => {
               variant="contained"
               color="primary"
               onClick={handleAssignStudent}
-              sx={{ width: "30%", mx: "right" }}
+              sx={{ width: "40%", mx: "right", backgroundColor: 'var(--primary)', color: 'white', boxShadow:'none',borderRadius: 2 }}
             >
               Assign Student
             </Button>
           </Grid>
         </Grid>
       </Box>
+  
       <ToastContainer
         position="top-center"
         autoClose={1000}
@@ -248,7 +285,6 @@ const InstructorDetails = ({ instructorData, onBack }) => {
         theme="colored"
       />
     </>
-  );
-};
+  )};
 
 export default InstructorDetails;

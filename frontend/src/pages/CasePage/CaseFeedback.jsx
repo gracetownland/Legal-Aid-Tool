@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Box, Typography, Button, Stack, TextField, Card, CardContent, Snackbar, Alert, Container
 } from "@mui/material";
@@ -9,13 +9,17 @@ import InstructorHeader from "../../components/InstructorHeader";
 import { fetchAuthSession } from "aws-amplify/auth";
 import SendIcon from "@mui/icons-material/Send";
 import FeedbackIcon from '@mui/icons-material/Feedback';
+import Divider from "@mui/material/Divider";
+import NotFound from "../NotFound";
 
 const FeedbackPage = () => {
   const { caseId } = useParams();
+  const [caseData, setCaseData] = useState({});
   const [userRole, setUserRole] = useState("student");
   const [messages, setMessages] = useState([]);
   const [feedback, setFeedback] = useState("");
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+  const messageRefs = useRef({});
 
   const handleSnackbarClose = () => setSnackbar((prev) => ({ ...prev, open: false }));
 
@@ -32,12 +36,95 @@ const FeedbackPage = () => {
 
       const data = await res.json();
       setMessages(data.messages || []);
+      setCaseData(data.caseData || {});
       console.log("messages: ", data.messages[0].message_content);
     };
 
     fetchCaseData();
   }, [caseId]);
 
+
+  useEffect(() => {
+    if (!messages.length) return;
+  
+    const timeoutMap = new Map();
+    
+  
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const messageId = entry.target.dataset.messageId;
+  
+          // If it's visible and the tab is active
+          if (entry.isIntersecting && document.visibilityState === "visible") {
+            const timeoutId = setTimeout(() => {
+              if (
+                entry.isIntersecting &&
+                document.visibilityState === "visible"
+              ) {
+                console.log(`Message ${messageId} has been in view for 2 seconds`);
+                
+                
+                readMessage(messageId);
+
+              }
+            }, 2000);
+  
+            timeoutMap.set(messageId, timeoutId);
+            entry.target.dataset.timeoutId = timeoutId;
+          } else {
+            // Clear if they scrolled away or tab is hidden
+            const id = timeoutMap.get(messageId);
+            if (id) clearTimeout(id);
+          }
+        });
+      },
+      { threshold: 1.0 }
+    );
+  
+    messages.forEach((msg) => {
+      const el = messageRefs.current[msg.message_id];
+      if (el) {
+        el.dataset.messageId = msg.message_id;
+        observer.observe(el);
+      }
+    });
+
+    const readMessage = async (messageId) => {
+      try {
+        const session = await fetchAuthSession();
+        const token = session.tokens.idToken;
+        fetch(`${import.meta.env.VITE_API_ENDPOINT}student/read_message?message_id=${messageId}`, {
+          method: "PUT",
+          headers: {
+            Authorization: token,
+            "Content-Type": "application/json",
+          },
+        });
+      } catch (error) {
+        console.error("Error reading message:", error);
+      }
+    }
+  
+    // Listen for tab switch
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        for (const id of timeoutMap.values()) {
+          clearTimeout(id);
+        }
+      }
+    };
+  
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+  
+    return () => {
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      for (const id of timeoutMap.values()) {
+        clearTimeout(id);
+      }
+    };
+  }, [messages]);
 
 
   const handleSubmitFeedback = async () => {
@@ -64,6 +151,7 @@ const FeedbackPage = () => {
   };
 
   return (
+    (caseData ?
     <>
      
       <Box position="fixed" top={0} left={0} width="100%" zIndex={1000}>
@@ -75,8 +163,12 @@ const FeedbackPage = () => {
         <SideMenu />
 
         <Container sx={{ flexGrow: 1, p: 4, maxWidth: "900px", mx: "auto", textAlign: "left" }}>
-          <Typography variant="h4" fontWeight={600} gutterBottom>Feedback</Typography>
-
+          <div>
+          <Typography variant="h4" fontWeight={600} fontFamily="Outfit">Feedback</Typography>
+          <Typography variant="h4" fontWeight={400} fontFamily="Outfit" fontSize={20} mb={1} textAlign="left">
+                        For Case: "{caseData.case_title}"
+          </Typography>
+                        </div>
           {userRole === "student" && (
             <Box
               sx={{
@@ -89,11 +181,28 @@ const FeedbackPage = () => {
             >
               {messages.length > 0 ? (
                 messages.map((msg) => (
-                  <Box key={msg.id} mb={2}>
-                    <Typography variant="body1" sx={{ whiteSpace: "pre-wrap" }}>{msg.message_content}</Typography>
-                    <Typography variant="caption" color="#808080">
-                      Sent by: {msg.first_name} {msg.last_name}
+                  <Box key={msg.message_id} ref={(el)=>(messageRefs.current[msg.message_id] = el)} mb={2} style={{ border: "1px solid var(--border)", borderRadius: "8px", padding: "0px", backgroundColor: "var(--background)" }}>
+                    <Stack direction="row" spacing={1} justifyContent="space-between" alignItems="center">
+                    <Typography variant="caption" color="var(--text)" pt={1} pl={1} pr={1} pb={0.5}>
+                      From: {msg.first_name} {msg.last_name}
                     </Typography>
+                    <Typography variant="caption" color="var(--text)" pt={1} pl={1} pr={1} pb={0.5}>
+                    {new Date(msg.time_sent).toLocaleTimeString(undefined, {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}, {" "}
+                     
+                    {new Date(msg.time_sent).toLocaleDateString(undefined, {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    })} 
+                    </Typography>
+                    
+                    </Stack>
+                    <Divider sx={{ borderColor: "var(--border)", width: '100%' }} />
+                    <Typography variant="body1" sx={{ whiteSpace: "pre-wrap", padding: '10px' }}>{msg.message_content}</Typography>
+                    
                   </Box>
                 ))
               ) : (
@@ -108,7 +217,35 @@ const FeedbackPage = () => {
 
           {userRole === "instructor" && (
             <Card sx={{ backgroundColor: 'var(--background)', borderRadius: 2, boxShadow: 'none', border: '1px solid var(--border)' }}>
-              
+              <Box
+  sx={{
+    mb: 3,
+    border: "1px solid var(--border)",
+    borderRadius: 2,
+    p: 2,
+    backgroundColor: "var(--background)",
+  }}
+>
+  <Typography variant="h6" fontWeight={500} mb={2}>Previous Feedback</Typography>
+  {messages.length > 0 ? (
+    messages.map((msg) => (
+      <Box key={msg.id} mb={2}>
+        <Typography variant="body1" sx={{ whiteSpace: "pre-wrap" }}>{msg.message_content}</Typography>
+        <Typography variant="caption" color="#808080">
+          Sent by: {msg.first_name} {msg.last_name}
+        </Typography>
+        {msg.is_read && (
+      <Typography variant="caption" color="green" fontStyle="italic" ml={1}>
+        ✅ Read
+      </Typography>
+    )}
+      </Box>
+    ))
+  ) : (
+    <Typography variant="body2" color="#808080">No feedback sent yet.</Typography>
+  )}
+</Box>
+
               <CardContent sx={{m: 1, color: 'var(--text)'}}>
               <p>Send your students feedback on this case here. They will be able to see your name.</p>
                 <TextField
@@ -185,6 +322,10 @@ const FeedbackPage = () => {
         </Alert>
       </Snackbar>
     </>
+
+    :
+
+    <NotFound/>)
   );
 };
 

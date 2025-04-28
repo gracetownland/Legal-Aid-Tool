@@ -87,14 +87,16 @@ const NewCaseForm = () => {
     setError(null);
 
     const caseData = {
-      case_title: "New Case", // Temporary placeholder title
+      case_title: "New Case", // Temporary placeholder title while one is generated
       case_type: formData.broadAreaOfLaw,
       jurisdiction: formData.jurisdiction,
       case_description: formData.legalMatterSummary,
+      province: formData.province,
+      statute: formData.statuteDetails,
     };
 
     try {
-      console.log("Submitting the case...");
+      console.log("Submitting the case with data:", caseData);
 
       const { tokens } = await fetchAuthSession();
       if (!tokens || !tokens.idToken)
@@ -109,7 +111,10 @@ const NewCaseForm = () => {
 
       // Step 1: Create the case in the database
       console.log("Creating the case in the database...");
+
       console.log(caseData);
+      console.log(JSON.stringify(caseData));
+
       const response = await fetch(
         `${import.meta.env.VITE_API_ENDPOINT}student/case?` +
           `user_id=${encodeURIComponent(cognito_id)}`,
@@ -161,9 +166,12 @@ const NewCaseForm = () => {
         case_type: formData.broadAreaOfLaw,
         jurisdiction: formData.jurisdiction,
         case_description: formData.legalMatterSummary,
+        province: formData.province,
+        statute: formData.statuteDetails,
       };
 
       console.log("Updating the case with the generated title...");
+      
       const updateResponse = await fetch(
         `${import.meta.env.VITE_API_ENDPOINT}student/edit_case?case_id=${data.case_id}`,
         {
@@ -186,6 +194,7 @@ const NewCaseForm = () => {
 
       // Step 4: Continue with the rest of the logic (e.g., generating the legal summary)
       console.log("Generating legal matter summary...");
+      
       const init_llm_response = await fetch(
         `${import.meta.env.VITE_API_ENDPOINT}student/text_generation?case_id=${data.case_id}`,
         {
@@ -431,162 +440,252 @@ const handleSubmitWithAudio = async () => {
             border: "1px solid var(--border)",
           }}
         >
-          {step === "initial" && (
-            <Box>
-              <Typography variant="h5" sx={{ textAlign: "left", mb: 2 }}>
-                Would you like to upload an audio file?
-              </Typography>
-              <Button variant="contained" onClick={() => handleAudioPrompt("yes")} sx={{ mr: 2 }}>
-                Yes
-              </Button>
-              <Button variant="contained" onClick={() => handleAudioPrompt("no")}>
-                No
-              </Button>
-            </Box>
-          )}
-
-          {step === "uploadAudio" && (
-            <Box>
-              <Typography variant="h5" sx={{ textAlign: "left", mb: 2 }}>
-                Upload an Audio File
-              </Typography>
-              <input type="file" accept="audio/*" onChange={handleFileUpload} />
-              <Button
-                variant="contained"
-                fullWidth
-                color="primary"
-                onClick={handleSubmitWithAudio}
-                disabled={isSubmitting || !audioFile}
-                sx={{ mt: 2 }}
+          <Typography variant="h5" sx={{ textAlign: "left", mb: 2, fontFamily: "inter" }}>
+            Start A New Case
+          </Typography>
+          <form noValidate autoComplete="off" onSubmit={handleSubmit} >
+            <FormControl fullWidth sx={{ mb:2, textAlign: "left", borderColor: "var(--border)",
+              borderColor: "var(--border)",
+              "& .MuiOutlinedInput-root": {
+                "& fieldset": {
+                  borderColor: "var(--border)", // Set border color
+                },
+                "&.Mui-focused fieldset": {
+                  borderColor: "var(--border)", // Set focused border color
+                },
+                "& input": {
+                  color: "var(--text)", // Set input text color
+                },
+                "& .MuiInputBase-input::placeholder": {
+                  color: "var(--placeholder-text)", // Set placeholder text color
+                },
+              },
+            }}>
+              <InputLabel sx={{color: 'var(--placeholder-text)'}}>Broad Area of Law</InputLabel>
+              <Select
+                label="Broad Area of Law"
+              sx={{color: 'var(--text)'}}
+                name="broadAreaOfLaw"
+                value={formData.broadAreaOfLaw}
+                onChange={handleChange}
+                required
               >
-                Start Interview
-              </Button>
-            </Box>
-          )}
+                {[
+                  "Criminal Law",
+                  "Civil Law",
+                  "Family Law",
+                  "Business Law",
+                  "Environmental Law",
+                  "Health Law",
+                  "Immigration Law",
+                  "Labour Law",
+                  "Personal Injury Law",
+                  "Tax Law",
+                  "Intellectual Property Law",
+                  "Other",
+                ].map((area) => (
+                  <MenuItem key={area} value={area}>
+                    {area}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
-          {step === "form" && (
-            <form noValidate autoComplete="off" onSubmit={handleSubmit}>
-              <Typography variant="h5" sx={{ textAlign: "left", mb: 2 }}>
-                Start A New Case
-              </Typography>
+            <FormControl fullWidth sx={{ mb: 2, textAlign: "left" }}>
+              <FormLabel style={{color: 'var(--text)'}}>Jurisdiction</FormLabel>
+              <FormGroup >
+                {["Federal", "Provincial"].map((option) => (
+                  <FormControlLabel
+                    key={option}
+                    control={
+                      <Checkbox
+                        checked={formData.jurisdiction.includes(option)}
+                        onChange={handleChange}
+                        name="jurisdiction"
+                        value={option}
+                        style={{color: 'var(--text)'}}
+                      />
+                    }
+                    label={option}
+                  />
+                ))}
+              </FormGroup>
+            </FormControl>
 
-              <FormControl fullWidth sx={{ mb: 2, textAlign: "left" }}>
-                <InputLabel>Broad Area of Law</InputLabel>
-                <Select
-                  name="broadAreaOfLaw"
-                  value={formData.broadAreaOfLaw}
-                  onChange={handleChange}
-                  required
-                >
-                  {["Criminal Law", "Civil Law", "Family Law", "Business Law", "Other"].map((area) => (
-                    <MenuItem key={area} value={area}>
-                      {area}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-
-              {/* Jurisdiction Field */}
-<FormControl fullWidth sx={{ mb: 2, textAlign: "left" }}>
-  <FormLabel>Jurisdiction</FormLabel>
-  <FormGroup>
-    <FormControlLabel
-      control={
-        <Checkbox
-          checked={formData.jurisdiction.includes("Provincial")}
-          onChange={handleJurisdictionChange}
-          name="jurisdiction"
-          value="Provincial"
-        />
-      }
-      label="Provincial"
-    />
-    <FormControlLabel
-      control={
-        <Checkbox
-          checked={formData.jurisdiction.includes("Federal")}
-          onChange={handleJurisdictionChange}
-          name="jurisdiction"
-          value="Federal"
-        />
-      }
-      label="Federal"
-    />
-  </FormGroup>
+            {formData.jurisdiction.includes("Provincial") && (
+              <FormControl fullWidth sx={{ 
+  mb: 2, 
+  textAlign: "left", 
+  "& .MuiOutlinedInput-notchedOutline": {
+    borderColor: "var(--border)", // Correct border color target
+  },
+  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+    borderColor: "var(--border)",
+  },
+  "& .MuiSelect-outlined": {
+    color: "var(--text)", // Text color inside select
+  }
+}}>
+  <InputLabel id="province-label" sx={{ color: 'var(--placeholder-text)' }}>
+    Province
+  </InputLabel>
+  <Select
+    labelId="province-label"
+    label="Province"
+    name="province"
+    value={formData.province}
+    onChange={handleChange}
+    sx={{ color: 'var(--text)' }}
+  >
+    {[
+      "Alberta",
+      "British Columbia",
+      "Manitoba",
+      "New Brunswick",
+      "Newfoundland and Labrador",
+      "Nova Scotia",
+      "Ontario",
+      "Prince Edward Island",
+      "Quebec",
+      "Saskatchewan",
+      "Northwest Territories",
+      "Nunavut",
+      "Yukon",
+    ].map((province) => (
+      <MenuItem key={province} value={province}>
+        {province}
+      </MenuItem>
+    ))}
+  </Select>
 </FormControl>
+            )}
+            <div style={{display: "flex", flexDirection: "row", gap: "1rem"}}>
 
-{/* Conditional Province Dropdown */}
-{formData.jurisdiction.includes("Provincial") && (
-  <FormControl fullWidth sx={{ mb: 2, textAlign: "left" }}>
-    <InputLabel>Province</InputLabel>
-    <Select
-      name="province"
-      value={formData.province}
-      onChange={handleChange}
-      required
-    >
-      {[
-        "Ontario", "British Columbia", "Alberta", "Quebec", "Manitoba", "Saskatchewan", "Nova Scotia", 
-        "New Brunswick", "Prince Edward Island", "Newfoundland and Labrador", "Northwest Territories", 
-        "Yukon", "Nunavut"
-      ].map((province) => (
-        <MenuItem key={province} value={province}>
-          {province}
-        </MenuItem>
-      ))}
-    </Select>
-  </FormControl>
-)}
-
-
-              <TextField
-                label="Statute"
-                name="statute"
-                fullWidth
-                variant="outlined"
-                value={formData.statute}
-                onChange={handleChange}
-                required
-                sx={{ mb: 2 }}
-              />
-              <TextField
-                label="Statute Details"
-                name="statuteDetails"
-                fullWidth
-                variant="outlined"
-                value={formData.statuteDetails}
-                onChange={handleChange}
-                sx={{ mb: 2 }}
-              />
-              <TextField
-                label="Legal Matter Summary"
-                name="legalMatterSummary"
-                fullWidth
-                variant="outlined"
-                value={formData.legalMatterSummary}
-                onChange={handleChange}
-                multiline
-                rows={4}
-                required
-                sx={{ mb: 2 }}
-              />
-              <Button
-                variant="contained"
-                fullWidth
-                color="primary"
-                type="submit"
-                disabled={isSubmitting}
-                sx={{ color: "white" }}
-              >
-                {isSubmitting ? "Submitting..." : "Start Interview"}
-              </Button>
-              {error && (
-                <Typography color="error" sx={{ mt: 2 }}>
-                  {error}
-                </Typography>
-              )}
-            </form>
-          )}
+            
+<p style={{marginTop: 10, color: 'var(--text)'}}>Statute Applicable?</p>
+<RadioGroup
+  name="statute"
+  value={formData.statute}
+  onChange={handleChange}
+  row
+  sx={{ mb: 2 }}
+>
+<FormControlLabel 
+    value="Yes" 
+    control={
+      <Radio 
+        sx={{
+          color: "var(--border)", // Set the default circle color
+          "&.Mui-checked": {
+            color: "var(--text)", // Set the checked circle color
+          },
+        }} 
+      />
+    } 
+    label="Yes" 
+  />
+  <FormControlLabel 
+    value="No" 
+    control={
+      <Radio 
+        sx={{
+          color: "var(--border)", // Set the default circle color
+          "&.Mui-checked": {
+            color: "var(--text)", // Set the checked circle color
+          },
+        }} 
+      />
+    } 
+    label="No" 
+  />
+</RadioGroup>
+</div>
+            <TextField
+              label="Statute Details"
+              name="statuteDetails"
+              fullWidth
+              variant="outlined"
+              value={formData.statuteDetails}
+              onChange={handleChange}
+              InputLabelProps={{
+                sx: {
+                  color: "var(--placeholder-text)", // Normal label color
+                  "&.Mui-focused": {
+                    color: "var(--placeholder-text)", // Focused label color
+                  },
+                },
+              }}
+              sx={{ mb: 2 ,
+                "& .MuiOutlinedInput-root": {
+                  "& fieldset": {
+                    borderColor: "var(--border)", // Set border color
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: "var(--border)", // Set focused border color
+                  },
+                  "& input": {
+                    color: "var(--text)", // Set input text color
+                  },
+                  "& .MuiInputBase-input::placeholder": {
+                    color: "var(--placeholder-text)", // Set placeholder text color
+                  },
+                }}}
+            />
+            
+            <TextField
+  label="Legal Matter Summary"
+  name="legalMatterSummary"
+  fullWidth
+  variant="outlined"
+  value={formData.legalMatterSummary}
+  onChange={handleChange}
+  multiline
+  rows={4}
+  required
+  InputLabelProps={{
+    sx: {
+      color: "var(--placeholder-text)", // Normal label color
+      "&.Mui-focused": {
+        color: "var(--placeholder-text)", // Focused label color
+      },
+    },
+  }}
+  sx={{
+    mb: 2,
+    "& .MuiOutlinedInput-root": {
+      "& fieldset": {
+        borderColor: "var(--border)", // Set border color
+      },
+      "&.Mui-focused fieldset": {
+        borderColor: "var(--border)", // Set focused border color
+      },
+      // Targeting both input and textarea for multiline fields:
+      "& input, & textarea": {
+        color: "var(--text)", // Set input text color
+        "&::placeholder, &::label": {
+          color: "var(--placeholder-text)", // Set placeholder text color
+          opacity: 1, // Optional: Ensures full color in some browsers
+        },
+      },
+    },
+  }}
+/>
+            <Button
+              variant="contained"
+              fullWidth
+              color="primary"
+              type="submit"
+              disabled={isSubmitting}
+              sx={{ color: "white", borderRadius: 2, fontFamily: "Outfit", backgroundColor: "var(--secondary)", boxShadow: "none",}}
+            >
+              {isSubmitting ? "Submitting..." : "Start Interview"}
+            </Button>
+            {error && (
+              <Typography color="error" sx={{ mt: 2 }}>
+                {error}
+              </Typography>
+            )}
+          </form>
         </Box>
       </Container>
     </ThemeProvider>

@@ -6,6 +6,7 @@ import AssignmentIcon from "@mui/icons-material/Assignment";
 import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import PersonIcon from '@mui/icons-material/Person';
 import Notification from "./Notification";
 // Amplify
 import { signOut, fetchAuthSession, fetchUserAttributes } from "aws-amplify/auth";
@@ -211,7 +212,7 @@ const StudentHeader = () => {
             >
               <h2 className="mx-4 py-2 text-[var(--text)] text-left">Notifications</h2>
               <Divider className="my-2" style={{ borderColor: "var(--border)" }} />
-              <div style={{ maxHeight: "35rem", overflowY: "auto" }} className="overflow-y-auto">
+              <div style={{ maxHeight: "75vh", overflowY: "auto" }} className="overflow-y-auto">
                 {notifications.length > 0 ? (
                   notifications.map((notif, index) => (
                     <div key={index} className="m-0 p-0">
@@ -225,7 +226,7 @@ const StudentHeader = () => {
                     </div>
                   ))
                 ) : (
-                  <div className="m-0 p-2 text-gray-500 text-center">No notifications</div>
+                  <div className="m-0 p-2 text-gray-500 text-center w-96 p-10">No notifications</div>
                 )}
               </div>
             </div>

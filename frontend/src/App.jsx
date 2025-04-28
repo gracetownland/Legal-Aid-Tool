@@ -20,11 +20,15 @@ import InstructorHomepage from "./pages/instructor/InstructorHomepage";
 import AdminHomepage from "./pages/admin/AdminHomepage";
 import CaseOverview from "./pages/CasePage/CaseOverview";
 import InterviewAssistant from "./pages/CasePage/InterviewAssistant";
-import PrelimSummary from "./pages/CasePage/PrelimSummary";
-import AdminChangeSystemPrompt  from "./pages/admin/AdminChangeSystemPrompt";
+import AIControlPanel  from "./pages/admin/AdminAIControlPanel";
 import SummariesPage from "./pages/CasePage/CaseSummaries";
 import CaseFeedback from "./pages/CasePage/CaseFeedback";
 import Transcriptions from "./pages/student/Transcriptions";
+
+import AllCasesPage from "./pages/instructor/InstructorAllCases";
+import NotFound from "./pages/NotFound";
+// import Transcriptions from "./pages/student/Transcriptions";
+
 
 export const UserContext = createContext();
 
@@ -65,7 +69,7 @@ function App() {
         .then(({ tokens }) => {
           if (tokens && tokens.accessToken) {
             const group = tokens.accessToken.payload["cognito:groups"];
-            console.log("User's Groups:", tokens.accessToken);
+            console.log("User's Tokens:", tokens);
             setUser(tokens.accessToken.payload);
             setUserGroup(group || []);
           }
@@ -93,6 +97,14 @@ function App() {
     }
   };
 
+  const getAllCases = () => {
+    if (userGroup && userGroup.includes("instructor")) {
+        return <AllCasesPage />;
+    } else {
+      return <ViewAllCases />;
+    } 
+  };
+
   return (
     <UserContext.Provider
       value={ user }
@@ -106,14 +118,20 @@ function App() {
           <Route path="/new-case" element={<NewCaseForm />} />
           <Route path="/cases" element={<ViewAllCases />} />
           <Route path="/transcriptions" element={<Transcriptions />} />
-          <Route path="/home/*" element={<StudentHomepage />} />
+         
+          <Route path="/all-cases" element={getAllCases()} />
+          {/* <Route path="/transcriptions" element={<Transcriptions />} /> */}
+          <Route path="/home/*" element={getHomePage()} />
           <Route path="/case/:caseId/interview-assistant" element={<InterviewAssistant />} />
           <Route path="/case/:caseId/overview/*" element={<CaseOverview />} />
           <Route path="/case/:caseId/summaries" element={<SummariesPage />} />
           <Route path="/case/:caseId/feedback" element={<CaseFeedback />} />
-          <Route path="/system-prompt" element={<ProtectedRoute allowedGroups={["admin", "techadmin"]} userGroup={userGroup}>
-                                                  <AdminChangeSystemPrompt />
-                                                </ProtectedRoute>} />
+          <Route path="/ai-control-panel" element={<ProtectedRoute allowedGroups={["admin", "techadmin"]} userGroup={userGroup}>
+                                                  <AIControlPanel />
+                                                </ProtectedRoute>} />        
+
+          {/* [KEEP ON BOTTOM] Catch-all route for 404 */}
+          <Route path="*" element={<NotFound />} />                           
         </Routes>
       </Router>
     </UserContext.Provider>
