@@ -1357,67 +1357,6 @@ paths:
         httpMethod: "POST"
         type: "aws_proxy"
 
-  /student/message_limit_parameter:
-    options:
-      summary: CORS support
-      description: Enable CORS by returning correct headers
-      responses:
-        200:
-          $ref: "#/components/responses/Success"
-      x-amazon-apigateway-integration:
-        type: mock
-        requestTemplates:
-          application/json: |
-            {
-              "statusCode" : 200
-            }
-        responses:
-          default:
-            statusCode: "200"
-            responseParameters:
-              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key'"
-              method.response.header.Access-Control-Allow-Methods: "'*'"
-              method.response.header.Access-Control-Allow-Origin: "'*'"
-            responseTemplates:
-              application/json: |
-                {}
-
-    get:
-      tags:
-        - Student
-      summary: Get message limit from SSM parameter store
-      operationId: student_get_message_limit_parameter_GET
-      responses:
-        "200":
-          description: The current message limit
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  value:
-                    type: string
-                    description: Message limit value
-                    example: "Infinity"
-        "500":
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: "Internal server error"
-      security:
-        - studentAuthorizer: []
-      x-amazon-apigateway-integration:
-        uri:
-          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${studentFunction.Arn}/invocations"
-        passthroughBehavior: "when_no_match"
-        httpMethod: "GET"
-        type: "aws_proxy"
-
   /student/notifications:
     options:
       summary: CORS support
