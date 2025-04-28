@@ -98,7 +98,7 @@ def handler(event, context):
                 "statute" varchar DEFAULT 'N/A',
                 "status" varchar DEFAULT 'In progress',
                 "last_updated" timestamp DEFAULT now(),
-                "time_created" timestamp DEFAULT now(),
+                "last_viewed" timestamp DEFAULT now(),
                 "time_submitted" timestamp DEFAULT null,
                 "time_reviewed" timestamp DEFAULT null,
                 "sent_to_review" boolean,

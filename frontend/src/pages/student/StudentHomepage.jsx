@@ -27,6 +27,7 @@ import {
 } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
+import { set } from "date-fns";
 
 // MUI theming
 const theme = createTheme({
@@ -61,6 +62,7 @@ export const StudentHomepage = () => {
   const [openDialog, setOpenDialog] = useState(false); // Track if a dialog is open
   const [caseToDelete, setCaseToDelete] = useState(null); // Track which case to delete
   const [anchorEl, setAnchorEl] = useState(null); // For controlling the menu's anchor
+  const [acceptedDisclaimer, setAcceptedDisclaimer] = useState(true); // For tracking if the disclaimer is accepted
   const [selectedCaseId, setSelectedCaseId] = useState(null); // For tracking the selected case id
 
   // Handle opening the dialog
@@ -169,12 +171,48 @@ export const StudentHomepage = () => {
     fetchCases();
   }, []);
 
+  useEffect(() => {
+    const checkDisclaimer = async () => {
+      try {
+        const session = await fetchAuthSession();
+        const token = session.tokens.idToken;
+        const user_id = session.tokens.idToken.payload.sub;
+        const response = await fetch(
+          `${import.meta.env.VITE_API_ENDPOINT}student/disclaimer?user_id=${user_id}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: token,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        const data = await response.json();
+        setAcceptedDisclaimer(data.accepted_disclaimer);
+      } catch (error) {
+        console.error("Error fetching disclaimer status:", error);
+      }
+    }
+
+    checkDisclaimer();
+    setAcceptedDisclaimer(false); // Set to false for testing purposes, remove this line in production
+  }, []);
+
   const handleViewCase = (caseId) => {
     navigate(`/case/${caseId}/overview`);
   };
 
   return (
     <div style={{}}>
+              {!acceptedDisclaimer && (
+    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", zIndex: 1000, backgroundColor: "rgba(0, 0, 0, 0.5)" }}>
+      {/* Your content here */}
+      <Card sx={{ padding: 2, width: "80%", maxWidth: "600px", backgroundColor: "var(--background)", color: "var(--text)", boxShadow: "none", border: "1px solid var(--border)" }}>
+        <CardContent sx={{ textAlign: "center" }}>
+        </CardContent>
+        </Card>
+    </div>
+  )}
       <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh"}}>
         {/* Header */}
         <AppBar position="fixed" color="primary">
@@ -183,6 +221,7 @@ export const StudentHomepage = () => {
 
         {/* Main Content */}
         <Box sx={{ marginTop: 8, padding: 2, flexGrow: 1}}>
+
           <Container
             sx={{
               display: "flex",
