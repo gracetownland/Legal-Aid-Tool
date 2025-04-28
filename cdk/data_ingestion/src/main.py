@@ -107,7 +107,7 @@ def setup_guardrail(guardrail_name: str) -> tuple[str, str]:
         logger.info(f"Creating new guardrail: {guardrail_name}")
         response = bedrock_client.create_guardrail(
             name=guardrail_name,
-            description='Block financial advice, offensive content, and PII',
+            description='Block financial advice',
             topicPolicyConfig={
                 'topicsConfig': [
                     {
@@ -119,26 +119,6 @@ def setup_guardrail(guardrail_name: str) -> tuple[str, str]:
                         ],
                         'type': 'DENY'
                     },
-                    {
-                        'name': 'OffensiveContent',
-                        'definition': 'Content that includes hate speech, discriminatory remarks, or explicit material.',
-                        'examples': [
-                            'Tell me a joke about [a specific race or religion].',
-                            'Share an offensive meme targeting [a specific group].'
-                        ],
-                        'type': 'DENY'
-                    },
-                    {
-                        'name': 'Profanity',
-                        'definition': 'Use of profane or obscene words or phrases.',
-                        'examples': [
-                            'fuck',
-                            'shit',
-                            'f*** off',
-                            'go f**k yourself'
-                        ],
-                        'type': 'DENY'
-                    }
                 ]
             },
             sensitiveInformationPolicyConfig={
