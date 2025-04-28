@@ -50,6 +50,63 @@ export default function AIControlPanel() {
     fetchAndSetPrompts();
   }, []);
 
+  useEffect(() => {
+    const fetchMessageLimit = async () => {
+      const session = await fetchAuthSession();
+      var token = session.tokens.idToken
+      const response = await fetch(
+        `${import.meta.env.VITE_API_ENDPOINT}admin/message_limit`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: token,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const data = await response.json();
+      if (data.value !== 'Infinity') {
+      setMessageLimit(data.value);
+      setNoLimit(false);
+      } else {
+        setMessageLimit('0');
+        setNoLimit(true);      
+      }
+      
+    };
+
+    fetchMessageLimit();
+    console.log("Message limit:", messageLimit);
+  }, []);
+
+  const saveMessageLimit = async () => {
+    setSaving(true);
+    try{
+     const session = await fetchAuthSession();
+    var token = session.tokens.idToken
+    const response = await fetch(
+      `${import.meta.env.VITE_API_ENDPOINT}admin/message_limit`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: token,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          value: noLimit ? 'Infinity' : messageLimit,
+        }),
+      }
+    ); 
+    }
+    catch (error) {
+      console.error("Error saving message limit:", error);
+    } finally {
+      setSaving(false);
+    }
+  };
+    
+
+
   const savePrompt = async () => {
     setSaving(true);
 
@@ -183,6 +240,21 @@ export default function AIControlPanel() {
   }}
 />
   </div>
+  <Button
+    onClick={saveMessageLimit}
+    disabled={saving}
+    sx={{
+      backgroundColor: "var(--secondary)",
+      color: "white",
+      flexGrow: 1,
+      height: "40px",
+      "&:hover": { backgroundColor: "var(--primary)", opacity: 0.8 },
+      "&:disabled": { backgroundColor: "var(--border)" }
+    }}
+  >
+    {saving ? "Saving..." : "Save Message Limit"}
+  </Button>
+  
 </div>
 
 
@@ -261,18 +333,12 @@ export default function AIControlPanel() {
           paddingY: "20px",
           textAlign: 'left',
         }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', justifyContent: 'space-between' }}>
            {/* History Navigation */}
            <h1 style={{ fontSize: '30px', margin: '10px' }}><strong>Previous System Prompt</strong></h1>
-        <Card sx={{ 
-          background: "transparent", 
-          color: "var(--text)", 
-          border: "1px solid var(--border)", 
-          boxShadow: 'none',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}>
-          <IconButton 
+
+           <div>
+           <IconButton 
             onClick={() => setCurrentIndex((prev) => Math.max(prev - 1, 0))}
             disabled={currentIndex === 0}
             sx={{
@@ -282,6 +348,30 @@ export default function AIControlPanel() {
           >
             <ArrowBackIosIcon />
           </IconButton>
+          
+
+          <IconButton 
+            onClick={() => setCurrentIndex((prev) => Math.min(prev + 1, previousPrompts.length - 1))}
+            disabled={currentIndex === previousPrompts.length - 1}
+            sx={{
+              color: "var(--text)",
+              "&:disabled": { color: "var(--border)" }
+            }}
+          >
+            <ArrowForwardIosIcon />
+          </IconButton>
+          </div>
+          </div>
+        <Card sx={{ 
+          background: "transparent", 
+          color: "var(--text)", 
+          border: "1px solid var(--border)", 
+          boxShadow: 'none',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}>
+          
 
           <CardContent sx={{ flexGrow: 1, textAlign: 'center' }}>
           <Typography variant="caption" sx={{ color: "var(--text-light)", marginTop: "5px", display: "block" }}>
@@ -294,16 +384,7 @@ export default function AIControlPanel() {
             
           </CardContent>
 
-          <IconButton 
-            onClick={() => setCurrentIndex((prev) => Math.min(prev + 1, previousPrompts.length - 1))}
-            disabled={currentIndex === previousPrompts.length - 1}
-            sx={{
-              color: "var(--text)",
-              "&:disabled": { color: "var(--border)" }
-            }}
-          >
-            <ArrowForwardIosIcon />
-          </IconButton>
+          
         
         </Card>
         <div>       
