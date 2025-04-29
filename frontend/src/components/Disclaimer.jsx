@@ -51,7 +51,19 @@ export default function Disclaimer({ onClick }) {
           This tool can be a very useful starting place, prompt or supplemental tool for your research, but is never on its own an adequate basis for your analysis of the law or relevant facts of the case. 
         </p>
         <div>
-          <Checkbox onChange={handleCheckboxChange} /> I have read and understood the message above.
+        <Checkbox
+  sx={{
+    color: 'var(--text)',
+    '& .Mui-checked': {
+      color: 'var(--primary)', // Change the checkmark color to var(--primary)
+    },
+  }}
+  onChange={handleCheckboxChange}
+/>
+I have read and understood the message above.
+
+
+
           <Button
             variant="contained"
             className="bg-[var(--primary)] text-white px-4 py-2 rounded-lg hover:bg-[var(--secondary)] transition-colors"
