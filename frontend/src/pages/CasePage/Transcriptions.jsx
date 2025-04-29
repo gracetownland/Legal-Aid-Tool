@@ -500,7 +500,7 @@ const handleDelete = async () => {
               </TableContainer>
             ) : (
               <Typography variant="body2" color="gray">
-                No summaries available.
+                No transcriptions yet.
               </Typography>
             )}
           </Stack>
@@ -573,19 +573,40 @@ const handleDelete = async () => {
           </Box>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={closeUploadDialog} disabled={isUploading}>
-            Cancel
-          </Button>
-          <Button 
-            variant="contained" 
-            color="primary" 
-            onClick={handleAudioUploading}
-            disabled={!audioFile || isUploading}
-            startIcon={isUploading ? <CircularProgress size={20} color="inherit" /> : null}
-          >
-            {isUploading ? 'Processing...' : 'Upload & Transcribe'}
-          </Button>
-        </DialogActions>
+  <Button onClick={closeUploadDialog} disabled={isUploading} sx={{ 
+    textTransform: "none",
+    backgroundColor: "var(--secondary)",
+    color: "white",
+    "&:hover": {
+      backgroundColor: "var(--primary)",
+    },
+      borderRadius: 5, // Optional: for consistent button shape
+      fontFamily: "Outfit", // Optional: if you're using this font 
+      }}>
+    Cancel
+  </Button>
+  <Button 
+    variant="contained" 
+    color="primary" 
+    onClick={handleAudioUploading}
+    disabled={!audioFile || isUploading}
+    startIcon={isUploading ? <CircularProgress size={20} color="inherit" /> : null}
+    sx={{
+      textTransform: "none",
+      backgroundColor: "var(--secondary)",
+      color: "white",
+      "&:hover": {
+        backgroundColor: "var(--primary)",
+      },
+      boxShadow: "none", // Optional: removes default MUI shadow
+      borderRadius: 5, // Optional: for consistent button shape
+      fontFamily: "Outfit", // Optional: if you're using this font
+    }}
+  >
+    {isUploading ? 'Processing...' : 'Upload & Transcribe'}
+  </Button>
+</DialogActions>
+
       </Dialog>
 
       {/* Menu */}
