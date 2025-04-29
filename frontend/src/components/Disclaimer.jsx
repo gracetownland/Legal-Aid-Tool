@@ -54,7 +54,7 @@ export default function Disclaimer({ onClick }) {
         <Checkbox
   sx={{
     color: 'var(--text)',
-    '& .Mui-checked': {
+    '&.Mui-checked': {
       color: 'var(--primary)', // Change the checkmark color to var(--primary)
     },
   }}
