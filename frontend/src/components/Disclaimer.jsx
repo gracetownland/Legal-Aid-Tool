@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Checkbox from '@mui/material/Checkbox';
 import Button from '@mui/material/Button';
+import { fetchAuthSession } from 'aws-amplify/auth';
+import { on } from 'events';
 
 export default function Disclaimer({ onClick }) {
   const [checked, setChecked] = useState(false);
@@ -10,11 +12,27 @@ export default function Disclaimer({ onClick }) {
     setChecked(event.target.checked);
   };
 
-  const handleClick = () => {
+  const handleClick = async () => {
+    try {
+      const session = await fetchAuthSession();
+      const token = session.tokens.idToken;
+      const user_id = session.tokens.idToken.payload.sub;
+      const response = await fetch(
+        `${import.meta.env.VITE_API_ENDPOINT}student/disclaimer?user_id=${user_id}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: token,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    } catch (error) {
+      console.error("Error accepting disclaimer:", error);
+    }
+    
     setVisible(false);
-    setTimeout(() => {
-      onClick();
-    }, 100);
+    onClick();
   };
 
   return (

@@ -190,7 +190,7 @@ export const StudentHomepage = () => {
           }
         );
         const data = await response.json();
-        setAcceptedDisclaimer(data.accepted_disclaimer);
+        setAcceptedDisclaimer(data[0]?.accepted_disclaimer);
       } catch (error) {
         console.error("Error fetching disclaimer status:", error);
       }
