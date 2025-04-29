@@ -45,10 +45,10 @@ export default function Disclaimer({ onClick }) {
         <p className="text-sm text-gray-500 mb-4 text-justify px-4">
           This is a tool designed to help Allard students in a clinical setting analyze the case before them and develop areas for legal and factual inquiry.  
           <br /> <br />
-          This tool is not meant to answer your clients’ questions – only you with the help of your supervisor can do that. It was not designed to provide legal advice, definitively respond to any legal issue or set of circumstances or provide all of the relevant law.  <br /> <br />
+          This tool is <strong>not</strong> meant to answer your clients’ questions – only you with the help of your supervisor can do that. It was not designed to provide legal advice, definitively respond to any legal issue or set of circumstances or provide all of the relevant law.  <br /> <br />
           Any legal or factual information provided by the tool needs to be independently verified by you, especially cases and their correct citations.  Users need to assume that the information provided may have errors, be out of date, or be missing relevant legal or factual analysis. 
           <br /> <br />
-          This tool can be a very useful starting place, prompt or supplemental tool for your research, but is never on its own an adequate basis for your analysis of the law or relevant facts of the case. 
+          This tool can be a very useful starting place, prompt or supplemental tool for your research, but is <strong>never on its own an adequate basis</strong> for your analysis of the law or relevant facts of the case. 
         </p>
         <div>
         <Checkbox
