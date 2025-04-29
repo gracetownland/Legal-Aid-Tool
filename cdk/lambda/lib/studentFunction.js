@@ -313,21 +313,14 @@ exports.handler = async (event) => {
   break;
 
   case "GET /student/get_transcriptions":
-  if (event.queryStringParameters && event.queryStringParameters.user_id) {
-    const cognito_id = event.queryStringParameters.user_id;
+  if (event.queryStringParameters && event.queryStringParameters.case_id) {
+    const caseId = event.queryStringParameters.case_id;
 
     try {
-      // Retrieve the user ID using the cognito_id
-      const user = await sqlConnection`
-        SELECT user_id FROM "users" where cognito_id = ${cognito_id};
-      `;
-
-      const user_id = user[0]?.user_id;
-
-      if (user_id) {
+      if (caseId) {
         const data = await sqlConnection`
           SELECT * 
-          FROM "audio_files" WHERE user_id = ${user_id};
+          FROM "audio_files" WHERE case_id = ${caseId};
         `;
 
         // Check if data is empty and handle the case
@@ -492,21 +485,9 @@ exports.handler = async (event) => {
           
           case "POST /student/initialize_audio_file":
             if (event.queryStringParameters) {
-              const { audio_file_id, s3_file_path, cognito_id, case_id } = event.queryStringParameters;}
+              const { audio_file_id, s3_file_path, cognito_id, case_id } = event.queryStringParameters
           
               try {
-                // Find user_id based on cognito_id
-                const userResult = await sqlConnection`
-                  SELECT user_id FROM "users" WHERE cognito_id = ${cognito_id};
-                `;
-          
-                if (userResult.length === 0) {
-                  response.statusCode = 404;
-                  response.body = JSON.stringify({ error: "User not found" });
-                  break;
-                }
-          
-          
                 // Insert into audio_files table
                 const insertResult = await sqlConnection`
                   INSERT INTO "audio_files" (audio_file_id, case_id, s3_file_path)
@@ -521,6 +502,7 @@ exports.handler = async (event) => {
                 response.statusCode = 500;
                 console.error(err);
               }
+            }
               break;
 
 
