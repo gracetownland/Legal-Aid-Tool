@@ -197,7 +197,6 @@ export const StudentHomepage = () => {
     }
 
     checkDisclaimer();
-    setAcceptedDisclaimer(false); // Set to false for testing purposes, remove this line in production
   }, []);
 
   const acceptDisclaimer = async ()=>{

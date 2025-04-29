@@ -446,10 +446,53 @@ exports.handler = async (event) => {
             response.body = JSON.stringify({ error: "Invalid value" });
           }
           break;
+
+
+          case "GET /student/disclaimer":
+          if (event.queryStringParameters && event.queryStringParameters.user_id) {
+            const cognito_id = event.queryStringParameters.user_id;
+        
+            try {
+              // Retrieve the user ID using the cognito_id
+              const user = await sqlConnection`
+                SELECT user_id FROM "users" where cognito_id = ${cognito_id};
+              `;
+        
+              const user_id = user[0]?.user_id;
+        
+              if (user_id) {
+                const data = await sqlConnection`
+                  SELECT accepted_disclaimer                  
+                  FROM users
+                  WHERE user_id = ${user_id};
+                `;
+        
+                // Check if data is empty and handle the case
+                if (data.length === 0) {
+                  response.statusCode = 404; // Not Found
+                  response.body = JSON.stringify({ message: "Couldn't check if disclaimer was accepted" });
+                } else {
+                  response.statusCode = 200; // OK
+                  response.body = JSON.stringify(data); // Ensure the data is always valid JSON
+                }
+              } else {
+                response.statusCode = 404; // Not Found
+                response.body = JSON.stringify({ error: "User not found" });
+              }
+            } catch (err) {
+              response.statusCode = 500; // Internal server error
+              console.error(err);
+              response.body = JSON.stringify({ error: "Internal server error" });
+            }
+          } else {
+            response.statusCode = 400; // Bad Request
+            response.body = JSON.stringify({ error: "Invalid value" });
+          }
+          break;
           
           case "POST /student/initialize_audio_file":
             if (event.queryStringParameters) {
-              const { audio_file_id, s3_file_path, cognito_id } = event.queryStringParameters;
+              const { audio_file_id, s3_file_path, cognito_id } = event.queryStringParameters;}
           
               try {
                 // Find user_id based on cognito_id
@@ -478,6 +521,8 @@ exports.handler = async (event) => {
               } catch (err) {
                 response.statusCode = 500;
                 console.error(err);
+              }
+              break;
 
 
         case "GET /student/message_counter":
@@ -605,6 +650,27 @@ exports.handler = async (event) => {
             } else {
               response.statusCode = 400;
               response.body = JSON.stringify({ error: "Message ID is required" });
+            }
+            break;
+
+            case "PUT /student/disclaimer":
+            if (event.queryStringParameters && event.queryStringParameters.user_id) {
+              const user_id = event.queryStringParameters.user_id;
+              try {
+                // Mark the disclaimer as accepted
+                await sqlConnection`
+                  UPDATE users SET accepted_disclaimer = true WHERE cognito_id = ${user_id};
+                `;
+          
+                response.body = JSON.stringify({ success: true });
+              } catch (err) {
+                response.statusCode = 500;
+                console.log(err);
+                response.body = JSON.stringify({ error: "Internal server error" });
+              }
+            } else {
+              response.statusCode = 400;
+              response.body = JSON.stringify({ error: "User ID is required" });
             }
             break;
     
