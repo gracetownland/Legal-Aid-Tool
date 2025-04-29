@@ -23,7 +23,7 @@ import InterviewAssistant from "./pages/CasePage/InterviewAssistant";
 import AIControlPanel  from "./pages/admin/AdminAIControlPanel";
 import SummariesPage from "./pages/CasePage/CaseSummaries";
 import CaseFeedback from "./pages/CasePage/CaseFeedback";
-import Transcriptions from "./pages/student/Transcriptions";
+import Transcriptions from "./pages/CasePage/Transcriptions";
 
 import AllCasesPage from "./pages/instructor/InstructorAllCases";
 import NotFound from "./pages/NotFound";
@@ -125,6 +125,7 @@ function App() {
           <Route path="/case/:caseId/interview-assistant" element={<InterviewAssistant />} />
           <Route path="/case/:caseId/overview/*" element={<CaseOverview />} />
           <Route path="/case/:caseId/summaries" element={<SummariesPage />} />
+          <Route path="/case/:caseId/transcriptions" element={<Transcriptions />} />
           <Route path="/case/:caseId/feedback" element={<CaseFeedback />} />
           <Route path="/ai-control-panel" element={<ProtectedRoute allowedGroups={["admin", "techadmin"]} userGroup={userGroup}>
                                                   <AIControlPanel />

@@ -168,6 +168,8 @@ const SideMenu = () => {
   />
 </ListItem>
 
+
+
 <ListItem
   button
   onClick={() => handleNavigation("Summaries")}
@@ -191,6 +193,28 @@ const SideMenu = () => {
   />
 </ListItem>
 
+<ListItem
+  button
+  onClick={() => handleNavigation("Transcriptions")}
+  selected={isActive("Transcriptions")}
+  sx={{
+    pl: 2,
+    borderLeft: isActive("Transcriptions") ? "4px solid var(--primary)" : "4px solid transparent",
+    backgroundColor: isActive("Transcriptions") ? "var(--background3)" : "transparent",
+    "&:hover": {
+      backgroundColor: "var(--background3)",
+      cursor: "pointer",
+    },
+  }}
+>
+  <ListItemText
+    primary="Case Transcriptions"
+    primaryTypographyProps={{
+      fontWeight: isActive("Transcriptions") ? "bold" : "normal",
+      color: isActive("Transcriptions") ? "var(--primary)" : "inherit",
+    }}
+  />
+</ListItem>
 
   <ListItem
   button

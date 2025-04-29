@@ -492,7 +492,7 @@ exports.handler = async (event) => {
           
           case "POST /student/initialize_audio_file":
             if (event.queryStringParameters) {
-              const { audio_file_id, s3_file_path, cognito_id } = event.queryStringParameters;}
+              const { audio_file_id, s3_file_path, cognito_id, case_id } = event.queryStringParameters;}
           
               try {
                 // Find user_id based on cognito_id
@@ -506,12 +506,11 @@ exports.handler = async (event) => {
                   break;
                 }
           
-                const user_id = userResult[0].user_id;
           
                 // Insert into audio_files table
                 const insertResult = await sqlConnection`
-                  INSERT INTO "audio_files" (audio_file_id, user_id, s3_file_path)
-                  VALUES (${audio_file_id}, ${user_id}, ${s3_file_path})
+                  INSERT INTO "audio_files" (audio_file_id, case_id, s3_file_path)
+                  VALUES (${audio_file_id}, ${case_id}, ${s3_file_path})
                   RETURNING *;
                 `;
           
