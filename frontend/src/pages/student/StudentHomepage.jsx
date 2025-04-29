@@ -7,6 +7,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { ring } from 'ldrs';
 import { fetchAuthSession, fetchUserAttributes } from 'aws-amplify/auth'; 
 import { AppBar } from "@mui/material";
+import Disclaimer from "../../components/Disclaimer";
 ring.register();
 
 import {
@@ -28,6 +29,7 @@ import {
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
 import { set } from "date-fns";
+import zIndex from "@mui/material/styles/zIndex";
 
 // MUI theming
 const theme = createTheme({
@@ -198,21 +200,25 @@ export const StudentHomepage = () => {
     setAcceptedDisclaimer(false); // Set to false for testing purposes, remove this line in production
   }, []);
 
+  const acceptDisclaimer = async ()=>{
+    setAcceptedDisclaimer(true);
+  }
+
   const handleViewCase = (caseId) => {
     navigate(`/case/${caseId}/overview`);
   };
 
   return (
     <div style={{}}>
-              {!acceptedDisclaimer && (
-    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", zIndex: 1000, backgroundColor: "rgba(0, 0, 0, 0.5)" }}>
-      {/* Your content here */}
-      <Card sx={{ padding: 2, width: "80%", maxWidth: "600px", backgroundColor: "var(--background)", color: "var(--text)", boxShadow: "none", border: "1px solid var(--border)" }}>
-        <CardContent sx={{ textAlign: "center" }}>
-        </CardContent>
-        </Card>
-    </div>
-  )}
+
+      {!acceptedDisclaimer && (
+        <div>
+        <Disclaimer style={{zIndex: 1000}} onClick={acceptDisclaimer} />
+        <StudentHeader />
+        </div>
+      )}
+
+      {acceptedDisclaimer && (<div>
       <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh"}}>
         {/* Header */}
         <AppBar position="fixed" color="primary">
@@ -466,6 +472,7 @@ export const StudentHomepage = () => {
           </Button>
         </DialogActions>
       </Dialog>
+    </div>)}
     </div>
   );
 };

@@ -24,6 +24,7 @@
   --green-text: #2e9832;
   --border: #cccccc;
   --feedback: #3b58ff;
+  --disclaimer-border: #d4dbdf;
 
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -60,6 +61,7 @@
     --placeholder-text: #8e8e8e;
     --border: #5c5c5c;
     --feedback: #769aff;
+    --disclaimer-border: #424242;
 
     color: var(--text);
     background-color: var(--background);
