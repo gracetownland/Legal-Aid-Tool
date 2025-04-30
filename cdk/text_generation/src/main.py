@@ -481,18 +481,8 @@ def handler(event, context):
 
     try:
         logger.info("Generating response from the LLM.")
-        if audio_flag == "yay":
-            response = get_audio_response(
-                query=student_query,
-                llm=llm,
-                history_aware_retriever=history_aware_retriever,
-                table_name=TABLE_NAME,
-                case_id=case_id,
-                system_prompt=system_prompt,
-                case_audio_description=case_audio_description
-            )
-        else:
-            response = get_response(
+        
+        response = get_response(
                 query=student_query,
                 province="none",
                 statute="none",
@@ -503,12 +493,11 @@ def handler(event, context):
                 system_prompt=system_prompt,
                 case_type=case_type,
                 jurisdiction=jurisdiction,
-                case_description=case_description
-            )
+                case_description=case_description  ) 
         print("response: ", response)
         
     except Exception as e:
-        logger.error(f"Error getting response: {e}")
+        logger.error(f"Error getting response from AI: {e}")
         return {
             'statusCode': 500,
             "headers": {

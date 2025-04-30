@@ -249,7 +249,6 @@ export class ApiGatewayStack extends cdk.Stack {
             text-decoration: none;
           }
         </style>
-        <h1>Legal Aid Tool</h1>
         <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600&display=swap" rel="stylesheet">
       </head>
       <body>

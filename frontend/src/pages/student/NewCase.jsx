@@ -500,7 +500,7 @@ const handleSubmitWithAudio = async () => {
                     control={
                       <Checkbox
                         checked={formData.jurisdiction.includes(option)}
-                        onChange={handleChange}
+                        onChange={handleJurisdictionChange}
                         name="jurisdiction"
                         value={option}
                         style={{color: 'var(--text)'}}
