@@ -97,14 +97,15 @@ const [selectedTranscription, setSelectedTranscription] = useState(null);
         }
 
         const data = await response.json();
-        setCaseData(data);
+        setCaseData(data.caseData);
+        
       } catch (error) {
         console.error("Error fetching case data:", error);
       }
     };
 
     fetchCaseData();
-  }, [caseId])
+  }, [])
 
   const generatePresignedUrl = async (audioFileId) => {
     const fileName = audioFile.name;
