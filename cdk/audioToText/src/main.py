@@ -143,6 +143,41 @@ def connect_to_db():
             raise
     return connection
 
+def format_diarized_transcript(data):
+    speaker_segments = data["results"]["speaker_labels"]["segments"]
+    items = data["results"]["items"]
+
+    # Map each speaker_label (e.g., spk_0) to Speaker 1, Speaker 2, etc.
+    speaker_map = {}
+    speaker_counter = 1
+    for segment in speaker_segments:
+        label = segment["speaker_label"]
+        if label not in speaker_map:
+            speaker_map[label] = f"Speaker {speaker_counter}"
+            speaker_counter += 1
+
+    output = []
+    segment_index = 0
+    segment = speaker_segments[segment_index]
+    speaker = segment["speaker_label"]
+    current_line = f"**{speaker_map[speaker]}:** "
+
+    for item in items:
+        if item["type"] == "punctuation":
+            current_line = current_line.rstrip() + item["alternatives"][0]["content"] + " "
+        else:
+            while (segment_index + 1 < len(speaker_segments) and
+                   float(item["start_time"]) >= float(speaker_segments[segment_index + 1]["start_time"])):
+                output.append(current_line.strip())
+                segment_index += 1
+                segment = speaker_segments[segment_index]
+                speaker = segment["speaker_label"]
+                current_line = f"**{speaker_map[speaker]}:** "
+
+            current_line += item["alternatives"][0]["content"] + " "
+
+    output.append(current_line.strip())
+    return "\n\n".join(output)
 
 def add_audio_to_db(audio_file_id, audio_text):
     conn = connect_to_db()
@@ -211,7 +246,12 @@ def handler(event, context):
             TranscriptionJobName=job_name,
             Media={"MediaFileUri": media_file_uri},
             MediaFormat=file_type,
-            LanguageCode="en-US"
+            LanguageCode="en-US",
+             Settings={
+        'ShowSpeakerLabels': True,
+        'MaxSpeakerLabels': 2,
+        'ChannelIdentification': False  # You want speaker labels, not channel separation
+    }
         )
 
         # Poll for job completion
@@ -229,7 +269,8 @@ def handler(event, context):
         # 4. Download and parse transcript
         with urllib.request.urlopen(transcript_uri) as r:
             data = json.loads(r.read().decode())
-        transcript_text = data.get("results", {}).get("transcripts", [{}])[0].get("transcript", "")
+
+        transcript_text = format_diarized_transcript(data)
         
         # 5. Store transcript and notify clients
         add_audio_to_db(audio_file_id, transcript_text)
@@ -239,6 +280,16 @@ def handler(event, context):
 
         # This sends to AppSync → triggers `onNotify`
         invoke_event_notification(audio_file_id, "transcription_complete", cognito_token)
+
+        # 6. Delete the audio file from S3
+        try:
+            s3.delete_object(
+                Bucket=AUDIO_BUCKET,
+                Key=f"{audio_file_id}/{file_name}.{file_type}"
+            )
+            logger.info(f"Deleted file {audio_file_id}/{file_name}.{file_type} from S3")
+        except Exception as e:
+            logger.error(f"Failed to delete audio file from S3: {e}")
 
 
 
