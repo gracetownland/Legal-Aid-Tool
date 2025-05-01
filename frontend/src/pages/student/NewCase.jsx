@@ -363,78 +363,82 @@ const NewCaseForm = () => {
   </Select>
 </FormControl>
             )}
-            <div style={{display: "flex", flexDirection: "row", gap: "1rem"}}>
-
-            
-<p style={{marginTop: 10, color: 'var(--text)'}}>Statute Applicable?</p>
-<RadioGroup
-  name="statute"
-  value={formData.statute}
-  onChange={handleChange}
-  row
-  sx={{ mb: 2 }}
->
-<FormControlLabel 
-    value="Yes" 
-    control={
-      <Radio 
-        sx={{
-          color: "var(--border)", // Set the default circle color
-          "&.Mui-checked": {
-            color: "var(--text)", // Set the checked circle color
-          },
-        }} 
-      />
-    } 
-    label="Yes" 
-  />
-  <FormControlLabel 
-    value="No" 
-    control={
-      <Radio 
-        sx={{
-          color: "var(--border)", // Set the default circle color
-          "&.Mui-checked": {
-            color: "var(--text)", // Set the checked circle color
-          },
-        }} 
-      />
-    } 
-    label="No" 
-  />
-</RadioGroup>
+<div style={{ display: "flex", flexDirection: "row", gap: "1rem" }}>
+  <p style={{ marginTop: 10, color: 'var(--text)' }}>Statute Applicable?</p>
+  <RadioGroup
+    name="statute"
+    value={formData.statute}
+    onChange={handleChange}
+    row
+    sx={{ mb: 2 }}
+  >
+    <FormControlLabel
+      value="Yes"
+      control={
+        <Radio
+          sx={{
+            color: "var(--border)",
+            "&.Mui-checked": {
+              color: "var(--text)",
+            },
+          }}
+        />
+      }
+      label="Yes"
+    />
+    <FormControlLabel
+      value="No"
+      control={
+        <Radio
+          sx={{
+            color: "var(--border)",
+            "&.Mui-checked": {
+              color: "var(--text)",
+            },
+          }}
+        />
+      }
+      label="No"
+    />
+  </RadioGroup>
 </div>
-            <TextField
-              label="Statute Details"
-              name="statuteDetails"
-              fullWidth
-              variant="outlined"
-              value={formData.statuteDetails}
-              onChange={handleChange}
-              InputLabelProps={{
-                sx: {
-                  color: "var(--placeholder-text)", // Normal label color
-                  "&.Mui-focused": {
-                    color: "var(--placeholder-text)", // Focused label color
-                  },
-                },
-              }}
-              sx={{ mb: 2 ,
-                "& .MuiOutlinedInput-root": {
-                  "& fieldset": {
-                    borderColor: "var(--border)", // Set border color
-                  },
-                  "&.Mui-focused fieldset": {
-                    borderColor: "var(--border)", // Set focused border color
-                  },
-                  "& input": {
-                    color: "var(--text)", // Set input text color
-                  },
-                  "& .MuiInputBase-input::placeholder": {
-                    color: "var(--placeholder-text)", // Set placeholder text color
-                  },
-                }}}
-            />
+
+{formData.statute === "Yes" && (
+  <TextField
+    label="Statute Details"
+    name="statuteDetails"
+    fullWidth
+    variant="outlined"
+    value={formData.statuteDetails}
+    onChange={handleChange}
+    InputLabelProps={{
+      sx: {
+        color: "var(--placeholder-text)",
+        "&.Mui-focused": {
+          color: "var(--placeholder-text)",
+        },
+      },
+    }}
+    sx={{
+      mb: 2,
+      "& .MuiOutlinedInput-root": {
+        "& fieldset": {
+          borderColor: "var(--border)",
+        },
+        "&.Mui-focused fieldset": {
+          borderColor: "var(--border)",
+        },
+        "& input": {
+          color: "var(--text)",
+        },
+        "& .MuiInputBase-input::placeholder": {
+          color: "var(--placeholder-text)",
+        },
+      },
+    }}
+  />
+)}
+
             
             <TextField
   label="Provide a brief overview of the circumstances of the case you are working on, or a summary of the legal issue you are looking at"
