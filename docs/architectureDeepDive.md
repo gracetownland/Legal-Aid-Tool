@@ -4,13 +4,21 @@
 
 ![Archnitecture Diagram](./media/architecture.png)
 
-1. 	Users access the application through a React frontend hosted on AWS Amplify. AWS Cognito handles user authentication, ensuring that only authorized users can log in and interact with the platform.
-2. 	The frontend communicates with backend services by sending secure API requests through AWS API Gateway. AWS IAM policies are used to authorize and manage access between the frontend and backend Lambda functions.
-3. 	When a user uploads an audio file, it is stored in an S3 bucket. An AWS Lambda function monitors the bucket, retrieves the audio file, and prepares it for transcription processing.
-4.	Amazon Transcribe processes the uploaded audio file and converts it into text. After the transcription is complete, Amazon AppSync sends a real-time WebSocket notification back to the frontend to update the user interface.
-5.	Metadata related to the audio file and its transcription, such as timestamps and user associations, is securely stored in an Amazon RDS database via an RDS Proxy to optimize database connections.
-6.	For AI-powered text generation (e.g., summarizations, conversation generation), AWS Lambda triggers Amazon Bedrock, which runs foundation models like Claude, Titan, or Llama to generate relevant outputs.
-7.	The outputs and conversation history are stored in Amazon DynamoDB. This provides fast retrieval and scalability, allowing users to view past interactions and summaries efficiently.
+1. The user request is first sent through a security layer which comprises of AWS WAF, Amazon Cloudfront, and AWS Shield for flagging any potential threats.
+2. Users then access the application through a React frontend hosted on AWS Amplify. AWS Cognito handles user authentication, ensuring that only authorized users can log in and interact with the platform.
+3. The frontend communicates with backend services via two APIs:
+
+-  **REST API (API Gateway → Lambda)** for CRUD operations and presigned URLs
+
+- **GraphQL API (AppSync)** for real-time updates via subscriptions.
+Access is controlled using IAM roles and policies.
+4. When a user uploads an audio file, a presigned url is generated which is stored in an S3 bucket. An AWS Lambda function monitors the bucket, retrieves the audio file, and prepares it for transcription processing. Amazon Transcribe processes the uploaded audio file and converts it into text. After the transcription is complete, Amazon AppSync sends a real-time WebSocket notification back to the frontend to update the user interface.
+5.	Metadata related to the audio file and its transcription, such as timestamps and case id, is securely stored in an Amazon RDS database via an RDS Proxy to optimize database connections.
+6.	Users can create, edit or delete cases which triggers a lambda function. 
+7. This Lambda function interacts with the RDS to change the data. 
+8. This data from RDS is retrieved by Amazon Bedrock when text generation Lambda is triggered. 
+9. For AI-powered text generation (e.g., summarizations, title generation), AWS Lambda triggers Amazon Bedrock, which runs the Llama 3 model after retrieving relevant information from Amazon RDS database.
+10.	The conversation history are stored in Amazon DynamoDB. This provides fast retrieval and scalability, allowing users to view past interactions efficiently.
 
 ### Database Schema
 
