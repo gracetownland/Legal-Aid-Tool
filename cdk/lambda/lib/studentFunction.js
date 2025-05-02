@@ -297,7 +297,7 @@ exports.handler = async (event) => {
     try {
       if (caseId) {
         const data = await sqlConnection`
-          SELECT * 
+          SELECT audio_file_id, file_title, timestamp
           FROM "audio_files" WHERE case_id = ${caseId};
         `;
 
@@ -323,6 +323,41 @@ exports.handler = async (event) => {
     response.body = JSON.stringify({ error: "Invalid value" });
   }
   break;
+
+  case "GET /student/transcription":
+    if (event.queryStringParameters && event.queryStringParameters.case_id) {
+      const audio_file_id = event.queryStringParameters.audio_file_id;
+  
+      try {
+        if (caseId) {
+          const data = await sqlConnection`
+            SELECT *
+            FROM "audio_files" WHERE audio_file_id = ${audio_file_id};
+          `;
+  
+          // Check if data is empty and handle the case
+          if (data.length === 0) {
+            response.statusCode = 404; // Not Found
+            response.body = JSON.stringify({ message: "No cases found" });
+          } else {
+            response.statusCode = 200; // OK
+            response.body = JSON.stringify(data); // Ensure the data is always valid JSON
+          }
+        } else {
+          response.statusCode = 404; // Not Found
+          response.body = JSON.stringify({ error: "User not found" });
+        }
+      } catch (err) {
+        response.statusCode = 500; // Internal server error
+        console.error(err);
+        response.body = JSON.stringify({ error: "Internal server error" });
+      }
+    } else {
+      response.statusCode = 400; // Bad Request
+      response.body = JSON.stringify({ error: "Invalid value" });
+    }
+    break;
+
       case "GET /student/case_page":
         if (event.queryStringParameters && event.queryStringParameters.case_id) {
           const case_id = event.queryStringParameters.case_id;
@@ -855,6 +890,34 @@ exports.handler = async (event) => {
         }
         break;
 
+        case "DELETE /student/delete_transcription":
+          console.log(event);
+          if (
+            event.queryStringParameters != null &&
+            event.queryStringParameters.audio_file_id
+        ) {
+            const audioFileId = event.queryStringParameters.audio_file_id;
+    
+            try {
+                await sqlConnection`
+                    DELETE FROM "audio_files"
+                    WHERE audio_file_id = ${audioFileId};
+                `;
+    
+                response.statusCode = 200;
+                response.body = JSON.stringify({
+                    message: "Case deleted successfully",
+                });
+            } catch (err) {
+                response.statusCode = 500;
+                console.error(err);
+                response.body = JSON.stringify({ error: "Internal server error" });
+            }
+        } else {
+            response.statusCode = 400;
+            response.body = JSON.stringify({ error: "audio_File_id is required" });
+        }
+        break;
 
         case "PUT /student/edit_case":
           if (
