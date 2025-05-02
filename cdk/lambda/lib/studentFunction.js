@@ -88,9 +88,7 @@ exports.handler = async (event) => {
             user_email,
             username,
             first_name,
-            last_name,
-            time_account_created,
-            last_sign_in
+            last_name
           } = event.queryStringParameters;
 
           const cognitoUserId = event.requestContext.authorizer.userId;
@@ -222,24 +220,12 @@ exports.handler = async (event) => {
 
             const caseId = newCase[0].case_id;
 
-            // Generate a SHA-256 hash of the case_id
-            const caseHash = hashUUID(caseId.toString());
-
-            // Update the case with the generated case_hash
-            await sqlConnection`
-                UPDATE "cases" SET case_hash = ${caseHash} WHERE case_id = ${caseId};
-            `;
-
-            response.body = JSON.stringify({ case_id: caseId, case_hash: caseHash });
+            response.body = JSON.stringify({ case_id: caseId});
           } catch (err) {
             response.statusCode = 500;
             console.log(err);
             response.body = JSON.stringify({ error: "Internal server error" });
           }
-        // } else {
-        //   response.statusCode = 400;
-        //   response.body = JSON.stringify({ error: "Case data is required" });
-        // }
       break;
 
       case "GET /student/message_limit":
@@ -762,12 +748,6 @@ exports.handler = async (event) => {
             response.statusCode = 400;
             response.body = JSON.stringify({ error: "Case ID is required" });
           }
-          break;
-          
-          
-            
-        case "POST /student/create_message":
-         
           break;
           
         case "GET /student/notes":
