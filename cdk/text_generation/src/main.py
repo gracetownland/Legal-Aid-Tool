@@ -369,16 +369,6 @@ def handler(event, context):
     case_title, case_type, jurisdiction, case_description, province, statute = get_case_details(case_id)
     if case_title is None or case_type is None or jurisdiction is None or case_description is None or province is None or statute is None:
         logger.error(f"Error fetching case details for case_id: {case_id}")
-        # return {
-        #     'statusCode': 400,
-        #     "headers": {
-        #         "Content-Type": "application/json",
-        #         "Access-Control-Allow-Headers": "*",
-        #         "Access-Control-Allow-Origin": "*",
-        #         "Access-Control-Allow-Methods": "*",
-        #     },
-        #     'body': json.dumps('Error fetching patient details')
-        # }
 
     body = {} if event.get("body") is None else json.loads(event.get("body"))
     question = body.get("message_content", "")
