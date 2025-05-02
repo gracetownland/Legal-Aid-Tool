@@ -6,14 +6,6 @@ const {
   AdminGetUserCommand,
 } = require("@aws-sdk/client-cognito-identity-provider");
 
-const crypto = require("crypto");
-
-
-function hashUUID(uuid) {
-  const hash = crypto.createHash("sha256").update(uuid).digest();
-  return hash.slice(0, 4).toString('base64').replace(/[^A-Za-z0-9]/g, '').slice(0, 6);
-}
-
 // SQL conneciton from global variable at lib.js
 let sqlConnection = global.sqlConnection;
 

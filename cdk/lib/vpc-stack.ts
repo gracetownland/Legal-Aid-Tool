@@ -132,12 +132,6 @@ export class VpcStack extends Stack {
         privateDnsEnabled: false, // Disable private DNS to avoid conflicts
       });
 
-      this.vpc.addInterfaceEndpoint("Glue Endpoint", {
-        service: ec2.InterfaceVpcEndpointAwsService.GLUE,
-        subnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
-        privateDnsEnabled: false, // Disable private DNS to avoid conflicts
-      });
-
       this.vpc.addFlowLog(`${id}-vpcFlowLog`);
 
       // Get default security group for VPC
