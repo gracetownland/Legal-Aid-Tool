@@ -68,8 +68,9 @@ export class ApiGatewayStack extends cdk.Stack {
             allowedOrigins: ["*"],
           },
         ],
-        // When deleting the stack, need to empty the Bucket and delete it manually
-        removalPolicy: cdk.RemovalPolicy.RETAIN,
+        // When deleting the stack, the bucket will be deleted as well
+        removalPolicy: cdk.RemovalPolicy.DESTROY,
+        autoDeleteObjects: true,
         enforceSSL: true,
       }
     );
