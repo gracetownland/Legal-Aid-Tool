@@ -1535,29 +1535,6 @@ export class ApiGatewayStack extends cdk.Stack {
       })
     );
 
-
-
-    // Create S3 Bucket to handle documents for each simulation group
-    const dataIngestionBucket = new s3.Bucket(this, `${id}-DataIngestionBucket`, {
-      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-      cors: [
-        {
-          allowedHeaders: ["*"],
-          allowedMethods: [
-            s3.HttpMethods.GET,
-            s3.HttpMethods.PUT,
-            s3.HttpMethods.HEAD,
-            s3.HttpMethods.POST,
-            s3.HttpMethods.DELETE,
-          ],
-          allowedOrigins: ["*"],
-        },
-      ],
-      // When deleting the stack, need to empty the Bucket and delete it manually
-      removalPolicy: cdk.RemovalPolicy.RETAIN,
-      enforceSSL: true,
-    });
-
     // Create the Lambda function for generating presigned URLs
     const generatePreSignedURL = new lambda.Function(
       this,
@@ -1601,99 +1578,24 @@ export class ApiGatewayStack extends cdk.Stack {
       sourceArn: `arn:aws:execute-api:${this.region}:${this.account}:${this.api.restApiId}/*/*/student*`,
     });
 
-    /**
-     *
-     * Create Lambda with container image for data ingestion workflow in RAG pipeline
-     * This function will be triggered when a file in uploaded or deleted fro, the S3 Bucket
-     */
-    const dataIngestLambdaDockerFunc = new lambda.DockerImageFunction(
-      this,
-      `${id}-DataIngestLambdaDockerFunction`,
-      {
-        code: lambda.DockerImageCode.fromImageAsset("./data_ingestion"),
-        memorySize: 2048,
-        timeout: cdk.Duration.seconds(900),
-        vpc: vpcStack.vpc, // Pass the VPC
-        functionName: `${id}-DataIngestLambdaDockerFunction`,
-        environment: {
-          SM_DB_CREDENTIALS: db.secretPathAdminName,
-          RDS_PROXY_ENDPOINT: db.rdsProxyEndpointAdmin,
-          BUCKET: dataIngestionBucket.bucketName,
-          REGION: this.region,
-        },
-      }
-    );
 
-    // Override the Logical ID of the Lambda Function to get ARN in OpenAPI
-    const cfnDataIngestLambdaDockerFunc = dataIngestLambdaDockerFunc.node
-      .defaultChild as lambda.CfnFunction;
-    cfnDataIngestLambdaDockerFunc.overrideLogicalId(
-      "DataIngestLambdaDockerFunc"
-    );
-
-    // Add the permission to the Lambda function's policy to allow API Gateway access
-    dataIngestLambdaDockerFunc.addPermission("AllowApiGatewayInvoke", {
-      principal: new iam.ServicePrincipal("apigateway.amazonaws.com"),
-      action: "lambda:InvokeFunction",
-      sourceArn: `arn:aws:execute-api:${this.region}:${this.account}:${this.api.restApiId}/*/*/student*`,
-    });
-
-    dataIngestLambdaDockerFunc.addToRolePolicy(
-      new iam.PolicyStatement({
-        effect: iam.Effect.ALLOW,
-        actions: [
-          "bedrock:CreateGuardrail",
-          "bedrock:CreateGuardrailVersion",
-          "bedrock:DeleteGuardrail", // Permission to create guardrails
-          "bedrock:ListGuardrails",  // (Optional) To list existing guardrails
-          "bedrock:InvokeGuardrail",
-          "bedrock:ApplyGuardrail"  // (Optional) To invoke the guardrail for filtering
-        ],
-        resources: ["*"], // Replace with specific resource ARNs if available
-      })
-    );
-
-    // Attach the custom Bedrock policy to Lambda function
-    dataIngestLambdaDockerFunc.addToRolePolicy(bedrockPolicyStatement);
-
-    // Grant access to Secret Manager
-    dataIngestLambdaDockerFunc.addToRolePolicy(
-      new iam.PolicyStatement({
-        effect: iam.Effect.ALLOW,
-        actions: [
-          //Secrets Manager
-          "secretsmanager:GetSecretValue",
-        ],
-        resources: [
-          `arn:aws:secretsmanager:${this.region}:${this.account}:secret:*`,
-        ],
-      })
-    );
-
-    // Grant access to SSM Parameter Store for specific parameters
-    dataIngestLambdaDockerFunc.addToRolePolicy(
-      new iam.PolicyStatement({
-        effect: iam.Effect.ALLOW,
-        actions: ["ssm:GetParameter"],
-        resources: [embeddingModelParameter.parameterArn],
-      })
-    );
 
     // Get Log Group for dataIngestLambdaDockerFunc
-    let logGroup: logs.ILogGroup;
-    try {
-      logGroup = logs.LogGroup.fromLogGroupName(
-        this,
-        `${id}-ExistingDataIngestLambdaLogGroup`,
-        `/aws/lambda/${dataIngestLambdaDockerFunc.functionName}`
-      );
-    } catch {
-      logGroup = new logs.LogGroup(this, `${id}-DataIngestLambdaLogGroup`, {
-        logGroupName: `/aws/lambda/${dataIngestLambdaDockerFunc.functionName}`,
-        retention: logs.RetentionDays.ONE_WEEK, // Set retention policy
-        removalPolicy: cdk.RemovalPolicy.DESTROY, // Adjust as needed
-      });
-    }
+    // let logGroup: logs.ILogGroup;
+    // try {
+    //   logGroup = logs.LogGroup.fromLogGroupName(
+    //     this,
+    //     `${id}-ExistingDataIngestLambdaLogGroup`,
+    //     `/aws/lambda/${dataIngestLambdaDockerFunc.functionName}`
+    //   );
+    // } catch {
+    //   logGroup = new logs.LogGroup(this, `${id}-DataIngestLambdaLogGroup`, {
+    //     logGroupName: `/aws/lambda/${dataIngestLambdaDockerFunc.functionName}`,
+    //     retention: logs.RetentionDays.ONE_WEEK, // Set retention policy
+    //     removalPolicy: cdk.RemovalPolicy.DESTROY, // Adjust as needed
+    //   });
+    // }
+
     // Waf Firewall
     const waf = new wafv2.CfnWebACL(this, `${id}-waf`, {
       description: "LAT waf with OWASP",
