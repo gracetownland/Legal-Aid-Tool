@@ -777,7 +777,6 @@ exports.handler = async (event) => {
             const {notes} = JSON.parse(event.body || "{}");
 
             try {
-              // Update the patient details in the patients table
               await sqlConnection`
                   UPDATE "cases"
                   SET 
@@ -807,7 +806,6 @@ exports.handler = async (event) => {
             const caseId = event.queryStringParameters.case_id;
     
             try {
-                // Delete the patient from the patients table
                 await sqlConnection`
                     DELETE FROM "cases"
                     WHERE case_id = ${caseId};
@@ -837,7 +835,6 @@ exports.handler = async (event) => {
             const summaryId = event.queryStringParameters.summary_id;
     
             try {
-                // Delete the patient from the patients table
                 await sqlConnection`
                     DELETE FROM "summaries"
                     WHERE summary_id = ${summaryId};
@@ -868,7 +865,6 @@ exports.handler = async (event) => {
             const { case_id, cognito_id } = event.queryStringParameters;
             const { case_title, case_type, case_description, status, jurisdiction, province, statute } = JSON.parse(event.body || "{}");
             try {
-                // Update the patient details in the patients table
                 await sqlConnection`
                     UPDATE "cases"
                     SET 
@@ -904,7 +900,6 @@ exports.handler = async (event) => {
         ) {
             const { case_id, cognito_id } = event.queryStringParameters;
             try {
-                // Update the patient details in the patients table
                 await sqlConnection`
                     UPDATE "cases"
                     SET 
