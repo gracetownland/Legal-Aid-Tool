@@ -63,30 +63,6 @@ export class ApiGatewayStack extends cdk.Stack {
 
     this.layerList = {};
 
-    const promptStorageBucket = new s3.Bucket(
-      this,
-      `${id}-system-prompt-bucket`,
-      {
-        blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-        cors: [
-          {
-            allowedHeaders: ["*"],
-            allowedMethods: [
-              s3.HttpMethods.GET,
-              s3.HttpMethods.PUT,
-              s3.HttpMethods.HEAD,
-              s3.HttpMethods.POST,
-              s3.HttpMethods.DELETE,
-            ],
-            allowedOrigins: ["*"],
-          },
-        ],
-        // When deleting the stack, need to empty the Bucket and delete it manually
-        removalPolicy: cdk.RemovalPolicy.RETAIN,
-        enforceSSL: true,
-      }
-    );
-
     const audioStorageBucket = new s3.Bucket(
       this,
       `${id}-audio-prompt-bucket`,
@@ -619,27 +595,6 @@ export class ApiGatewayStack extends cdk.Stack {
       },
     });
 
-    // Create S3 Bucket to store notes for each case
-    const noteStorageBucket = new s3.Bucket(this, `${id}-NoteStorageBucket`, {
-      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-      cors: [
-        {
-          allowedHeaders: ["*"],
-          allowedMethods: [
-            s3.HttpMethods.GET,
-            s3.HttpMethods.PUT,
-            s3.HttpMethods.HEAD,
-            s3.HttpMethods.POST,
-            s3.HttpMethods.DELETE,
-          ],
-          allowedOrigins: ["*"],
-        },
-      ],
-      // When deleting the stack, need to empty the Bucket and delete it manually
-      removalPolicy: cdk.RemovalPolicy.RETAIN,
-      enforceSSL: true,
-    });
-
 
     // Create SSM parameter for message limit
     const messageLimitParameter = new ssm.StringParameter(this, "MessageLimitParameter", {
@@ -660,7 +615,6 @@ export class ApiGatewayStack extends cdk.Stack {
         SM_DB_CREDENTIALS: db.secretPathUser.secretName,
         RDS_PROXY_ENDPOINT: db.rdsProxyEndpoint,
         USER_POOL: this.userPool.userPoolId,
-        BUCKET: noteStorageBucket.bucketName,
         MESSAGE_LIMIT: messageLimitParameter.parameterName,
       },
       functionName: `${id}-studentFunction`,
@@ -669,16 +623,6 @@ export class ApiGatewayStack extends cdk.Stack {
       role: lambdaRole,
     });
 
-    noteStorageBucket.grantReadWrite(lambdaStudentFunction);
-    lambdaStudentFunction.addToRolePolicy(
-      new iam.PolicyStatement({
-        actions: ["s3:PutObject", "s3:GetObject"],
-        resources: [
-          noteStorageBucket.bucketArn,
-          `${noteStorageBucket.bucketArn}/*`,
-        ],
-      })
-    );
     // Allow access to DynamoDB Table for reading chat history
     lambdaStudentFunction.addToRolePolicy(
       new iam.PolicyStatement({
@@ -971,30 +915,6 @@ export class ApiGatewayStack extends cdk.Stack {
       role: coglambdaRole,
     });
 
-    // const sqsFunction = new lambda.Function(this, `${id}-sqsFunction`, {
-    //   runtime: lambda.Runtime.NODEJS_20_X,
-    //   handler: "sqs.handler",
-    //   memorySize: 512,
-    //   code: lambda.Code.fromAsset("lambda/sqs"),
-    //   timeout: cdk.Duration.seconds(900),
-    //   environment: {
-    //     SQS_QUEUE_URL: audioToTextQueue.queueUrl,
-    //   },
-    //   vpc: vpcStack.vpc,
-    //   role: coglambdaRole,
-    // });
-
-    // sqsFunction.addEventSource(
-    //   new lambdaEventSources.S3EventSource(audioStorageBucket, {
-    //     events: [
-    //       s3.EventType.OBJECT_CREATED,
-    //       s3.EventType.OBJECT_RESTORE_COMPLETED,
-    //     ],
-    //   })
-    // );
-
-    // audioToTextQueue.grantSendMessages(sqsFunction);
-
     const audioToTextFunction = new lambda.DockerImageFunction(this, `${id}-audioToTextFunc`, {
       code: lambda.DockerImageCode.fromImageAsset("./audioToText"),
       timeout: Duration.seconds(300),
@@ -1282,7 +1202,6 @@ export class ApiGatewayStack extends cdk.Stack {
           BEDROCK_LLM_PARAM: bedrockLLMParameter.parameterName,
           EMBEDDING_MODEL_PARAM: embeddingModelParameter.parameterName,
           TABLE_NAME_PARAM: tableNameParameter.parameterName,
-          PROMPT_BUCKET_NAME: promptStorageBucket.bucketName,
         },
       }
     );
@@ -1306,24 +1225,12 @@ export class ApiGatewayStack extends cdk.Stack {
         actions: [
           "bedrock:CreateGuardrail",
           "bedrock:CreateGuardrailVersion",
-          "bedrock:DeleteGuardrail", // Permission to create guardrails
-          "bedrock:ListGuardrails",  // (Optional) To list existing guardrails
+          "bedrock:DeleteGuardrail", 
+          "bedrock:ListGuardrails", 
           "bedrock:InvokeGuardrail",
-          "bedrock:ApplyGuardrail"  // (Optional) To invoke the guardrail for filtering
+          "bedrock:ApplyGuardrail"  
         ],
-        resources: ["*"], // Replace with specific resource ARNs if available
-      })
-    );
-
-    textGenLambdaDockerFunc.role?.attachInlinePolicy(
-      new iam.Policy(this, "S3ReadWritePolicy", {
-        statements: [
-          new iam.PolicyStatement({
-            actions: ["s3:GetObject", "s3:PutObject"],
-            resources: [`arn:aws:s3:::${promptStorageBucket.bucketName}/*`], // Adjust bucket name
-            effect: iam.Effect.ALLOW,
-          }),
-        ],
+        resources: ["*"], 
       })
     );
 
