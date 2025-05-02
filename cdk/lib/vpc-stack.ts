@@ -10,7 +10,7 @@ export class VpcStack extends Stack {
   public readonly vpcCidrString: string;
   public readonly privateSubnetsCidrStrings: string[];
 
-  constructor(scope: Construct, id: string, props?: StackProps) {
+  constructor(scope: Construct, id: string, props: StackProps & { stackPrefix: string }) {
     super(scope, id, props);
 
     const existingVpcId: string = ""; // CHANGE IF DEPLOYING WITH EXISTING VPC
@@ -19,7 +19,8 @@ export class VpcStack extends Stack {
       const AWSControlTowerStackSet = ""; // CHANGE TO YOUR CONTROL TOWER STACK SET
       const existingPublicSubnetID: string = ""; // CHANGE IF DEPLOYING WITH EXISTING PUBLIC SUBNET
 
-      const latPrefix = "Clinical-interview-Tool-production";
+      const latPrefix= props.stackPrefix
+      // const latPrefix = props?.stackPrefix ?? "Legal-Aid-Tool";
 
       this.vpcCidrString = "172.31.94.0/20";
 

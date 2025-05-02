@@ -15,7 +15,7 @@ const env = {
 
 const StackPrefix = app.node.tryGetContext("StackPrefix");
 
-const vpcStack = new VpcStack(app, `${StackPrefix}-VpcStack`, { env });
+const vpcStack = new VpcStack(app, `${StackPrefix}-VpcStack`, { env, stackPrefix: StackPrefix, });
 const dbStack = new DatabaseStack(app, `${StackPrefix}-Database`, vpcStack, { env });
 const apiStack = new ApiGatewayStack(app, `${StackPrefix}-Api`, dbStack, vpcStack, { env });
 const dbFlowStack = new DBFlowStack(app, `${StackPrefix}-DBFlow`, vpcStack, dbStack, apiStack, { env });
