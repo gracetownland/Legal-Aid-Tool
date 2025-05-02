@@ -1,38 +1,25 @@
 import * as cdk from "aws-cdk-lib";
 import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import * as lambda from "aws-cdk-lib/aws-lambda";
-import * as lambdaEventSources from "aws-cdk-lib/aws-lambda-event-sources";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as appsync from "aws-cdk-lib/aws-appsync";
 import { Construct } from "constructs";
-import { ISchema } from "aws-cdk-lib/aws-appsync";
 import { Duration } from "aws-cdk-lib";
-import * as sqs from "aws-cdk-lib/aws-sqs";
 import * as wafv2 from "aws-cdk-lib/aws-wafv2";
 import {
-  Architecture,
   Code,
-  Function,
   LayerVersion,
   Runtime,
 } from "aws-cdk-lib/aws-lambda";
-//import { VpcStack } from './vpc-stack';
 import * as cognito from "aws-cdk-lib/aws-cognito";
-import { CfnJson } from "aws-cdk-lib";
 import { VpcStack } from "./vpc-stack";
 import { DatabaseStack } from "./database-stack";
-import { parse, stringify } from "yaml";
 import { Fn } from "aws-cdk-lib";
 import { Asset } from "aws-cdk-lib/aws-s3-assets";
 import * as s3 from "aws-cdk-lib/aws-s3";
-import * as bedrock from "aws-cdk-lib/aws-bedrock";
 import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 import * as ssm from "aws-cdk-lib/aws-ssm";
-import * as logs from "aws-cdk-lib/aws-logs";
-import * as cloudwatch from "aws-cdk-lib/aws-cloudwatch";
-import * as events from "aws-cdk-lib/aws-events";
-import * as targets from "aws-cdk-lib/aws-events-targets";
-import { text } from "stream/consumers";
+
 
 export class ApiGatewayStack extends cdk.Stack {
   private readonly api: apigateway.SpecRestApi;
@@ -86,26 +73,6 @@ export class ApiGatewayStack extends cdk.Stack {
         enforceSSL: true,
       }
     );
-
-
-    // // Create FIFO SQS Queue
-    // const audioToTextQueue = new sqs.Queue(this, `${id}-AudioToTextQueue`, {
-    //   queueName: `${id}-audioToText-queue.fifo`,
-    //   fifo: true,
-    //   removalPolicy: cdk.RemovalPolicy.DESTROY,
-    //   visibilityTimeout: cdk.Duration.seconds(900),
-    // });
-
-    // // Create FIFO SQS Queue
-    // const textToLlmQueue = new sqs.Queue(this, `${id}-TextToLlmQueue`, {
-    //   queueName: `${id}-textToLlm-queue.fifo`,
-    //   fifo: true,
-    //   removalPolicy: cdk.RemovalPolicy.DESTROY,
-    //   visibilityTimeout: cdk.Duration.seconds(900),
-    // });
-
-
-
     
     /**
      *
