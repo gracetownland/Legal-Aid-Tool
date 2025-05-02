@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import {
   Box, Typography, Container, Button, Stack, Divider, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent,
-  DialogActions, IconButton, Menu, MenuItem, CircularProgress
+  DialogActions, IconButton, Menu, MenuItem, CircularProgress, TextField
 } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
 import { jsPDF } from "jspdf";
@@ -140,7 +140,8 @@ const [selectedTranscription, setSelectedTranscription] = useState(null);
       `audio_file_id=${encodeURIComponent(audioFileId)}&` +
       `s3_file_path=${encodeURIComponent(s3FilePath)}&` +
       `cognito_id=${encodeURIComponent(cognitoId)}&` +
-      `case_id=${encodeURIComponent(caseId)}&` ,
+      `case_id=${encodeURIComponent(caseId)}&`  +
+      `title=${encodeURIComponent(title)}`,
       {
         method: "POST",
         headers: { Authorization: token, "Content-Type": "application/json" },
@@ -200,7 +201,7 @@ const [selectedTranscription, setSelectedTranscription] = useState(null);
       const audioFileId = uuidv4();
       const presignedUrl = await generatePresignedUrl(audioFileId);
       await uploadFile(audioFile.file, presignedUrl);
-      await initializeAudioFileInDb(audioFileId, audioFile.name);
+      await initializeAudioFileInDb(audioFileId, audioFile.name, audioFile.title);
       audioToText(audioFileId);
       const { tokens } = await fetchAuthSession();
       const cognitoToken = tokens.idToken.toString();
@@ -223,7 +224,7 @@ const [selectedTranscription, setSelectedTranscription] = useState(null);
     const fileTypeShort = file.type.split("/")[1];
     const normalizedType = fileTypeShort === "mpeg" ? "mp3" : fileTypeShort;
 
-    setAudioFile({ file: file, name: fileNameWithoutExtension, type: normalizedType });
+    setAudioFile({ file: file, name: fileNameWithoutExtension, type: normalizedType, title: "" });
   };
 
   const openUploadDialog = () => {
@@ -530,7 +531,16 @@ const handleDelete = async () => {
             <Typography variant="body1" gutterBottom>
               Select an audio file to upload for transcription
             </Typography>
-            
+            <TextField
+  label="Title"
+  variant="outlined"
+  fullWidth
+  margin="normal"
+  value={audioFile?.title || ""}
+  onChange={(e) => setAudioFile((prev) => ({ ...prev, title: e.target.value }))}
+  placeholder="e.g., Client Interview #1"
+/>
+
             {audioFile ? (
               <Box sx={{ mt: 2, p: 2, border: '1px solid #e0e0e0', borderRadius: 1 }}>
                 <Typography variant="subtitle1">Selected file:</Typography>

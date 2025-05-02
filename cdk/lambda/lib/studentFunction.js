@@ -485,13 +485,13 @@ exports.handler = async (event) => {
           
           case "POST /student/initialize_audio_file":
             if (event.queryStringParameters) {
-              const { audio_file_id, s3_file_path, cognito_id, case_id } = event.queryStringParameters
+              const { audio_file_id, s3_file_path, cognito_id, case_id, title } = event.queryStringParameters
           
               try {
                 // Insert into audio_files table
                 const insertResult = await sqlConnection`
-                  INSERT INTO "audio_files" (audio_file_id, case_id, s3_file_path)
-                  VALUES (${audio_file_id}, ${case_id}, ${s3_file_path})
+                  INSERT INTO "audio_files" (audio_file_id, case_id, s3_file_path, file_title)
+                  VALUES (${audio_file_id}, ${case_id}, ${s3_file_path}, ${title})
                   RETURNING *;
                 `;
           
