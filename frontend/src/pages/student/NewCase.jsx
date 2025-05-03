@@ -203,6 +203,12 @@ const NewCaseForm = () => {
         }
       );
 
+      if (init_llm_response.status === 504) {
+        console.warn("LLM generation timed out. Redirecting to /home.");
+        navigate("/home");
+        return;
+      }
+
       if (!init_llm_response.ok) {
         throw new Error(
           `HTTP error during legal summary generation! Status: ${init_llm_response.status}`
