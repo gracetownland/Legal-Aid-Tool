@@ -342,8 +342,12 @@ const CaseOverview = () => {
                         <Typography variant="body2">
                           {key === "jurisdiction" && caseData[key] ? (
                             Array.isArray(caseData[key])
-                              ? caseData[key].join(", ")
-                              : (caseData[key].match(/[A-Z][a-z\s]+/g) || [caseData[key]]).join(", ")
+                              ? caseData[key]
+                                  .map(j => j === "Provincial" ? `Provincial (${caseData.province})` : j)
+                                  .join(", ")
+                              : caseData[key] === "Provincial"
+                                ? `Provincial (${caseData.province})`
+                                : caseData[key]
                           ) : (
                             caseData[key] || "N/A"
                           )}
