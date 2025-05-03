@@ -6,7 +6,10 @@ import { ApiGatewayStack } from '../lib/api-gateway-stack';
 import { DatabaseStack } from '../lib/database-stack';
 import { DBFlowStack } from '../lib/dbFlow-stack';
 import { VpcStack } from '../lib/vpc-stack';
+import { AwsSolutionsChecks } from 'cdk-nag';
+import { Aspects } from 'aws-cdk-lib';
 const app = new cdk.App();
+// Aspects.of(app).add(new AwsSolutionsChecks({ verbose: true })); // Uncomment this line to enable AWS Solutions checks
 
 const env = {
   account: process.env.CDK_DEFAULT_ACCOUNT,
