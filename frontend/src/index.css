@@ -10,6 +10,7 @@
   --text-secondary: #6e6e6e;
   --text-button: #f0f0f0;
   --background: #ffffff;
+  --background-translucent: hwb(from var(--background) h w b / 0.8);
   --background2: #f5f5f5;
   --background3: #d4dbdf;
   --header: #ffffff;
@@ -48,6 +49,7 @@
     --green-text: #65ff6a;
     --text-button: #0e0e0e;
     --background: #2c2c2c;
+    --background-translucent: hwb(from var(--background) h w b / 0.8);
     --background2: #171717;
     --background3: #444444;
     --header: #171717;

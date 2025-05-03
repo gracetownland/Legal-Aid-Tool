@@ -18,6 +18,9 @@ import {
   Container,
   ThemeProvider,
 } from "@mui/material";
+
+import { Backdrop, CircularProgress } from "@mui/material";
+
 import { useNavigate } from "react-router-dom";
 import theme from "../../Theme";
 import StudentHeader from "../../components/StudentHeader";
@@ -232,6 +235,18 @@ const NewCaseForm = () => {
       <AppBar position="static" color="primary" elevation={0}>
         <StudentHeader />
       </AppBar>
+      <Backdrop
+        sx={{ backgroundColor: "var(--background-translucent)", zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        open={isSubmitting}
+      >
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: 'var(--text)' }}>
+          <CircularProgress color="inherit" />
+          <Typography variant="h6" sx={{ mt: 2, fontFamily: 'Outfit' }}>
+            Creating case, this may take a minute...
+          </Typography>
+        </Box>
+      </Backdrop>
+
       <Container sx={{ display: "flex", justifyContent: "center" }}>
         <Box
           sx={{
