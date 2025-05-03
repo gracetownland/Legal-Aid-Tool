@@ -239,8 +239,8 @@ def handler(event, context):
         cur.close()
 
         try:
-            handle_generate_title(case_id)
-            return _response(200, {'case_id': case_id, 'case_hash': case_hash})
+            case_title = handle_generate_title(case_id)
+            return _response(200, {'case_id': case_id, 'case_hash': case_hash, 'case_title': capitalize_title(case_title)})
         except Exception as e:
             logger.warning(f"Title generation failed: {e}", exc_info=True)
             return _response(200, {

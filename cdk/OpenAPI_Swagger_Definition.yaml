@@ -905,6 +905,9 @@ paths:
                   case_hash:
                     type: string
                     description: The hash generated for the case
+                  case_title:
+                    type: string
+                    description: The title of the created case
         "400":
           description: Invalid value
         "401":
