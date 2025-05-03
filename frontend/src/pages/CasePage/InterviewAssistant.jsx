@@ -261,7 +261,7 @@ const InterviewAssistant = () => {
   };
 
   const handleKeyPress = (event) => {
-    if (event.key === "Enter" && !event.shiftKey && !isAItyping && messageCounter <= messageLimit) {
+    if (event.key === "Enter" && !event.shiftKey && !isAItyping && messageCounter < messageLimit) {
       event.preventDefault();
       handleSendMessage();
     } if (messageCounter >= messageLimit && event.key === "Enter" && !event.shiftKey) {
