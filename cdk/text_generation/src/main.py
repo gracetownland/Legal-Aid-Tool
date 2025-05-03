@@ -486,6 +486,7 @@ def handler(event, context):
                 case_description=case_description  ) 
         print("response: ", response)
         
+        
     except Exception as e:
         logger.error(f"Error getting response from AI: {e}")
         return {
