@@ -174,7 +174,7 @@ const InstructorHomepage = () => {
           {/* Right Column: Cases Cards */}
           <Grid item xs={12} md={8}>
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-              <Typography color="black" fontWeight="bold" textAlign="left" variant="h6">
+              <Typography color="var(--text)" fontFamily="Outfit" fontWeight="bold" textAlign="left" variant="h6">
                 Cases Submitted for Review
               </Typography>
             </Box>
