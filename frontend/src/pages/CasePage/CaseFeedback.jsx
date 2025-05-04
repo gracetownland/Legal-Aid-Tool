@@ -144,6 +144,7 @@ const FeedbackPage = () => {
 
       if (!response.ok) throw new Error();
       setSnackbar({ open: true, message: "Feedback submitted!", severity: "success" });
+      window.location.reload();
       setFeedback("");
     } catch {
       setSnackbar({ open: true, message: "Failed to submit feedback.", severity: "error" });
@@ -230,7 +231,7 @@ const FeedbackPage = () => {
   {messages.length > 0 ? (
     messages.map((msg) => (
       <Box key={msg.id} mb={2}>
-        <Typography variant="body1" sx={{ whiteSpace: "pre-wrap" }}>{msg.message_content}</Typography>
+        <Typography variant="body1" sx={{ whiteSpace: "pre-wrap", color: "var(--text)" }}>{msg.message_content}</Typography>
         <Typography variant="caption" color="#808080">
           Sent by: {msg.first_name} {msg.last_name}
         </Typography>
