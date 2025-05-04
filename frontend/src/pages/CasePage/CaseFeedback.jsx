@@ -219,14 +219,14 @@ const FeedbackPage = () => {
             <Card sx={{ backgroundColor: 'var(--background)', borderRadius: 2, boxShadow: 'none', border: '1px solid var(--border)' }}>
               <Box
   sx={{
-    mb: 3,
+    m: 3,
     border: "1px solid var(--border)",
     borderRadius: 2,
     p: 2,
     backgroundColor: "var(--background)",
   }}
 >
-  <Typography variant="h6" fontWeight={500} mb={2}>Previous Feedback</Typography>
+  <Typography variant="h6" fontWeight={500} mb={2} color="var(--text)" fontFamily="Outfit">Previous Feedback</Typography>
   {messages.length > 0 ? (
     messages.map((msg) => (
       <Box key={msg.id} mb={2}>
