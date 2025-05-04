@@ -313,16 +313,13 @@ const CaseOverview = () => {
         px: 3,
         color: "white",
         backgroundColor: "var(--secondary)",
-        "&:hover": {
-          backgroundColor: "var(--primary)",
-        },
         py: 1.5,
         borderRadius: 10,
         transition: "0.2s ease",
         boxShadow: "none",
         "&:hover": {
-          boxShadow: "0px 2px 10px rgba(0,0,0,0.15)",
-          transform: "translateY(-1px)"
+          boxShadow: "none",
+          backgroundColor: "var(--primary)",
         }
       }}
     >

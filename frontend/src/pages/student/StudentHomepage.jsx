@@ -472,10 +472,10 @@ export const StudentHomepage = () => {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button sx={{color: "var(--text)", backgroundColor: "var(--background2)", textTransform: "none", borderRadius: 5, paddingX: 3}} onClick={handleCloseDialog} color="primary">
+          <Button sx={{color: "var(--text)", backgroundColor: "var(--background2)", textTransform: "none", borderRadius: 5, paddingX: 3, "&:hover":{backgroundColor:"var(--background)"}}} onClick={handleCloseDialog} color="primary">
             Cancel
           </Button>
-          <Button onClick={handleDeleteFromMenu} sx={{color: "white", backgroundColor: "#fe3030", paddingX: 3, textTransform: "none", borderRadius: 5}}>
+          <Button onClick={handleDeleteFromMenu} sx={{color: "white", backgroundColor: "#fe3030", paddingX: 3, textTransform: "none", borderRadius: 5, '&:hover':{backgroundColor:'#d22'}}}>
             Delete
           </Button>
         </DialogActions>
