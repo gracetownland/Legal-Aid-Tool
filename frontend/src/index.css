@@ -12,7 +12,7 @@
   --background: #ffffff;
   --background-translucent: hwb(from var(--background) h w b / 0.8);
   --background2: #f5f5f5;
-  --background3: #d4dbdf;
+  --background3: #ffffff;
   --header: #ffffff;
   --header-text: --primary;
   --primary: #111835;
