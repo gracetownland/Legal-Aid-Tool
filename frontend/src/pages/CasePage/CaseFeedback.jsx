@@ -227,7 +227,8 @@ const FeedbackPage = () => {
     backgroundColor: "var(--background)",
   }}
 >
-  <Typography variant="h6" fontWeight={500} mb={2} color="var(--text)" fontFamily="Outfit">Previous Feedback</Typography>
+  <Typography variant="h6" fontWeight={500} color="var(--text)" fontFamily="Outfit">Previous Feedback</Typography>
+  <Divider sx={{borderColor: 'var(--border)', marginTop: 0.75, marginBottom: 2}} />
   {messages.length > 0 ? (
     messages.map((msg) => (
       <Box key={msg.id} mb={2}>
