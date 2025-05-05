@@ -240,18 +240,22 @@ def handler(event, context):
         media_file_uri = f"s3://{AUDIO_BUCKET}/{audio_file_id}/{file_name}.{file_type}"
         logger.info(f"Starting transcription for: {media_file_uri}")
 
-        # 3. Start Transcription job
+       # 3. Start Transcription job
         job_name = f"transcription-{audio_file_id}-{int(time.time())}-{random.randint(1000, 9999)}"
         transcribe.start_transcription_job(
             TranscriptionJobName=job_name,
             Media={"MediaFileUri": media_file_uri},
             MediaFormat=file_type,
             LanguageCode="en-US",
-             Settings={
-        'ShowSpeakerLabels': True,
-        'MaxSpeakerLabels': 2,
-        'ChannelIdentification': False  # You want speaker labels, not channel separation
-    }
+            Settings={
+                'ShowSpeakerLabels': True,
+                'MaxSpeakerLabels': 2,
+                'ShowAlternatives': False,
+            },
+            ContentRedaction={
+                'RedactionType': 'PII',
+                'RedactionOutput': 'redacted'
+            }
         )
 
         # Poll for job completion
@@ -260,7 +264,7 @@ def handler(event, context):
             resp = transcribe.get_transcription_job(TranscriptionJobName=job_name)
             status = resp["TranscriptionJob"]["TranscriptionJobStatus"]
             if status == "COMPLETED":
-                transcript_uri = resp["TranscriptionJob"]["Transcript"]["TranscriptFileUri"]
+                transcript_uri = resp["TranscriptionJob"]["Transcript"]["RedactedTranscriptFileUri"]
                 break
             if status == "FAILED":
                 raise Exception("Transcription job failed")
@@ -270,7 +274,10 @@ def handler(event, context):
         with urllib.request.urlopen(transcript_uri) as r:
             data = json.loads(r.read().decode())
 
+        # Use basic formatting since speaker labels aren't supported with redaction
         transcript_text = format_diarized_transcript(data)
+
+
         
         # 5. Store transcript and notify clients
         add_audio_to_db(audio_file_id, transcript_text)
