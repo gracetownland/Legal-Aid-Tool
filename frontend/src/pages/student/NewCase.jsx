@@ -18,6 +18,9 @@ import {
   Container,
   ThemeProvider,
 } from "@mui/material";
+
+import { Backdrop, CircularProgress } from "@mui/material";
+
 import { useNavigate } from "react-router-dom";
 import theme from "../../Theme";
 import StudentHeader from "../../components/StudentHeader";
@@ -138,31 +141,25 @@ const NewCaseForm = () => {
         return;
       }
 
-      // Step 2: Generate a title for the newly created case
-      console.log("Generating title for the case...");
-      const get_title = await fetch(
-        `${import.meta.env.VITE_API_ENDPOINT}student/title_generation?case_id=${data.case_id}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: token,
-          },
-        }
-      );
+      // // Step 2: Generate a title for the newly created case
+      // console.log("Generating title for the case...");
+      // const get_title = await fetch(
+      //   `${import.meta.env.VITE_API_ENDPOINT}student/title_generation?case_id=${data.case_id}`,
+      //   {
+      //     method: "POST",
+      //     headers: {
+      //       "Content-Type": "application/json",
+      //       Authorization: token,
+      //     },
+      //   }
+      // );
 
-      const titleData = await get_title.json();
-      console.log("Title generated:", titleData);
 
-      if (!get_title.ok) {
-        setError(titleData.error || "Failed to generate title");
-        setIsSubmitting(false);
-        return;
-      }
+      console.log("Title generated:", data.case_title);
 
       // Step 3: Optionally update the case with the new title
       const updatedCaseData = {
-        case_title: titleData.generated_title,
+        case_title: data.generated_title,
         case_type: formData.broadAreaOfLaw,
         jurisdiction: formData.jurisdiction,
         case_description: formData.legalMatterSummary,
@@ -204,10 +201,16 @@ const NewCaseForm = () => {
             Authorization: token,
           },
           body: JSON.stringify({
-            message_content: "Please provide a brief analysis of the legal matter first to show me all of the legal case facts and relevant legal resources I can refer to, using legal vocabulary. In this analysis, show me a breif list of essential elements of proving the case, and also show me relevant legal texts that encompass the case; please cite 4-5 legal cases and or docments I can refer to, preferably reasonably recent, but if older cases are particularly relevant, they acceptable. Please also include any additional insights that could help me approach this case, such as relevant issues (if any) or anything else important. In addition to this brief analysis, list some possible next steps my client could take, and follow-up questions for me to ask my client.",
+            message_content: "Please provide a brief analysis of the legal matter first to show me all of the legal case facts and relevant legal resources I can refer to, using legal vocabulary. In this analysis, show me a breif list of essential elements of proving the case, and also show me relevant legal texts that encompass the case; please cite 4-5 legal cases and or docments I can refer to, and prioritize citing cases reasonably recent enough to the present day, but if older cases are particularly relevant, they acceptable. Please also include any additional insights that could help me approach this case, such as relevant issues (if any) or anything else important. In addition to this brief analysis, list some possible next steps my client could take, and follow-up questions for me to ask my client.",
           }),
         }
       );
+
+      if (init_llm_response.status === 504) {
+        console.warn("LLM generation timed out. Redirecting to /home.");
+        navigate("/home");
+        return;
+      }
 
       if (!init_llm_response.ok) {
         throw new Error(
@@ -232,6 +235,18 @@ const NewCaseForm = () => {
       <AppBar position="static" color="primary" elevation={0}>
         <StudentHeader />
       </AppBar>
+      <Backdrop
+        sx={{ backgroundColor: "var(--background-translucent)", zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        open={isSubmitting}
+      >
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', color: 'var(--text)' }}>
+          <CircularProgress color="inherit" />
+          <Typography variant="h6" sx={{ mt: 2, fontFamily: 'Outfit' }}>
+            Creating case, this may take a minute...
+          </Typography>
+        </Box>
+      </Backdrop>
+
       <Container sx={{ display: "flex", justifyContent: "center" }}>
         <Box
           sx={{

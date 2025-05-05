@@ -217,7 +217,7 @@ const StudentHeader = () => {
                     </div>
                   ))
                 ) : (
-                  <div className="m-0 p-2 text-gray-500 text-center w-96 p-10">No notifications</div>
+                  <div className="m-0 text-gray-500 text-center w-96 p-10 py-5">No notifications</div>
                 )}
               </div>
             </div>

@@ -8,6 +8,7 @@ import { ring } from 'ldrs';
 import { fetchAuthSession, fetchUserAttributes } from 'aws-amplify/auth'; 
 import { AppBar } from "@mui/material";
 import Disclaimer from "../../components/Disclaimer";
+import DeleteIcon from '@mui/icons-material/Delete';
 ring.register();
 
 import {
@@ -432,8 +433,15 @@ export const StudentHomepage = () => {
                                   anchorEl={anchorEl}
                                   open={Boolean(anchorEl)}
                                   onClose={handleMenuClose}
+                                  PaperProps={{
+                                    elevation: 0,
+                                    sx: { boxShadow: "none", border: "1px solid var(--border)", backgroundColor: "var(--background3)", color:"var(--text)", fontFamily: "Outfit" },
+                                  }}
                                 >
-                                  <MenuItem onClick={() => handleOpenDialog(caseItem.case_id)}>Delete</MenuItem>
+                                  <MenuItem onClick={() => handleOpenDialog(caseItem.case_id)}>
+                                    <DeleteIcon sx={{ mr: 1 }} />
+                                    Delete
+                                    </MenuItem>
                                 </Menu>
                               </CardActions>
                             </Card>
@@ -455,18 +463,19 @@ export const StudentHomepage = () => {
       <Dialog
         open={openDialog}
         onClose={handleCloseDialog}
+        PaperProps={{ sx:{backgroundColor: 'var(--background)', color:"var(--text)", border: '1px solid var(--border)', fontFamily: "Outfit"} }}
       >
-        <DialogTitle>Are you sure?</DialogTitle>
+        <DialogTitle fontFamily={"Outfit"} fontWeight={'bold'}>Are you sure?</DialogTitle>
         <DialogContent>
-          <Typography>
-            Are you sure you want to delete this item? This action cannot be undone.
+          <Typography fontFamily={"Outfit"}>
+            Are you sure you want to delete this case? This action cannot be undone.
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog} color="primary">
+          <Button sx={{color: "var(--text)", backgroundColor: "var(--background2)", textTransform: "none", borderRadius: 5, paddingX: 3, "&:hover":{backgroundColor:"var(--background)"}}} onClick={handleCloseDialog} color="primary">
             Cancel
           </Button>
-          <Button onClick={handleDeleteFromMenu} color="error">
+          <Button onClick={handleDeleteFromMenu} sx={{color: "white", backgroundColor: "#fe3030", paddingX: 3, textTransform: "none", borderRadius: 5, '&:hover':{backgroundColor:'#d22'}}}>
             Delete
           </Button>
         </DialogActions>

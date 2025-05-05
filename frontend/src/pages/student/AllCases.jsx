@@ -23,6 +23,7 @@ import { MoreHoriz } from "@mui/icons-material";
 import StudentHeader from "../../components/StudentHeader";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { fetchAuthSession, fetchUserAttributes } from "aws-amplify/auth";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 const theme = createTheme({
   palette: {
@@ -97,9 +98,10 @@ const ViewAllCases = () => {
   }, [cases, searchTerm]);
 
   const handleMenuClick = (event, caseId) => {
+    setSelectedCaseId(caseId);
+    
     event.stopPropagation();
     setAnchorEl(event.currentTarget);
-    setSelectedCaseId(caseId);
   };
 
   const handleMenuClose = () => {
@@ -122,6 +124,8 @@ const ViewAllCases = () => {
       const session = await fetchAuthSession();
       const token = session.tokens.idToken;
       const cognito_id = token.payload.sub;
+      console.log("cognito_id:", cognito_id);
+      console.log("selectedCaseId:", selectedCaseId);
 
       const response = await fetch(
         `${import.meta.env.VITE_API_ENDPOINT}student/delete_case?case_id=${selectedCaseId}&cognito_id=${cognito_id}`,
@@ -263,21 +267,42 @@ const ViewAllCases = () => {
       </Container>
 
       {/* Delete confirmation dialog */}
-      <Dialog open={openDialog} onClose={handleCloseDialog}>
-        <DialogTitle>Delete Case</DialogTitle>
+      <Dialog
+        open={openDialog}
+        onClose={handleCloseDialog}
+        PaperProps={{ sx:{backgroundColor: 'var(--background)', color:"var(--text)", border: '1px solid var(--border)', fontFamily: "Outfit"} }}
+      >
+        <DialogTitle fontFamily={"Outfit"} fontWeight={'bold'}>Are you sure?</DialogTitle>
         <DialogContent>
-          <Typography>Are you sure you want to delete this case? This action cannot be undone.</Typography>
+          <Typography fontFamily={"Outfit"}>
+            Are you sure you want to delete this case? This action cannot be undone.
+          </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button onClick={handleDeleteCase} color="error">Delete</Button>
+          <Button sx={{color: "var(--text)", backgroundColor: "var(--background2)", textTransform: "none", borderRadius: 5, paddingX: 3, "&:hover":{backgroundColor:"var(--background)"}}} onClick={handleCloseDialog} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleDeleteCase} sx={{color: "white", backgroundColor: "#fe3030", paddingX: 3, textTransform: "none", borderRadius: 5, '&:hover':{backgroundColor:'#d22'}}}>
+            Delete
+          </Button>
         </DialogActions>
       </Dialog>
 
       {/* 3-dot menu */}
-      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-        <MenuItem onClick={handleOpenDialog}>Delete</MenuItem>
-      </Menu>
+      <Menu
+                                  anchorEl={anchorEl}
+                                  open={Boolean(anchorEl)}
+                                  onClose={handleMenuClose}
+                                  PaperProps={{
+                                    elevation: 0,
+                                    sx: { boxShadow: "none", border: "1px solid var(--border)", backgroundColor: "var(--background3)", color:"var(--text)", fontFamily: "Outfit" },
+                                  }}
+                                >
+                                  <MenuItem onClick={handleOpenDialog}>
+                                    <DeleteIcon sx={{ mr: 1 }} />
+                                    Delete
+                                    </MenuItem>
+                                </Menu>
     </ThemeProvider>
   );
 };

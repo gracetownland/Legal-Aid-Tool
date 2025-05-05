@@ -81,12 +81,13 @@ const CaseOverview = () => {
 
       const session = await fetchAuthSession();
       const token = session.tokens.idToken;
+      const cognito_id = token.payload.sub;
       const userRole = session.tokens.idToken.payload["cognito:groups"]?.[0] || "student";
       setUserRole(userRole);
 
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_API_ENDPOINT}student/case_page?case_id=${caseId}`,
+          `${import.meta.env.VITE_API_ENDPOINT}student/case_page?case_id=${caseId}&cognito_id=${cognito_id}`,
           {
             method: "GET",
             headers: {
@@ -313,16 +314,13 @@ const CaseOverview = () => {
         px: 3,
         color: "white",
         backgroundColor: "var(--secondary)",
-        "&:hover": {
-          backgroundColor: "var(--primary)",
-        },
         py: 1.5,
         borderRadius: 10,
         transition: "0.2s ease",
         boxShadow: "none",
         "&:hover": {
-          boxShadow: "0px 2px 10px rgba(0,0,0,0.15)",
-          transform: "translateY(-1px)"
+          boxShadow: "none",
+          backgroundColor: "var(--primary)",
         }
       }}
     >
@@ -342,8 +340,12 @@ const CaseOverview = () => {
                         <Typography variant="body2">
                           {key === "jurisdiction" && caseData[key] ? (
                             Array.isArray(caseData[key])
-                              ? caseData[key].join(", ")
-                              : (caseData[key].match(/[A-Z][a-z\s]+/g) || [caseData[key]]).join(", ")
+                              ? caseData[key]
+                                  .map(j => j === "Provincial" ? `Provincial (${caseData.province})` : j)
+                                  .join(", ")
+                              : caseData[key] === "Provincial"
+                                ? `Provincial (${caseData.province})`
+                                : caseData[key]
                           ) : (
                             caseData[key] || "N/A"
                           )}

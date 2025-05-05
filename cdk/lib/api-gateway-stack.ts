@@ -1311,6 +1311,21 @@ export class ApiGatewayStack extends cdk.Stack {
     // Attach the corrected Bedrock policy to Lambda
     titleGenLambdaDockerFunc.addToRolePolicy(bedrockPolicyStatement);
 
+    titleGenLambdaDockerFunc.addToRolePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: [
+          "bedrock:CreateGuardrail",
+          "bedrock:CreateGuardrailVersion",
+          "bedrock:DeleteGuardrail", 
+          "bedrock:ListGuardrails",
+          "bedrock:InvokeGuardrail",
+          "bedrock:ApplyGuardrail"
+        ],
+        resources: ["*"],
+      })
+    );
+
     // Grant access to Secret Manager
     titleGenLambdaDockerFunc.addToRolePolicy(
       new iam.PolicyStatement({

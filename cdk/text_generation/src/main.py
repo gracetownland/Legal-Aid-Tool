@@ -474,8 +474,8 @@ def handler(event, context):
         
         response = get_response(
                 query=student_query,
-                province="none",
-                statute="none",
+                province=province,
+                statute=statute,
                 llm=llm,
                 history_aware_retriever=history_aware_retriever,
                 table_name=TABLE_NAME,

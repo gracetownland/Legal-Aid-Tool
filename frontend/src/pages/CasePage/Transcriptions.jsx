@@ -81,8 +81,9 @@ const [selectedTranscription, setSelectedTranscription] = useState(null);
       try {
         const { tokens } = await fetchAuthSession();
         const token = tokens.idToken;
+        const cognitoId = tokens.idToken.payload.sub;
         const response = await fetch(
-          `${import.meta.env.VITE_API_ENDPOINT}student/case_page?case_id=${caseId}`,
+          `${import.meta.env.VITE_API_ENDPOINT}student/case_page?case_id=${caseId}&cognito_id=${cognitoId}`,
           {
             method: "GET",
             headers: {

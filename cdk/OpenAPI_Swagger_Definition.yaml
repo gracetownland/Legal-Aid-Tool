@@ -905,6 +905,9 @@ paths:
                   case_hash:
                     type: string
                     description: The hash generated for the case
+                  case_title:
+                    type: string
+                    description: The title of the created case
         "400":
           description: Invalid value
         "401":
@@ -917,7 +920,7 @@ paths:
         - studentAuthorizer: []
       x-amazon-apigateway-integration:
         uri:
-          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${DataIngestLambdaDockerFunc.Arn}/invocations"
+          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${TitleGenLambdaDockerFunc.Arn}/invocations"
         passthroughBehavior: "when_no_match"
         httpMethod: "POST"
         type: "aws_proxy"
@@ -1600,6 +1603,12 @@ paths:
           description: ID of the case
           schema:
             type: string
+        - in: query
+          name: user_id
+          required: true
+          description: ID of the user
+          schema:
+            type: string
       responses:
         "200":
           description: Recieved all the files for the group and patient successfully
@@ -1618,6 +1627,8 @@ paths:
           description: Bad Request
         "401":
           description: Unauthorized
+        "403":
+          description: Forbidden, user does not have access to the case
         "429":
           description: Too Many Requests
         "500":
