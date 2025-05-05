@@ -57,7 +57,8 @@ def get_response(
     case_type: str, 
     llm: ChatBedrockConverse,
     jurisdiction: Optional[str] = None, 
-    case_description: Optional[str] = None
+    case_description: Optional[str] = None,
+    province: Optional[str] = None
 ) -> str:
     """
     Generate a case title using an LLM based on input parameters.
@@ -93,6 +94,10 @@ def get_response(
     # Add jurisdiction to the prompt if provided
     if jurisdiction:
         prompt += f"Jurisdiction: {jurisdiction}\n"
+
+    # Add case description to the prompt if provided
+    if province:
+        prompt += f"Province: {province}\n"
     
     # Add case description to the prompt if provided
     if case_description:
