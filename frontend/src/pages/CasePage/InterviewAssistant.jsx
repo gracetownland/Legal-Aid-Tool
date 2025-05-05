@@ -101,10 +101,11 @@ const InterviewAssistant = () => {
     const fetchCaseData = async () => {
       const session = await fetchAuthSession();
       const token = session.tokens.idToken;
+      const cognito_id = session.tokens.idToken.payload.sub;
       console.log("Token: ", token);
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_API_ENDPOINT}student/case_page?case_id=${caseId}`,
+          `${import.meta.env.VITE_API_ENDPOINT}student/case_page?case_id=${caseId}&cognito_id=${cognito_id}`,
           {
             method: "GET",
             headers: {

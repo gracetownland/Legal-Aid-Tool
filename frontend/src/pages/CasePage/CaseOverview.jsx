@@ -81,12 +81,13 @@ const CaseOverview = () => {
 
       const session = await fetchAuthSession();
       const token = session.tokens.idToken;
+      const cognito_id = token.payload.sub;
       const userRole = session.tokens.idToken.payload["cognito:groups"]?.[0] || "student";
       setUserRole(userRole);
 
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_API_ENDPOINT}student/case_page?case_id=${caseId}`,
+          `${import.meta.env.VITE_API_ENDPOINT}student/case_page?case_id=${caseId}&cognito_id=${cognito_id}`,
           {
             method: "GET",
             headers: {

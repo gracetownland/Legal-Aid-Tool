@@ -27,10 +27,11 @@ const FeedbackPage = () => {
     const fetchCaseData = async () => {
       const session = await fetchAuthSession();
       const token = session.tokens.idToken;
+      const cognitoId = token.payload.sub;
       const group = token.payload["cognito:groups"]?.[0] || "student";
       setUserRole(group);
 
-      const res = await fetch(`${import.meta.env.VITE_API_ENDPOINT}student/case_page?case_id=${caseId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_ENDPOINT}student/case_page?case_id=${caseId}&cognito_id=${cognitoId}`, {
         headers: { Authorization: token, "Content-Type": "application/json" },
       });
 

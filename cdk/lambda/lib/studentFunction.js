@@ -293,46 +293,85 @@ exports.handler = async (event) => {
   }
   break;
       case "GET /student/case_page":
-        if (event.queryStringParameters && event.queryStringParameters.case_id) {
+        if (event.queryStringParameters && event.queryStringParameters.case_id && event.queryStringParameters.cognito_id) {
           const case_id = event.queryStringParameters.case_id;
+          const cognito_id = event.queryStringParameters.cognito_id;
+        
           try {
-            const caseData = await sqlConnection`
+            // Step 1: Get user's UUID from their cognito stuff
+            const userResult = await sqlConnection`
+              SELECT user_id FROM "users" WHERE cognito_id = ${cognito_id};
+            `;
+            if (userResult.length === 0) {
+              response.statusCode = 403;
+              response.body = JSON.stringify({ error: "User not found" });
+              break;
+            }
+            const requestingUserId = userResult[0].user_id;
+        
+            // Step 2: Get the case and its owner
+            const caseResult = await sqlConnection`
               SELECT * FROM "cases" WHERE case_id = ${case_id};
             `;
-      
-            if (caseData.length > 0) {
-              // Retrieve messages for the case_id
-              const messages = await sqlConnection`
+            if (caseResult.length === 0) {
+              response.statusCode = 404;
+              response.body = JSON.stringify({ error: "Case not found" });
+              break;
+            }
+            const caseOwnerId = caseResult[0].user_id;
+        
+            // Step 3: Check access — either owner OR an instructor of the owner
+            let hasAccess = false;
+        
+            if (requestingUserId === caseOwnerId) {
+              hasAccess = true; // User owns the case
+            } else {
+              // Check if requesting user is an instructor of the student who owns the case
+              const instructorCheck = await sqlConnection`
+                SELECT 1 FROM "instructor_students"
+                WHERE instructor_id = ${requestingUserId} AND student_id = ${caseOwnerId};
+              `;
+              if (instructorCheck.length > 0) {
+                hasAccess = true;
+              }
+            }
+        
+            if (!hasAccess) {
+              response.statusCode = 403;
+              response.body = JSON.stringify({ error: "Access denied" });
+              break;
+            }
+        
+            // Step 4: Fetch messages and summaries
+            const messages = await sqlConnection`
               SELECT m.*, u.first_name, u.last_name
               FROM "messages" m
               LEFT JOIN "users" u ON m.instructor_id = u.user_id
               WHERE m.case_id = ${case_id};
-              `;
-
-              const summaries = await sqlConnection`
-                SELECT * FROM "summaries" WHERE case_id = ${case_id};
-              `;
-
-              // Combine case data and messages
-              const combinedData = {
-                caseData: caseData[0],
-                messages: messages,
-                summaries: summaries
-              };
-              response.body = JSON.stringify(combinedData);
-            } else {
-              response.statusCode = 404;
-              response.body = JSON.stringify({ error: "Case not found" });
-            }
+            `;
+        
+            const summaries = await sqlConnection`
+              SELECT * FROM "summaries" WHERE case_id = ${case_id};
+            `;
+        
+            const combinedData = {
+              caseData: caseResult[0],
+              messages,
+              summaries
+            };
+        
+            response.body = JSON.stringify(combinedData);
+        
           } catch (err) {
+            console.error(err);
             response.statusCode = 500;
-            console.log(err);
             response.body = JSON.stringify({ error: "Internal server error" });
           }
+        
         } else {
           response.statusCode = 400;
-          response.body = JSON.stringify({ error: "Case ID is required" });
-        }
+          response.body = JSON.stringify({ error: "Case ID and Cognito ID are required" });
+        }        
         break;  
 
         case "GET /student/notifications":
