@@ -189,37 +189,6 @@ exports.handler = async (event) => {
         }
         break;
 
-
-      case "POST /student/case":
-          console.log(event);
-          console.log("Received event:", JSON.stringify(event, null, 2));
-          const cognito_id = event.queryStringParameters.user_id;
-          const { case_title, case_type, jurisdiction, case_description, province, statute} = JSON.parse(event.body || "{}");
-          
-          const user = await sqlConnection`
-            SELECT user_id FROM "users" WHERE cognito_id = ${cognito_id};
-          `;
-
-          console.log("user_id:", user[0]?.user_id);
-
-          try {
-            // SQL query to insert the new case
-            const newCase = await sqlConnection`
-              INSERT INTO "cases" (user_id, case_title, case_type, jurisdiction, case_description, status, last_updated, province, statute)
-              VALUES (${user[0]?.user_id}, ${case_title}, ${case_type}, ${jurisdiction}, ${case_description}, 'In Progress', CURRENT_TIMESTAMP, ${province}, ${statute})
-              RETURNING case_id;
-            `;
-
-            const caseId = newCase[0].case_id;
-
-            response.body = JSON.stringify({ case_id: caseId});
-          } catch (err) {
-            response.statusCode = 500;
-            console.log(err);
-            response.body = JSON.stringify({ error: "Internal server error" });
-          }
-      break;
-
       case "GET /student/message_limit":
         if (event.queryStringParameters && event.queryStringParameters.user_id) {
             try {
