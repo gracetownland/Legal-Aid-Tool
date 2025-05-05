@@ -843,6 +843,9 @@ const InterviewAssistant = () => {
                     minHeight: "55px",
                     mr: "2em",
                     fontFamily: "Inter",
+                    "&:hover": {
+                      backgroundColor: "var(--primary)",
+                    }
                   }}
                   style={{ boxShadow: "none" }}
                   onClick={handleSendMessage}
