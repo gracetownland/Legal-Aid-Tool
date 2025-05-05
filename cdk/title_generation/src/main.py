@@ -239,7 +239,7 @@ def handler(event, context):
         cur.close()
 
         try:
-            case_title = handle_generate_title(case_id, case_type, jurisdiction, case_desc)
+            case_title = handle_generate_title(case_id, case_type, jurisdiction, case_desc, province)
             return _response(200, {'case_id': case_id, 'case_hash': case_hash, 'case_title': capitalize_title(case_title)})
         except Exception as e:
             logger.warning(f"Title generation failed: {e}", exc_info=True)
@@ -254,11 +254,8 @@ def handler(event, context):
         return _response(500, {'error': 'Internal server error'})
 
 
-def handle_generate_title(case_id: str, case_type: str, jurisdiction: str, case_description: str) -> str:
+def handle_generate_title(case_id: str, case_type: str, jurisdiction: str, case_description: str, province: str) -> str:
     initialize_constants()
-
-    if not all([case_id, case_type, jurisdiction, case_description]):
-        raise ValueError("Missing case data")
 
     try:
         llm = get_bedrock_llm(BEDROCK_LLM_ID)
@@ -266,6 +263,7 @@ def handle_generate_title(case_id: str, case_type: str, jurisdiction: str, case_
             case_type=case_type,
             jurisdiction=jurisdiction,
             case_description=case_description,
+            province=province,
             llm=llm
         )
         update_title(case_id, capitalize_title(response))
