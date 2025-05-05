@@ -262,26 +262,68 @@ exports.handler = async (event) => {
   case "GET /student/get_transcriptions":
   if (event.queryStringParameters && event.queryStringParameters.case_id) {
     const caseId = event.queryStringParameters.case_id;
+    const cognito_id = event.queryStringParameters.cognito_id;
 
     try {
-      if (caseId) {
-        const data = await sqlConnection`
-          SELECT audio_file_id, file_title, timestamp
-          FROM "audio_files" WHERE case_id = ${caseId};
-        `;
+      // Step 1: Get user's UUID from their cognito stuff
+      const userResult = await sqlConnection`
+      SELECT user_id FROM "users" WHERE cognito_id = ${cognito_id};
+    `;
+    if (userResult.length === 0) {
+      response.statusCode = 403;
+      response.body = JSON.stringify({ error: "User not found" });
+      break;
+    }
+    const requestingUserId = userResult[0].user_id;
 
-        // Check if data is empty and handle the case
-        if (data.length === 0) {
-          response.statusCode = 404; // Not Found
-          response.body = JSON.stringify({ message: "No cases found" });
-        } else {
-          response.statusCode = 200; // OK
-          response.body = JSON.stringify(data); // Ensure the data is always valid JSON
-        }
-      } else {
-        response.statusCode = 404; // Not Found
-        response.body = JSON.stringify({ error: "User not found" });
+    // Step 2: Get the case and its owner
+    const caseResult = await sqlConnection`
+      SELECT * FROM "cases" WHERE case_id = ${case_id};
+    `;
+    if (caseResult.length === 0) {
+      response.statusCode = 404;
+      response.body = JSON.stringify({ error: "Case not found" });
+      break;
+    }
+    const caseOwnerId = caseResult[0].user_id;
+
+    // Step 3: Check access — either owner OR an instructor of the owner
+    let hasAccess = false;
+
+    if (requestingUserId === caseOwnerId) {
+      hasAccess = true; // User owns the case
+    } else {
+      // Check if requesting user is an instructor of the student who owns the case
+      const instructorCheck = await sqlConnection`
+        SELECT 1 FROM "instructor_students"
+        WHERE instructor_id = ${requestingUserId} AND student_id = ${caseOwnerId};
+      `;
+      if (instructorCheck.length > 0) {
+        hasAccess = true;
       }
+    }
+
+    if (!hasAccess) {
+      response.statusCode = 403;
+      response.body = JSON.stringify({ error: "Access denied" });
+      break;
+    }
+
+    // Step 4: Fetch messages and summaries
+    // Step 4: Fetch transcriptions from audio_files for the case
+const transcriptions = await sqlConnection`
+SELECT audio_file_id, file_title, timestamp
+FROM "audio_files"
+WHERE case_id = ${caseId}
+ORDER BY timestamp DESC;
+`;
+
+// Step 5: Return transcriptions
+response.statusCode = 200;
+response.body = JSON.stringify(transcriptions);
+break;
+
+
     } catch (err) {
       response.statusCode = 500; // Internal server error
       console.error(err);
@@ -294,38 +336,84 @@ exports.handler = async (event) => {
   break;
 
   case "GET /student/transcription":
-    if (event.queryStringParameters && event.queryStringParameters.case_id) {
-      const audio_file_id = event.queryStringParameters.audio_file_id;
-  
-      try {
-        if (caseId) {
-          const data = await sqlConnection`
-            SELECT *
-            FROM "audio_files" WHERE audio_file_id = ${audio_file_id};
-          `;
-  
-          // Check if data is empty and handle the case
-          if (data.length === 0) {
-            response.statusCode = 404; // Not Found
-            response.body = JSON.stringify({ message: "No cases found" });
-          } else {
-            response.statusCode = 200; // OK
-            response.body = JSON.stringify(data); // Ensure the data is always valid JSON
-          }
-        } else {
-          response.statusCode = 404; // Not Found
-          response.body = JSON.stringify({ error: "User not found" });
-        }
-      } catch (err) {
-        response.statusCode = 500; // Internal server error
-        console.error(err);
-        response.body = JSON.stringify({ error: "Internal server error" });
+  if (event.queryStringParameters && event.queryStringParameters.audio_file_id && event.queryStringParameters.cognito_id) {
+    const audioFileId = event.queryStringParameters.audio_file_id;
+    const cognitoId = event.queryStringParameters.cognito_id;
+
+    try {
+      // Step 1: Get user ID from cognito_id
+      const userResult = await sqlConnection`
+        SELECT user_id FROM "users" WHERE cognito_id = ${cognitoId};
+      `;
+      if (userResult.length === 0) {
+        response.statusCode = 403;
+        response.body = JSON.stringify({ error: "User not found" });
+        break;
       }
-    } else {
-      response.statusCode = 400; // Bad Request
-      response.body = JSON.stringify({ error: "Invalid value" });
+      const requestingUserId = userResult[0].user_id;
+
+      // Step 2: Get case + owner for the audio file
+      const caseResult = await sqlConnection`
+        SELECT af.case_id, c.user_id AS case_owner_id
+        FROM "audio_files" af
+        JOIN "cases" c ON af.case_id = c.case_id
+        WHERE af.audio_file_id = ${audioFileId};
+      `;
+      if (caseResult.length === 0) {
+        response.statusCode = 404;
+        response.body = JSON.stringify({ error: "Audio file not found" });
+        break;
+      }
+
+      const caseId = caseResult[0].case_id;
+      const caseOwnerId = caseResult[0].case_owner_id;
+
+      // Step 3: Check access
+      let hasAccess = false;
+      if (requestingUserId === caseOwnerId) {
+        hasAccess = true;
+      } else {
+        const instructorCheck = await sqlConnection`
+          SELECT 1 FROM "instructor_students"
+          WHERE instructor_id = ${requestingUserId} AND student_id = ${caseOwnerId};
+        `;
+        if (instructorCheck.length > 0) {
+          hasAccess = true;
+        }
+      }
+
+      if (!hasAccess) {
+        response.statusCode = 403;
+        response.body = JSON.stringify({ error: "Access denied" });
+        break;
+      }
+
+      // Step 4: Fetch transcription
+      const data = await sqlConnection`
+        SELECT audio_text
+        FROM "audio_files"
+        WHERE audio_file_id = ${audioFileId};
+      `;
+
+      if (data.length === 0) {
+        response.statusCode = 404;
+        response.body = JSON.stringify({ message: "Transcription not found" });
+      } else {
+        response.statusCode = 200;
+        response.body = JSON.stringify(data[0]); // Just return the single result
+      }
+
+    } catch (err) {
+      response.statusCode = 500;
+      console.error(err);
+      response.body = JSON.stringify({ error: "Internal server error" });
     }
-    break;
+  } else {
+    response.statusCode = 400;
+    response.body = JSON.stringify({ error: "Missing audio_file_id or cognito_id" });
+  }
+  break;
+
 
       case "GET /student/case_page":
         if (event.queryStringParameters && event.queryStringParameters.case_id && event.queryStringParameters.cognito_id) {
@@ -993,7 +1081,61 @@ exports.handler = async (event) => {
          
         break;
 
-        case "POST /student/create_ai_message":
+        case "PUT /student/archive_case":
+          if (
+            event.queryStringParameters != null &&
+            event.queryStringParameters.case_id &&
+            event.queryStringParameters.cognito_id
+        ) {
+            const { case_id, cognito_id } = event.queryStringParameters;
+            try {
+                await sqlConnection`
+                    UPDATE "cases"
+                    SET 
+                        status = 'Archived'
+                    WHERE case_id = ${case_id}; 
+                `;
+                response.statusCode = 200;
+                response.body = JSON.stringify({
+                    message: "Case Updated Successfully",
+                });
+            } catch (err) {
+                response.statusCode = 500;
+                console.error(err);
+                response.body = JSON.stringify({
+                    error: "Internal server error",
+                });
+            }
+        }
+         
+        break;
+
+        case "PUT /student/unarchive_case":
+          if (
+            event.queryStringParameters != null &&
+            event.queryStringParameters.case_id &&
+            event.queryStringParameters.cognito_id
+        ) {
+            const { case_id, cognito_id } = event.queryStringParameters;
+            try {
+                await sqlConnection`
+                    UPDATE "cases"
+                    SET 
+                        status = 'In Progress'
+                    WHERE case_id = ${case_id}; 
+                `;
+                response.statusCode = 200;
+                response.body = JSON.stringify({
+                    message: "Case Updated Successfully",
+                });
+            } catch (err) {
+                response.statusCode = 500;
+                console.error(err);
+                response.body = JSON.stringify({
+                    error: "Internal server error",
+                });
+            }
+        }
          
         break;
       default:
