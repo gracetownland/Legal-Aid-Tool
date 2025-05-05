@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import {
   Box, Typography, Container, Button, Stack, Divider, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent,
-  DialogActions, IconButton, Menu, MenuItem, CircularProgress, TextField
+  DialogActions, IconButton, Menu, MenuItem, CircularProgress, TextField, Snackbar, Alert
 } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
 import { jsPDF } from "jspdf";
@@ -46,38 +46,34 @@ const [selectedTranscription, setSelectedTranscription] = useState(null);
   const wsRef = useRef(null);
   const [audioTitle, setAudioTitle] = useState("");
 
-
-  useEffect(() => {
-    const fetchTranscriptions = async () => {
-      try {
-        const { tokens } = await fetchAuthSession();
-        const token = tokens.idToken
-        const cognitoId = tokens.idToken.payload.sub;
-        const response = await fetch(
-          `${import.meta.env.VITE_API_ENDPOINT}student/get_transcriptions?case_id=${caseId}`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: token,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch transcriptions");
+  const fetchTranscriptions = async () => {
+    try {
+      const { tokens } = await fetchAuthSession();
+      const token = tokens.idToken
+      const cognitoId = tokens.idToken.payload.sub;
+      const response = await fetch(
+        `${import.meta.env.VITE_API_ENDPOINT}student/get_transcriptions?case_id=${caseId}&cognito_id=${cognitoId}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: token,
+            "Content-Type": "application/json",
+          },
         }
+      );
 
-        const data = await response.json();
-        console.log(data);
-        setTranscriptions(data);
-      } catch (error) {
-        console.error("Error fetching transcriptions:", error);
+      if (!response.ok) {
+        throw new Error("Failed to fetch transcriptions");
       }
-    };
 
-    fetchTranscriptions();
-  }, [])
+      const data = await response.json();
+      console.log(data);
+      setTranscriptions(data);
+    } catch (error) {
+      console.error("Error fetching transcriptions:", error);
+    }
+  };
+
 
   useEffect(() => {
     const fetchCaseData = async () => {
@@ -109,6 +105,7 @@ const [selectedTranscription, setSelectedTranscription] = useState(null);
     };
 
     fetchCaseData();
+    fetchTranscriptions();
   }, [])
 
   const generatePresignedUrl = async (audioFileId) => {
@@ -289,6 +286,8 @@ const [selectedTranscription, setSelectedTranscription] = useState(null);
         } else if (msg.type === "data" && msg.payload?.data?.onNotify?.message === "transcription_complete") {
           console.log("Transcription complete message received via WebSocket");
           ws.close();
+           // ✅ Refresh transcriptions in real-time
+          fetchTranscriptions();
           resolve();
         } else if (msg.type === "error") {
           console.error("WebSocket subscription error:", msg);
@@ -312,9 +311,10 @@ const [selectedTranscription, setSelectedTranscription] = useState(null);
     try {
       const { tokens } = await fetchAuthSession();
       const token = tokens.idToken;
+      const cognitoId = tokens.idToken.payload.sub;
   
       const response = await fetch(
-        `${import.meta.env.VITE_API_ENDPOINT}transcription?audio_file_id=${audioFileId}`,
+        `${import.meta.env.VITE_API_ENDPOINT}student/transcription?audio_file_id=${audioFileId}&cognito_id=${cognitoId}`,
         {
           method: "GET",
           headers: {
@@ -745,6 +745,22 @@ const handleDelete = async () => {
   )}
 </DialogContent>
       </Dialog>
+
+      <Snackbar
+  open={!!snackbarMessage}
+  autoHideDuration={6000}
+  onClose={() => setSnackbarMessage("")}
+  anchorOrigin={{ vertical: "top", horizontal: "center" }}
+>
+  <Alert
+    onClose={() => setSnackbarMessage("")}
+    severity="success"
+    sx={{ width: "100%" }}
+  >
+    {snackbarMessage}
+  </Alert>
+</Snackbar>
+
     </Box>
   );
 };
