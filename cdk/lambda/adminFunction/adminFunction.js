@@ -290,16 +290,16 @@ exports.handler = async (event) => {
       case "POST /admin/lower_instructor":
         if (
           event.queryStringParameters != null &&
-          event.queryStringParameters.email
+          event.queryStringParameters.user_id
         ) {
           try {
-            const userEmail = event.queryStringParameters.email;
+            const user_id = event.queryStringParameters.user_id;
 
             // Fetch the roles for the user
             const userRoleData = await sqlConnectionTableCreator`
                     SELECT roles, user_id
                     FROM "users"
-                    WHERE user_email = ${userEmail};
+                    WHERE user_id = ${user_id};
                   `;
 
             const userRoles = userRoleData[0]?.roles;
@@ -322,18 +322,12 @@ exports.handler = async (event) => {
             await sqlConnectionTableCreator`
                     UPDATE "users"
                     SET roles = ${updatedRoles}
-                    WHERE user_email = ${userEmail};
-                  `;
-
-            // Delete all enrolments where the enrolment type is instructor
-            await sqlConnectionTableCreator`
-                    DELETE FROM "enrolments"
-                    WHERE user_id = ${userId} AND enrolment_type = 'instructor';
+                    WHERE user_id = ${user_id};
                   `;
 
             response.statusCode = 200;
             response.body = JSON.stringify({
-              message: `User role updated to student for ${userEmail} and all instructor enrolments deleted.`,
+              message: `User role updated to student for ${user_id} and all instructor enrolments deleted.`,
             });
           } catch (err) {
             console.log(err);
