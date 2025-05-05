@@ -880,7 +880,7 @@ exports.handler = async (event) => {
                         case_type = ${case_type},
                         case_description = ${case_description},
                         status = ${status},
-                        jurisdiction = ${jurisdiction} 
+                        jurisdiction = ${jurisdiction}, 
                         province = ${province},
                         statute = ${statute}
                     WHERE case_id = ${case_id}; 

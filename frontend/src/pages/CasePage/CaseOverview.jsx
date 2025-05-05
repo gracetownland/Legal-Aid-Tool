@@ -71,6 +71,9 @@ const CaseOverview = () => {
         case_description: caseData.case_description,
         case_type: caseData.case_type,
         jurisdiction: caseData.jurisdiction,
+        province: caseData.province,
+        statute: caseData.statute,
+        case_hash: caseData.case_hash,
       });
     }
   }, [caseData]);
@@ -124,8 +127,10 @@ const CaseOverview = () => {
       const session = await fetchAuthSession();
       const token = session.tokens.idToken;
 
+      console.log("Edited case: ", editedCase)
+
       const response = await fetch(
-        `${import.meta.env.VITE_API_ENDPOINT}student/edit_case?case_id=${caseId}`,
+        `${import.meta.env.VITE_API_ENDPOINT}student/edit_case?case_id=${caseId}&cognito_id=${token.payload.sub}`,
         {
           method: "PUT",
           headers: {
