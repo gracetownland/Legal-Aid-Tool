@@ -37,6 +37,7 @@ const InstructorDetails = ({ instructorData, onBack }) => {
   const [selectedStudent, setSelectedStudent] = useState(null);  // Track the selected student
 
   useEffect(() => {
+    console.log(instructor)
     // Fetch all students
     const fetchStudents = async () => {
       try {
@@ -176,6 +177,48 @@ const InstructorDetails = ({ instructorData, onBack }) => {
     }
   };
 
+  const handleLowerInstructor = async () => {
+    try {
+      const session = await fetchAuthSession();
+      const token = session.tokens.idToken;
+  
+      const response = await fetch(
+        `${import.meta.env.VITE_API_ENDPOINT}admin/lower_instructor?user_id=${instructor.id}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: token,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+  
+      if (response.ok) {
+        toast.success("Instructor removed and downgraded to student.", {
+          position: "top-center",
+          autoClose: 1000,
+          theme: "colored",
+        });
+        onBack(); // Redirect to list view
+      } else {
+        const error = await response.json();
+        toast.error(`Failed: ${error.error}`, {
+          position: "top-center",
+          autoClose: 1000,
+          theme: "colored",
+        });
+      }
+    } catch (err) {
+      console.error("Error lowering instructor:", err);
+      toast.error("An error occurred while removing the instructor.", {
+        position: "top-center",
+        autoClose: 1000,
+        theme: "colored",
+      });
+    }
+  };
+  
+
   return (
     <>
       <Box component="main" sx={{ flexGrow: 1, p: 3, marginTop: 1, textAlign: "left" }}>
@@ -258,6 +301,20 @@ const InstructorDetails = ({ instructorData, onBack }) => {
             <Button variant="contained" onClick={onBack} sx={{ width: "30%", mx: "left", backgroundColor: 'var(--primary)', color: 'white', boxShadow:'none',borderRadius: 2  }}>
               Back
             </Button>
+            <Button
+    variant="outlined"
+    color="error"
+    onClick={handleLowerInstructor}
+    sx={{
+      width: "50%",
+      ml: 2,
+      borderRadius: 2,
+      borderColor: "#e57373",
+      color: "#e57373",
+    }}
+  >
+    Remove Instructor
+  </Button>
           </Grid>
           <Grid item xs={6} container justifyContent="flex-end">
             <Button
