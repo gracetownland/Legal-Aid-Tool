@@ -42,7 +42,10 @@ const Transcriptions = () => {
 const [selectedTranscription, setSelectedTranscription] = useState(null);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [anchorEl, setanchorEl] = useState("");
+  const [selectedTranscriptionId, setSelectedTranscriptionId] = useState(null);
   const wsRef = useRef(null);
+  const [audioTitle, setAudioTitle] = useState("");
+
 
   useEffect(() => {
     const fetchTranscriptions = async () => {
@@ -141,8 +144,8 @@ const [selectedTranscription, setSelectedTranscription] = useState(null);
       `audio_file_id=${encodeURIComponent(audioFileId)}&` +
       `s3_file_path=${encodeURIComponent(s3FilePath)}&` +
       `cognito_id=${encodeURIComponent(cognitoId)}&` +
-      `case_id=${encodeURIComponent(caseId)}&`  +
-      `title=${encodeURIComponent(title)}`,
+      `case_id=${encodeURIComponent(caseId)}&` +
+      `title=${encodeURIComponent(audioTitle)}` ,
       {
         method: "POST",
         headers: { Authorization: token, "Content-Type": "application/json" },
@@ -202,7 +205,7 @@ const [selectedTranscription, setSelectedTranscription] = useState(null);
       const audioFileId = uuidv4();
       const presignedUrl = await generatePresignedUrl(audioFileId);
       await uploadFile(audioFile.file, presignedUrl);
-      await initializeAudioFileInDb(audioFileId, audioFile.name, audioFile.title);
+      await initializeAudioFileInDb(audioFileId, audioFile.name, audioTitle);
       audioToText(audioFileId);
       const { tokens } = await fetchAuthSession();
       const cognitoToken = tokens.idToken.toString();
@@ -225,7 +228,7 @@ const [selectedTranscription, setSelectedTranscription] = useState(null);
     const fileTypeShort = file.type.split("/")[1];
     const normalizedType = fileTypeShort === "mpeg" ? "mp3" : fileTypeShort;
 
-    setAudioFile({ file: file, name: fileNameWithoutExtension, type: normalizedType, title: "" });
+    setAudioFile({ file: file, name: fileNameWithoutExtension, type: normalizedType });
   };
 
   const openUploadDialog = () => {
@@ -305,12 +308,39 @@ const [selectedTranscription, setSelectedTranscription] = useState(null);
     });
   };
   
+  const fetchTranscriptionText = async (audioFileId) => {
+    try {
+      const { tokens } = await fetchAuthSession();
+      const token = tokens.idToken;
+  
+      const response = await fetch(
+        `${import.meta.env.VITE_API_ENDPOINT}transcription?audio_file_id=${audioFileId}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: token,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+  
+      if (!response.ok) throw new Error("Failed to fetch transcription text");
+      const data = await response.json();
+      return data.audio_text;
+    } catch (error) {
+      console.error("Error fetching transcription:", error);
+      return "Error loading transcription.";
+    }
+  };
+  
 const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
-const handleView = (transcription) => {
-  setSelectedTranscription(transcription);
+const handleView = async (transcription) => {
+  const audioText = await fetchTranscriptionText(transcription.audio_file_id);
+  setSelectedTranscription({ ...transcription, audio_text: audioText });
   setViewDialogOpen(true);
 };
+
 
 
 const handleCloseView = () => {
@@ -318,17 +348,9 @@ const handleCloseView = () => {
   setSelectedTranscription(null);
 };
 
-const handleMenuOpen = (event, summaryId) => {
-  setanchorEl(event.currentTarget);
-  setSelectedSummaryId(summaryId);
-};
+const handleDownload = async (transcription) => {
+  const audioText = await fetchTranscriptionText(transcription.audio_file_id);
 
-const handleMenuClose = () => {
-  setanchorEl(null);
-  setSelectedSummaryId(null);
-};
-
-const handleDownload = (transcription) => {
   const doc = new jsPDF();
   const pageHeight = doc.internal.pageSize.height;
   const margin = 10;
@@ -336,11 +358,10 @@ const handleDownload = (transcription) => {
 
   doc.setFontSize(12);
   y += 10;
-
   doc.text("Transcription:", margin, y);
   y += 10;
 
-  const content = marked.parse(transcription.audio_text).replace(/<[^>]+>/g, "");
+  const content = marked.parse(audioText).replace(/<[^>]+>/g, "");
   const lines = doc.splitTextToSize(content, 180);
 
   for (let i = 0; i < lines.length; i++) {
@@ -352,25 +373,48 @@ const handleDownload = (transcription) => {
     y += 7;
   }
 
-  doc.text(`Interview Date: ${new Date(transcription.timestamp).toLocaleString()}`, margin, y + 10);
+  doc.text(
+    `Interview Date: ${new Date(transcription.timestamp).toLocaleString()}`,
+    margin,
+    y + 10
+  );
 
-  doc.save(`Case-${caseData.case_hash}:Transcription-${new Date(transcription.timestamp).toLocaleString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "numeric",
-    hour12: true,
-  })}.pdf`);
+  doc.save(
+    `Case-${caseData.case_hash}:Transcription-${new Date(
+      transcription.timestamp
+    ).toLocaleString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+      hour12: true,
+    })}.pdf`
+  );
 };
 
+const openMenu = Boolean(anchorEl);
+
+// open menu handler
+const handleMenuOpen = (event, transcriptionId) => {
+  setanchorEl(event.currentTarget);
+  setSelectedTranscriptionId(transcriptionId);
+};
+
+// close menu handler
+const handleMenuClose = () => {
+  setanchorEl(null);
+  setSelectedTranscriptionId(null);
+};
+
+// delete transcription handler
 const handleDelete = async () => {
   try {
     const session = await fetchAuthSession();
     const token = session.tokens.idToken;
-
+    const cognitoId = session.tokens.idToken.payload.sub;
     const response = await fetch(
-      `${import.meta.env.VITE_API_ENDPOINT}student/delete_summary?summary_id=${selectedSummaryId}`,
+      `${import.meta.env.VITE_API_ENDPOINT}student/delete_transcription?audio_file_id=${selectedTranscriptionId}`,
       {
         method: "DELETE",
         headers: {
@@ -379,18 +423,15 @@ const handleDelete = async () => {
         },
       }
     );
-
-    if (!response.ok) throw new Error("Failed to delete summary");
-
-    setTranscriptions((prev) => prev.filter((s) => s.summary_id !== selectedSummaryId));
+    if (!response.ok) throw new Error("Failed to delete transcription");
+    setTranscriptions((prev) => prev.filter((t) => t.audio_file_id !== selectedTranscriptionId));
   } catch (error) {
-    console.error("Error deleting summary:", error);
+    console.error("Error deleting transcription:", error);
   } finally {
     setConfirmDeleteOpen(false);
     handleMenuClose();
   }
 };
-
 
   return (
     <Box display="flex" flexDirection="column" minHeight="100vh">
@@ -438,12 +479,14 @@ const handleDelete = async () => {
             {transcriptions.length > 0 ? (
               <TableContainer component={Paper}>
                 <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Interview Date</TableCell>
-                      <TableCell align="right"></TableCell>
-                    </TableRow>
-                  </TableHead>
+                <TableHead>
+  <TableRow>
+    <TableCell>Interview Date</TableCell>
+    <TableCell>Title</TableCell>
+    <TableCell align="right"></TableCell>
+  </TableRow>
+</TableHead>
+
                   <TableBody>
                     {transcriptions.map((transcription) => (
                       <TableRow key={transcription.audio_file_id}>
@@ -456,7 +499,9 @@ const handleDelete = async () => {
                           minute: "numeric",
                           hour12: true,
                         })}
+
                       </TableCell>
+                      <TableCell>{transcription.file_title || "Untitled"}</TableCell>
                       <TableCell align="right">
                         <Stack direction="row" spacing={1} justifyContent="flex-end">
                           
@@ -493,6 +538,9 @@ const handleDelete = async () => {
                           >
                             Download
                           </Button>
+                          <IconButton onClick={(e) => handleMenuOpen(e, transcription.audio_file_id)}>
+  <MoreVertIcon />
+</IconButton>
                         </Stack>
                       </TableCell>
                     </TableRow>
@@ -529,19 +577,19 @@ const handleDelete = async () => {
         </DialogTitle>
         <DialogContent>
           <Box sx={{ p: 2 }}>
+          <TextField
+  fullWidth
+  label="Audio Title"
+  value={audioTitle}
+  onChange={(e) => setAudioTitle(e.target.value)}
+  sx={{ mb: 2 }}
+  inputProps={{ maxLength: 100 }}
+/>
+
             <Typography variant="body1" gutterBottom>
               Select an audio file to upload for transcription
             </Typography>
-            <TextField
-  label="Title"
-  variant="outlined"
-  fullWidth
-  margin="normal"
-  value={audioFile?.title || ""}
-  onChange={(e) => setAudioFile((prev) => ({ ...prev, title: e.target.value }))}
-  placeholder="e.g., Client Interview #1"
-/>
-
+            
             {audioFile ? (
               <Box sx={{ mt: 2, p: 2, border: '1px solid #e0e0e0', borderRadius: 1 }}>
                 <Typography variant="subtitle1">Selected file:</Typography>
@@ -622,7 +670,7 @@ const handleDelete = async () => {
       </Dialog>
 
       {/* Menu */}
-      {/* <Menu anchorEl={anchorEl} open={openMenu} onClose={handleMenuClose}>
+      <Menu anchorEl={anchorEl} open={openMenu} onClose={handleMenuClose}>
         <MenuItem
           onClick={() => {
             setConfirmDeleteOpen(true);
@@ -630,7 +678,7 @@ const handleDelete = async () => {
         >
           Delete
         </MenuItem>
-      </Menu> */}
+      </Menu>
 
       {/* Delete Confirmation */}
       <Dialog open={confirmDeleteOpen} onClose={() => setConfirmDeleteOpen(false)}>
