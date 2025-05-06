@@ -156,8 +156,8 @@ const ViewAllCases = () => {
       <AppBar position="static" color="primary" elevation={0}>
         <StudentHeader />
       </AppBar>
-      <Container sx={{ py: 4 }}>
-        <Typography variant="h5" sx={{ mb: 2 }}>
+      <Container sx={{ py: 4, mt: '70px' }}>
+        <Typography variant="h5" sx={{ mb: 2, fontFamily: "Outfit", fontWeight: 600 }}>
           View All Cases
         </Typography>
 
