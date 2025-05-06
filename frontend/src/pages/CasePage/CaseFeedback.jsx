@@ -64,13 +64,13 @@ const FeedbackPage = () => {
                 entry.isIntersecting &&
                 document.visibilityState === "visible"
               ) {
-                console.log(`Message ${messageId} has been in view for 2 seconds`);
+                console.log(`Message ${messageId} has been in view for 0 seconds`); // Change to desired time
                 
                 
                 readMessage(messageId);
 
               }
-            }, 2000);
+            }, 0); // Change desired time here (e.g., 1000ms = 1 second)
   
             timeoutMap.set(messageId, timeoutId);
             entry.target.dataset.timeoutId = timeoutId;
