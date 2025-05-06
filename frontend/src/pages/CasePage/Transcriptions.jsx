@@ -214,6 +214,7 @@ const [selectedTranscription, setSelectedTranscription] = useState(null);
       setError(error.message || "Failed to upload audio file");
     } finally {
       setIsUploading(false);
+      setAudioTitle("");
     }
   };
 
@@ -578,13 +579,13 @@ const handleDelete = async () => {
         <DialogContent>
           <Box sx={{ p: 2 }}>
           <TextField
-  fullWidth
-  label="Audio Title"
-  value={audioTitle}
-  onChange={(e) => setAudioTitle(e.target.value)}
-  sx={{ mb: 2 }}
-  inputProps={{ maxLength: 100 }}
-/>
+            fullWidth
+            label="Audio Title"
+            value={audioTitle}
+            onChange={(e) => setAudioTitle(e.target.value)}
+            sx={{ mb: 2 }}
+            inputProps={{ maxLength: 100 }}
+          />
 
             <Typography variant="body1" gutterBottom>
               Select an audio file to upload for transcription
