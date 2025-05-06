@@ -216,7 +216,43 @@ exports.handler = async (event) => {
             error: "instructor_email is required",
           });
         }
-        break;
+      break;
+      case "GET /admin/disclaimer":
+  try {
+    const disclaimers = await sqlConnectionTableCreator`
+      SELECT disclaimer_text, last_updated
+      FROM disclaimers
+      ORDER BY last_updated DESC;
+    `;
+    response.body = JSON.stringify(disclaimers);
+  } catch (err) {
+    console.error("Error fetching disclaimers:", err);
+    response.statusCode = 500;
+    response.body = JSON.stringify({ error: "Failed to fetch disclaimers" });
+  }
+  break;
+  case "POST /admin/disclaimer":
+    try {
+      if (!event.body) throw new Error("Missing request body");
+  
+      const { text } = JSON.parse(event.body);
+      if (!text) throw new Error("Missing 'text' field in request body");
+  
+      const inserted = await sqlConnectionTableCreator`
+        INSERT INTO disclaimers (disclaimer_text)
+        VALUES (${text})
+        RETURNING *;
+      `;
+  
+      response.statusCode = 200;
+      response.body = JSON.stringify(inserted[0]);
+    } catch (err) {
+      console.error("Error inserting disclaimer:", err);
+      response.statusCode = 500;
+      response.body = JSON.stringify({ error: err.message || "Internal server error" });
+    }
+    break;
+  
       case "POST /admin/elevate_instructor":
         if (
           event.queryStringParameters != null &&
@@ -325,6 +361,12 @@ exports.handler = async (event) => {
                     WHERE user_id = ${user_id};
                   `;
 
+            // Remove from instructor_students table
+      await sqlConnectionTableCreator`
+      DELETE FROM "instructor_students"
+      WHERE instructor_id = ${user_id};
+    `;
+    
             response.statusCode = 200;
             response.body = JSON.stringify({
               message: `User role updated to student for ${user_id} and all instructor enrolments deleted.`,
