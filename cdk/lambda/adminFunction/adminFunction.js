@@ -342,6 +342,72 @@ exports.handler = async (event) => {
         }
         break;
 
+        case "DELETE /admin/delete_instructor_student_assignment":
+          if (
+            event.queryStringParameters != null &&
+            event.queryStringParameters.instructor_id &&
+            event.queryStringParameters.student_id
+          ) {
+            try {
+              const instructor_id = event.queryStringParameters.instructor_id;
+              const student_id = event.queryStringParameters.student_id;
+        
+              // Fetch the roles for the instructor
+              const userRoleData = await sqlConnectionTableCreator`
+                SELECT roles, user_id
+                FROM "users"
+                WHERE user_id = ${instructor_id};
+              `;
+          
+              const userRoles = userRoleData[0]?.roles;
+              const userId = userRoleData[0]?.user_id;
+          
+              if (!userRoles || !userRoles.includes("instructor")) {
+                response.statusCode = 400;
+                response.body = JSON.stringify({
+                  error: "User is not an instructor or doesn't exist",
+                });
+                break;
+              }
+          
+              // Step 1: Check if the relationship between the instructor and student exists
+              const assignmentCheck = await sqlConnectionTableCreator`
+                SELECT * FROM "instructor_students"
+                WHERE instructor_id = ${instructor_id} AND student_id = ${student_id};
+              `;
+          
+              if (assignmentCheck.length === 0) {
+                response.statusCode = 404;
+                response.body = JSON.stringify({
+                  error: "Instructor-student assignment not found",
+                });
+                break;
+              }
+          
+              // Step 2: Unassign the instructor from the student
+              await sqlConnectionTableCreator`
+                DELETE FROM "instructor_students"
+                WHERE instructor_id = ${instructor_id} AND student_id = ${student_id};
+              `;
+          
+              response.statusCode = 200;
+              response.body = JSON.stringify({
+                message: `Instructor ${instructor_id} successfully unassigned from student ${student_id}.`,
+              });
+            } catch (err) {
+              console.log(err);
+              response.statusCode = 500;
+              response.body = JSON.stringify({ error: "Internal server error" });
+            }
+          } else {
+            response.statusCode = 400;
+            response.body = JSON.stringify({
+              error: "Instructor ID and Student ID query parameters are required",
+            });
+          }
+          break;
+        
+
       default:
         throw new Error(`Unsupported route: "${pathData}"`);
     }

@@ -13,6 +13,7 @@ import ReactMarkdown from "react-markdown";
 import SendIcon from "@mui/icons-material/Send";
 import FeedbackIcon from '@mui/icons-material/Feedback';
 import NotFound from "../NotFound";
+import Chip from "@mui/material/Chip";
 
 const CaseOverview = () => {
   const { caseId } = useParams();
@@ -22,6 +23,7 @@ const CaseOverview = () => {
   const [loading, setLoading] = useState(true);
   const [summaries, setSummaries] = useState("");
   const [editMode, setEditMode] = useState(false);
+  const [instructors, setInstructors] = useState([]);
   const [editedCase, setEditedCase] = useState({
     case_title: "",
     case_description: "",
@@ -119,7 +121,22 @@ const CaseOverview = () => {
   }, [caseId]);
 
   
-
+    useEffect(() => {
+      const fetchInstructors = async () => {
+        const session = await fetchAuthSession();
+        const token = session.tokens.idToken;
+        const cognitoId = token.payload.sub;
+  
+        const res = await fetch(`${import.meta.env.VITE_API_ENDPOINT}student/instructors?user_id=${cognitoId}`, {
+          headers: { Authorization: token, "Content-Type": "application/json" },
+        });
+  
+        const data = await res.json();
+        setInstructors(data || []);
+      };
+  
+      fetchInstructors();
+    }, [caseId]);
 
 
   const handleSaveEdit = async () => {
@@ -306,17 +323,37 @@ const CaseOverview = () => {
   {userRole === "instructor" ? (
     <></>
   ) : (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "left", gap: "1em" }}>
+      <div>
+      The instructor(s) currently able to review your case are: {(instructors.length === 0) ? "None" : instructors.map((instructor, index) => (
+      <Chip
+        key={index}
+        label={`${instructor.instructor_name}`}
+        sx={{
+          backgroundColor: "var(--background2)",
+          color: "var(--text)",
+          fontFamily: "Outfit",
+          fontWeight: 500,
+          borderRadius: 10,
+          transition: "0.2s ease",
+          ml: 1,
+        }}
+      />
+    ))}
+    </div>
     <Button
       variant="contained"
       color="primary"
       startIcon={<SendIcon />}
       onClick={handleSendForReview}
+      disabled={caseData.status === "Sent to Review" || instructors.length === 0}
       sx={{
         textTransform: "none",
         fontFamily: 'Inter',
         fontWeight: 450,
         px: 3,
         color: "white",
+        width: "fit-content",
         backgroundColor: "var(--secondary)",
         py: 1.5,
         borderRadius: 10,
@@ -330,6 +367,7 @@ const CaseOverview = () => {
     >
       Send Case for Review
     </Button>
+    </div>
   )}
 </Stack>
 
