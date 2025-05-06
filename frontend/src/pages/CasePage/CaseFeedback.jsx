@@ -11,6 +11,7 @@ import SendIcon from "@mui/icons-material/Send";
 import FeedbackIcon from '@mui/icons-material/Feedback';
 import Divider from "@mui/material/Divider";
 import NotFound from "../NotFound";
+import { ArrowUpward } from "@mui/icons-material";
 
 const FeedbackPage = () => {
   const { caseId } = useParams();
@@ -219,6 +220,69 @@ const FeedbackPage = () => {
 
           {userRole === "instructor" && (
             <Card sx={{ backgroundColor: 'var(--background)', borderRadius: 2, boxShadow: 'none', border: '1px solid var(--border)' }}>
+              
+              <CardContent sx={{my: 2, mx: 3, color: 'var(--text)', border: '1px solid var(--border)', borderRadius: 2, fontSize: '15pt', fontFamily: 'Outfit'}}>
+              <p>Provide New Feedback</p>
+                <Divider sx={{borderColor: 'var(--border)', marginTop: 0.75}} />
+                <TextField
+                  placeholder="Type feedback on this case for your student here. They will be able to see your name."
+                  fullWidth
+                  multiline
+                  value={feedback}
+                  onChange={(e) => setFeedback(e.target.value)}
+                  sx={{ my: 2, 
+                    overflow: "auto",
+                    "& .MuiOutlinedInput-root": {
+                      color: "var(--text)",
+                      "& fieldset": {
+                        borderColor: "var(--border)",
+                      },
+                      "&:hover fieldset": {
+                        borderColor: "var(--border)",
+                      },
+                      "&.Mui-focused fieldset": {
+                        borderColor: "var(--border)",
+                      },
+                    },
+                    "& .MuiInputLabel-root": {
+                      color: "var(--text)",
+                    },
+                  }}    
+                />
+                <Stack direction="row" spacing={2}>
+                  {userRole === "instructor" ? (
+                    <Button
+                      variant="contained"
+                      color="secondary"
+                      startIcon={<SendIcon />}
+                      onClick={handleSubmitFeedback}
+                      sx={{
+                        fontFamily: 'Inter',
+                        textTransform: "none",
+                        backgroundColor: "var(--secondary)",
+                        color: "white",
+                        fontWeight: 450,
+                        px: 3,
+                        py: 1.5,
+                        borderRadius: 10,
+                        transition: "0.2s ease",
+                        boxShadow: "none",
+                        "&:hover": {
+                          boxShadow: "none",
+                          backgroundColor: "var(--primary)",
+                        }
+                      }}
+                    >
+                      Send Feedback
+                    </Button>
+                  ) : (
+                    <></>
+                  )}
+                </Stack>
+
+              </CardContent>
+              
+
               <Box
   sx={{
     m: 3,
@@ -249,64 +313,7 @@ const FeedbackPage = () => {
   )}
 </Box>
 
-              <CardContent sx={{m: 1, color: 'var(--text)'}}>
-              <p>Send your students feedback on this case here. They will be able to see your name.</p>
-                <TextField
-                  placeholder="Your Feedback"
-                  fullWidth
-                  multiline
-                  value={feedback}
-                  onChange={(e) => setFeedback(e.target.value)}
-                  sx={{ my: 2, 
-                    overflow: "auto",
-                    "& .MuiOutlinedInput-root": {
-                      color: "var(--text)",
-                      "& fieldset": {
-                        borderColor: "var(--border)",
-                      },
-                      "&:hover fieldset": {
-                        borderColor: "var(--border)",
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: "var(--border)",
-                      },
-                    },
-                    "& .MuiInputLabel-root": {
-                      color: "var(--text)",
-                    },
-                  }}    
-                />
-                <Stack direction="row" spacing={2} mb={3}>
-  {userRole === "instructor" ? (
-    <Button
-      variant="contained"
-      color="secondary"
-      startIcon={<FeedbackIcon />}
-      onClick={handleSubmitFeedback}
-      sx={{
-        fontFamily: 'Inter',
-        textTransform: "none",
-        backgroundColor: "var(--secondary)",
-        color: "white",
-        fontWeight: 450,
-        px: 3,
-        py: 1.5,
-        borderRadius: 2,
-        transition: "0.2s ease",
-        boxShadow: "none",
-        "&:hover": {
-          boxShadow: "0px 2px 10px rgba(0,0,0,0.15)",
-          transform: "translateY(-1px)"
-        }
-      }}
-    >
-      {messages.length > 0 ? "Update Feedback" : "Send Feedback"}
-    </Button>
-  ) : (
-    <></>
-  )}
-</Stack>
-              </CardContent>
+              
             </Card>
           )}
         </Container>
