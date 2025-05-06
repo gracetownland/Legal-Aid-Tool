@@ -16,9 +16,13 @@ import {
   DialogContentText,
   Autocomplete,
   TextField,
+  IconButton
 } from "@mui/material";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Clear from "@mui/icons-material/Clear";
+import { Diversity1 } from "@mui/icons-material";
+
 
 // Function to convert string to title case
 function titleCase(str) {
@@ -37,12 +41,13 @@ const InstructorDetails = ({ instructorData, onBack }) => {
   const [selectedStudent, setSelectedStudent] = useState(null);  // Track the selected student
 
   useEffect(() => {
-    console.log(instructor)
+    console.log("Instructor:", instructor)
     // Fetch all students
     const fetchStudents = async () => {
       try {
         const session = await fetchAuthSession();
         const token = session.tokens.idToken;
+        
         const response = await fetch(
           `${import.meta.env.VITE_API_ENDPOINT}admin/students`,
           {
@@ -217,11 +222,61 @@ const InstructorDetails = ({ instructorData, onBack }) => {
       });
     }
   };
+
+  const handleUnassignStudent = async (studentId) => {
+    try {
+      const session = await fetchAuthSession();
+      const token = session.tokens.idToken;
+      
+
+      console.log("Unassigning student:", studentId);
+  
+      // Unassign student from instructor
+      const response = await fetch(
+        `${import.meta.env.VITE_API_ENDPOINT}admin/delete_instructor_student_assignment?instructor_id=${instructor.id}&student_id=${studentId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: token,
+            "Content-Type": "application/json",
+          }
+        }
+      );
+  
+      if (response.ok) {
+        fetchAssignedStudents(); // Refresh assigned students list
+      } else {
+        console.error("Failed to unassign student:", response.statusText);
+        toast.error("Failed to unassign student.", {
+          position: "top-center",
+          autoClose: 1000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "colored",
+        });
+      }
+    } catch (error) {
+      console.error("Error unassigning student:", error);
+      toast.error("An error occurred while unassigning the student.", {
+        position: "top-center",
+        autoClose: 1000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "colored",
+      });
+    }
+  }
   
 
   return (
     <>
-      <Box component="main" sx={{ flexGrow: 1, p: 3, marginTop: 1, textAlign: "left" }}>
+      <Box component="main" sx={{ flexGrow: 1, textAlign: "left" }}>
         <Toolbar />
         <Paper
           sx={{
@@ -234,8 +289,8 @@ const InstructorDetails = ({ instructorData, onBack }) => {
             boxShadow: "none",
           }}
         >
-          <Typography variant="h5" sx={{ marginBottom: 2, p: 1 }}>
-            Instructor: {titleCase(instructor?.first_name)} {titleCase(instructor?.last_name)}
+          <Typography variant="h5" sx={{ p: 1 }}>
+            <strong>Instructor: </strong> {titleCase(instructor?.user)} {titleCase(instructor?.last)}
           </Typography>
           <Divider sx={{ p: 1, marginBottom: 3, borderColor: "var(--border)" }} />
           <Typography variant="h7" sx={{ marginBottom: 1, p: 1 }}>
@@ -247,14 +302,25 @@ const InstructorDetails = ({ instructorData, onBack }) => {
             Assigned Students:
           </Typography>
           <Box>
+          <Divider sx={{ borderColor: "var(--border)", marginTop: 0.75, marginBottom: 1 }} />
             {assignedStudents.length > 0 ? (
               assignedStudents.map((student) => (
-                <Typography key={student.id}>
+                <>
+                <div style={{display: "flex", justifyContent: "space-between", alignItems: "center", paddingLeft: 10, borderRadius: 5, backgroundColor: "var(--background)", color: "var(--text)"}}>
+                <Typography key={student.user_id}>
                   {student.first_name} {student.last_name}
                 </Typography>
+                <IconButton>
+                  <Clear sx={{color: '#808080'}} onClick={() => handleUnassignStudent(student.user_id)}/>
+                </IconButton>
+
+                
+                </div>
+                <Divider sx={{ borderColor: "var(--border)", marginTop: 0.75, marginBottom: 0.75 }} />
+                </>
               ))
             ) : (
-              <Typography>No students assigned yet.</Typography>
+              <Typography sx={{marginTop: 2, color: "var(--placeholder-text)"}}>No students assigned yet.</Typography>
             )}
           </Box>
   
