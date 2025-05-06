@@ -130,9 +130,14 @@ const CaseOverview = () => {
         const res = await fetch(`${import.meta.env.VITE_API_ENDPOINT}student/instructors?user_id=${cognitoId}`, {
           headers: { Authorization: token, "Content-Type": "application/json" },
         });
-  
+        if (!res.ok) {
+          console.error("Failed to fetch instructors:", res.statusText);
+          return;
+        }
+
         const data = await res.json();
         setInstructors(data || []);
+        
       };
   
       fetchInstructors();
