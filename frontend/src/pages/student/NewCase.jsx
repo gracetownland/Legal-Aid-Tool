@@ -154,14 +154,12 @@ const NewCaseForm = () => {
       //   }
       // );
 
-
-      console.log("Title generated:", data.case_title);
-
       // Step 3: Optionally update the case with the new title
       const updatedCaseData = {
-        case_title: data.generated_title,
+        case_title: data.case_title,
         case_type: formData.broadAreaOfLaw,
         jurisdiction: formData.jurisdiction,
+        status: "In Progress",
         case_description: formData.legalMatterSummary,
         province: formData.province,
         statute: formData.statuteDetails,
