@@ -337,7 +337,7 @@ const InstructorDetails = ({ instructorData, onBack }) => {
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label="Select Student"
+                  label="Add Student"
                   variant="outlined"
                   sx={{
                     "& .MuiInputBase-input": {
