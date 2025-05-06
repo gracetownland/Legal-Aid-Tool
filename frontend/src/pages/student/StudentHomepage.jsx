@@ -154,7 +154,7 @@ export const StudentHomepage = () => {
           if (response.status === 404) {
             setLoading(false);
             setCases([]); // Set cases to an empty array if no cases are found
-            return; // Stop further execution
+            throw new Error("No cases found"); // Throw an error to be caught in the catch block
           }
   
           return response.json(); // Parse response JSON if not 404
