@@ -928,6 +928,41 @@ break;
         }
         break;
 
+        case "PUT /student/edit_case":
+          if (
+            event.queryStringParameters != null &&
+            event.queryStringParameters.case_id 
+        ) {
+            const { case_id } = event.queryStringParameters;
+
+            const { case_title, case_type, case_description, status, jurisdiction, province, statute } = JSON.parse(event.body || "{}");
+            try {
+                await sqlConnection`
+                    UPDATE "cases"
+                    SET 
+                        case_title = ${case_title},
+                        case_type = ${case_type},
+                        case_description = ${case_description},
+                        status = ${status},
+                        jurisdiction = ${jurisdiction}, 
+                        province = ${province},
+                        statute = ${statute}
+                    WHERE case_id = ${case_id}; 
+                `;
+                response.statusCode = 200;
+                response.body = JSON.stringify({
+                    message: "Case Updated Successfully",
+                });
+          } catch (err) {
+              response.statusCode = 500;
+              console.error(err);
+              response.body = JSON.stringify({
+                  error: "Internal server error",
+              });
+          }
+        }
+        break;
+
         case "DELETE /student/delete_case":
           console.log(event);
           if (
@@ -1013,42 +1048,6 @@ break;
             response.statusCode = 400;
             response.body = JSON.stringify({ error: "audio_File_id is required" });
         }
-        break;
-
-        case "PUT /student/edit_case":
-          if (
-            event.queryStringParameters != null &&
-            event.queryStringParameters.case_id &&
-            event.queryStringParameters.cognito_id
-        ) {
-            const { case_id, cognito_id } = event.queryStringParameters;
-            const { case_title, case_type, case_description, status, jurisdiction, province, statute } = JSON.parse(event.body || "{}");
-            try {
-                await sqlConnection`
-                    UPDATE "cases"
-                    SET 
-                        case_title = ${case_title},
-                        case_type = ${case_type},
-                        case_description = ${case_description},
-                        status = ${status},
-                        jurisdiction = ${jurisdiction}, 
-                        province = ${province},
-                        statute = ${statute}
-                    WHERE case_id = ${case_id}; 
-                `;
-                response.statusCode = 200;
-                response.body = JSON.stringify({
-                    message: "Case Updated Successfully",
-                });
-            } catch (err) {
-                response.statusCode = 500;
-                console.error(err);
-                response.body = JSON.stringify({
-                    error: "Internal server error",
-                });
-            }
-        }
-         
         break;
 
         case "PUT /student/review_case":

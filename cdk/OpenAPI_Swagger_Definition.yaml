@@ -2077,21 +2077,15 @@ paths:
     put:
       tags:
         - Student
-      summary: Update details of a case
-      operationId: student_edit_case_PUT
+      summary: Update notes in a session
+      operationId: update_case_PUT
       parameters:
         - in: query
           name: case_id
           required: true
-          description: ID of the case to be updated
           schema:
             type: string
-        - in: query
-          name: cognito_id
-          required: true
-          description: id of the student updating case
-          schema:
-            type: string
+          description: The ID of the case
       requestBody:
         required: true
         content:
@@ -2107,20 +2101,21 @@ paths:
                   type: string
                 status:
                   type: string
-              required:
-                - case_title
-                - case_description
-                - case_type
-                - status
+                jurisdiction:
+                  type: array
+                  items:
+                    type: string
+                province:
+                  type: string
+                statute:
+                  type: string
       responses:
         "200":
           description: Case updated successfully
         "400":
           description: Bad Request
-        "401":
-          description: Unauthorized
-        "429":
-          description: Too Many Requests
+        "404":
+          description: Case not found
         "500":
           description: Internal Server Error
       security:
@@ -2130,7 +2125,7 @@ paths:
           Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${studentFunction.Arn}/invocations"
         passthroughBehavior: "when_no_match"
         httpMethod: "POST"
-        type: "aws_proxy"
+        type: "aws_proxy" 
 
   /student/delete_case:
     options:

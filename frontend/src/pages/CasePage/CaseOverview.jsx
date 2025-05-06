@@ -68,12 +68,12 @@ const CaseOverview = () => {
     if (caseData) {
       setEditedCase({
         case_title: caseData.case_title,
-        case_description: caseData.case_description,
         case_type: caseData.case_type,
+        case_description: caseData.case_description,
+        status: caseData.status,
         jurisdiction: caseData.jurisdiction,
         province: caseData.province,
         statute: caseData.statute,
-        case_hash: caseData.case_hash,
       });
     }
   }, [caseData]);
@@ -130,16 +130,15 @@ const CaseOverview = () => {
       console.log("Edited case: ", editedCase)
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_ENDPOINT}student/edit_case?case_id=${caseId}&cognito_id=${token.payload.sub}`,
+        `${import.meta.env.VITE_API_ENDPOINT}student/edit_case?case_id=${encodeURIComponent(caseId)}`,
         {
-          method: "PUT",
-          headers: {
-            Authorization: token,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(editedCase), 
-        }
-      );
+            method: "PUT",
+            headers: {
+                Authorization: token,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(editedCase),
+        })
 
       if (!response.ok) throw new Error("Failed to update case");
 
