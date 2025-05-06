@@ -259,6 +259,77 @@ exports.handler = async (event) => {
   }
   break;
 
+  case "GET /student/recent_cases":
+  if (event.queryStringParameters && event.queryStringParameters.user_id) {
+    const cognito_id = event.queryStringParameters.user_id;
+
+    try {
+      // Retrieve the user ID using the cognito_id
+      const user = await sqlConnection`
+        SELECT user_id FROM "users" WHERE cognito_id = ${cognito_id};
+      `;
+
+      const user_id = user[0]?.user_id;
+
+      if (user_id) {
+        const data = await sqlConnection`
+          SELECT * 
+          FROM "cases"
+          WHERE user_id = ${user_id}
+          ORDER BY last_viewed DESC
+          LIMIT 6;
+        `;
+
+        if (data.length === 0) {
+          response.statusCode = 404;
+          response.body = JSON.stringify({ message: "No cases found" });
+        } else {
+          response.statusCode = 200;
+          response.body = JSON.stringify(data);
+        }
+      } else {
+        response.statusCode = 404;
+        response.body = JSON.stringify({ error: "User not found" });
+      }
+    } catch (err) {
+      response.statusCode = 500;
+      console.error(err);
+      response.body = JSON.stringify({ error: "Internal server error" });
+    }
+  } else {
+    response.statusCode = 400;
+    response.body = JSON.stringify({ error: "Invalid value" });
+  }
+  break;
+
+  case "PUT /student/view_case":
+  if (
+    event.queryStringParameters &&
+    event.queryStringParameters.case_id
+  ) {
+    const case_id = event.queryStringParameters.case_id;
+
+    try {      
+      await sqlConnection`
+        UPDATE "cases"
+        SET last_viewed = NOW()
+        WHERE case_id = ${case_id};
+      `;
+
+      response.statusCode = 200;
+      response.body = JSON.stringify({ message: "Last viewed timestamp updated" });
+    } catch (err) {
+      console.error(err);
+      response.statusCode = 500;
+      response.body = JSON.stringify({ error: "Internal server error" });
+    }
+  } else {
+    response.statusCode = 400;
+    response.body = JSON.stringify({ error: "Missing case_id or user_id" });
+  }
+  break;
+
+
   case "GET /student/get_transcriptions":
   if (event.queryStringParameters && event.queryStringParameters.case_id) {
     const caseId = event.queryStringParameters.case_id;

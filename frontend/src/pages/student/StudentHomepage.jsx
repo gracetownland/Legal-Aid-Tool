@@ -139,7 +139,7 @@ export const StudentHomepage = () => {
             return fetch(
               `${
                 import.meta.env.VITE_API_ENDPOINT
-              }student/get_cases?user_id=${cognito_id}`,
+              }student/recent_cases?user_id=${cognito_id}`,
               {
                 method: "GET",
                 headers: {
@@ -160,11 +160,9 @@ export const StudentHomepage = () => {
           return response.json(); // Parse response JSON if not 404
         })
         .then((data) => {
-          // Sort cases by last_updated (most recent first)
-          const sortedCases = data.sort((a, b) => new Date(b.last_updated) - new Date(a.last_updated));
-          setCases(sortedCases);
+          setCases(data);
           setLoading(false);
-          console.log(sortedCases);
+          console.log(data);
         })
         .catch((error) => {
           console.error("Error fetching cases:", error);
@@ -255,7 +253,7 @@ export const StudentHomepage = () => {
             >
               {cases.length > 0 && (
                 <Typography variant="h5" sx={{ textAlign: "left", fontWeight: 600, marginLeft: 3, marginTop: 5, color: "var(--header-text)", fontSize: "1.8rem", fontFamily: "Outfit" }}>
-                  Latest Cases
+                  Recent Cases
                 </Typography>
               )}
               <Stack sx={{ flex: 1, width: "100%" }}>

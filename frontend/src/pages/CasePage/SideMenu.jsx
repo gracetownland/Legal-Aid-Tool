@@ -53,6 +53,34 @@ const SideMenu = () => {
       fetchCaseData();
     }, [caseId]);
 
+      useEffect(() => {
+        const handleViewCase = async () => {
+        try {
+          const session = await fetchAuthSession();
+          const token = session.tokens.idToken;
+    
+          
+    
+          const response = await fetch(
+            `${import.meta.env.VITE_API_ENDPOINT}student/view_case?case_id=${encodeURIComponent(caseId)}`,
+            {
+                method: "PUT",
+                headers: {
+                    Authorization: token,
+                    "Content-Type": "application/json",
+                },
+            })
+            
+            console.log("Test")
+          if (!response.ok) throw new Error("Failed to update last viewed timestamp of case in database:");
+          } catch (error) {
+            console.error("Error editing case: ", error);
+          }
+        };
+    
+        handleViewCase();
+      }, []);
+
   const toggleNotes = () => {
     setIsNotesOpen(!isNotesOpen);
     const notesButton = document.getElementById("notesButton");
