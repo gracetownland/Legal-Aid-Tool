@@ -45,7 +45,7 @@ const StudentHeader = () => {
   }, []);
 
   useEffect(() => {
-    const intervalId = setInterval(async () => {
+    const fetchNotifications = async () => {
       try {
         const session = await fetchAuthSession();
         const token = session.tokens.idToken;
@@ -66,9 +66,13 @@ const StudentHeader = () => {
       } catch (error) {
         console.error("Error fetching notifications:", error);
       }
-    }, 30000); // 30-second interval
+    };
   
-    // Cleanup on component unmount
+
+    fetchNotifications();
+
+    const intervalId = setInterval(fetchNotifications, 30000);
+  
     return () => clearInterval(intervalId);
   }, []);
 
