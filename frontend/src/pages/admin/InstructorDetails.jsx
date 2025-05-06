@@ -16,7 +16,8 @@ import {
   DialogContentText,
   Autocomplete,
   TextField,
-  IconButton
+  IconButton,
+  Icon
 } from "@mui/material";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -153,7 +154,6 @@ const InstructorDetails = ({ instructorData, onBack }) => {
           theme: "colored",
         });
         fetchAssignedStudents(); // Refresh assigned students list
-        onBack();
       } else {
         console.error("Failed to assign student:", response.statusText);
         toast.error("Failed to assign student.", {
@@ -276,8 +276,8 @@ const InstructorDetails = ({ instructorData, onBack }) => {
 
   return (
     <>
-      <Box component="main" sx={{ flexGrow: 1, textAlign: "left" }}>
-        <Toolbar />
+      <Box component="main" sx={{ flexGrow: 1, paddingTop: 1, textAlign: "left" }}>
+        
         <Paper
           sx={{
             p: 2,
@@ -310,7 +310,10 @@ const InstructorDetails = ({ instructorData, onBack }) => {
                 <Typography key={student.user_id}>
                   {student.first_name} {student.last_name}
                 </Typography>
-                <IconButton>
+                <IconButton disableRipple disableFocusRipple  sx={{
+                  '&:focus': { outline: 'none' },
+                  '&:focus-visible': { outline: 'none' },
+                }}>
                   <Clear sx={{color: '#808080'}} onClick={() => handleUnassignStudent(student.user_id)}/>
                 </IconButton>
 
@@ -384,6 +387,7 @@ const InstructorDetails = ({ instructorData, onBack }) => {
           </Grid>
           <Grid item xs={6} container justifyContent="flex-end">
             <Button
+            type="button"
               variant="contained"
               color="primary"
               onClick={handleAssignStudent}
