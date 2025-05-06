@@ -349,7 +349,7 @@ exports.handler = async (event) => {
 
     // Step 2: Get the case and its owner
     const caseResult = await sqlConnection`
-      SELECT * FROM "cases" WHERE case_id = ${case_id};
+      SELECT * FROM "cases" WHERE case_id = ${caseId};
     `;
     if (caseResult.length === 0) {
       response.statusCode = 404;
