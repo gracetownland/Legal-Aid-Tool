@@ -1276,15 +1276,15 @@ export class ApiGatewayStack extends cdk.Stack {
 
 
 
-    const titleGenLambdaDockerFunc = new lambda.DockerImageFunction(
+    const caseGenLambdaDockerFunc = new lambda.DockerImageFunction(
       this,
-      `${id}-TitleGenLambdaDockerFunction`,
+      `${id}-CaseGenLambdaDockerFunction`,
       {
-        code: lambda.DockerImageCode.fromImageAsset("./title_generation"),
+        code: lambda.DockerImageCode.fromImageAsset("./case_generation"),
         memorySize: 512,
         timeout: cdk.Duration.seconds(300),
         vpc: vpcStack.vpc, // Pass the VPC
-        functionName: `${id}-TitleLambdaDockerFunction`,
+        functionName: `${id}-CaseLambdaDockerFunction`,
         environment: {
           SM_DB_CREDENTIALS: db.secretPathAdminName,
           RDS_PROXY_ENDPOINT: db.rdsProxyEndpointAdmin,
@@ -1296,12 +1296,12 @@ export class ApiGatewayStack extends cdk.Stack {
     );
 
     // Override the Logical ID of the Lambda Function to get ARN in OpenAPI
-    const cfnTitleGenDockerFunc = titleGenLambdaDockerFunc.node
+    const cfnCaseGenDockerFunc = caseGenLambdaDockerFunc.node
       .defaultChild as lambda.CfnFunction;
-    cfnTitleGenDockerFunc.overrideLogicalId("TitleGenLambdaDockerFunc");
+    cfnCaseGenDockerFunc.overrideLogicalId("CaseGenLambdaDockerFunc");
 
     // Add the permission to the Lambda function's policy to allow API Gateway access
-    titleGenLambdaDockerFunc.addPermission("AllowApiGatewayInvoke", {
+    caseGenLambdaDockerFunc.addPermission("AllowApiGatewayInvoke", {
       principal: new iam.ServicePrincipal("apigateway.amazonaws.com"),
       action: "lambda:InvokeFunction",
       sourceArn: `arn:aws:execute-api:${this.region}:${this.account}:${this.api.restApiId}/*/*/student*`,
@@ -1309,9 +1309,9 @@ export class ApiGatewayStack extends cdk.Stack {
 
 
     // Attach the corrected Bedrock policy to Lambda
-    titleGenLambdaDockerFunc.addToRolePolicy(bedrockPolicyStatement);
+    caseGenLambdaDockerFunc.addToRolePolicy(bedrockPolicyStatement);
 
-    titleGenLambdaDockerFunc.addToRolePolicy(
+    caseGenLambdaDockerFunc.addToRolePolicy(
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
         actions: [
@@ -1327,7 +1327,7 @@ export class ApiGatewayStack extends cdk.Stack {
     );
 
     // Grant access to Secret Manager
-    titleGenLambdaDockerFunc.addToRolePolicy(
+    caseGenLambdaDockerFunc.addToRolePolicy(
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
         actions: [
@@ -1341,7 +1341,7 @@ export class ApiGatewayStack extends cdk.Stack {
     );
 
        // Grant access to SSM Parameter Store for specific parameters
-       titleGenLambdaDockerFunc.addToRolePolicy(
+       caseGenLambdaDockerFunc.addToRolePolicy(
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
           actions: ["ssm:GetParameter"],

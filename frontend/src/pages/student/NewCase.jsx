@@ -141,19 +141,6 @@ const NewCaseForm = () => {
         return;
       }
 
-      // // Step 2: Generate a title for the newly created case
-      // console.log("Generating title for the case...");
-      // const get_title = await fetch(
-      //   `${import.meta.env.VITE_API_ENDPOINT}student/title_generation?case_id=${data.case_id}`,
-      //   {
-      //     method: "POST",
-      //     headers: {
-      //       "Content-Type": "application/json",
-      //       Authorization: token,
-      //     },
-      //   }
-      // );
-
       // Step 3: Optionally update the case with the new title
       const updatedCaseData = {
         case_title: data.case_title,
