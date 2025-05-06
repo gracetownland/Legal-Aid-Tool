@@ -146,6 +146,17 @@ const FeedbackPage = () => {
 
       if (!response.ok) throw new Error();
       setSnackbar({ open: true, message: "Feedback submitted!", severity: "success" });
+
+      // Brings to the front of student's recent cases on StudentHomepage
+      await fetch(
+        `${import.meta.env.VITE_API_ENDPOINT}student/view_case?case_id=${encodeURIComponent(caseId)}`,
+        {
+            method: "PUT",
+            headers: {
+                Authorization: token,
+                "Content-Type": "application/json",
+            },
+        })
       window.location.reload();
       setFeedback("");
     } catch {

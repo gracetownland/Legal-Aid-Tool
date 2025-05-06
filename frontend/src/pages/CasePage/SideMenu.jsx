@@ -23,7 +23,7 @@ const SideMenu = () => {
   const { caseId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const [userRole, setUserRole] = useState("student");
+  const [userRole, setUserRole] = useState(null);
   const [isNotesOpen, setIsNotesOpen] = useState(false);
   const [isPrelimSummaryGenerated, setIsPrelimSummaryGenerated] = useState(false); 
   const [isUnreadFeedback, setIsUnreadFeedback] = useState(false);
@@ -53,34 +53,6 @@ const SideMenu = () => {
       fetchCaseData();
     }, [caseId]);
 
-      useEffect(() => {
-        const handleViewCase = async () => {
-        try {
-          const session = await fetchAuthSession();
-          const token = session.tokens.idToken;
-    
-          
-    
-          const response = await fetch(
-            `${import.meta.env.VITE_API_ENDPOINT}student/view_case?case_id=${encodeURIComponent(caseId)}`,
-            {
-                method: "PUT",
-                headers: {
-                    Authorization: token,
-                    "Content-Type": "application/json",
-                },
-            })
-            
-            console.log("Test")
-          if (!response.ok) throw new Error("Failed to update last viewed timestamp of case in database:");
-          } catch (error) {
-            console.error("Error editing case: ", error);
-          }
-        };
-    
-        handleViewCase();
-      }, []);
-
   const toggleNotes = () => {
     setIsNotesOpen(!isNotesOpen);
     const notesButton = document.getElementById("notesButton");
@@ -107,6 +79,37 @@ const SideMenu = () => {
   const handleNavigation = (option) => {
     navigate(`/case/${caseId}/${option.toLowerCase().replace(" ", "-")}`);
   };
+
+  useEffect(() => {
+    const handleViewCase = async () => {
+    try {
+      const session = await fetchAuthSession();
+      const token = session.tokens.idToken;
+
+      
+
+      const response = await fetch(
+        `${import.meta.env.VITE_API_ENDPOINT}student/view_case?case_id=${encodeURIComponent(caseId)}`,
+        {
+            method: "PUT",
+            headers: {
+                Authorization: token,
+                "Content-Type": "application/json",
+            },
+        })
+        
+        console.log("Test")
+      if (!response.ok) throw new Error("Failed to update last viewed timestamp of case in database:");
+      } catch (error) {
+        console.error("Error editing case: ", error);
+      }
+    };
+
+    console.log(userRole)
+    if (userRole === "student") {
+    handleViewCase();
+    }
+  }, [userRole]);
 
   return (
     <>
