@@ -550,6 +550,50 @@ break;
           break;
 
 
+          case "GET /student/instructors":
+            if (event.queryStringParameters && event.queryStringParameters.user_id) {
+              const cognito_id = event.queryStringParameters.user_id;
+          
+              try {
+                // Retrieve the user ID using the cognito_id
+                const user = await sqlConnection`
+                  SELECT user_id FROM "users" where cognito_id = ${cognito_id};
+                `;
+          
+                const user_id = user[0]?.user_id;
+          
+                if (user_id) {
+                  const data = await sqlConnection`
+                    SELECT 
+                    u.first_name||' '||u.last_name AS instructor_name
+                    FROM instructor_students inst
+                    JOIN users u ON inst.instructor_id = u.user_id
+                    WHERE inst.student_id = ${user_id}
+                  `;
+          
+                  if (data.length === 0) {
+                    response.statusCode = 404; 
+                    response.body = JSON.stringify({ message: "No instructors assigned to this user." });
+                  } else {
+                    response.statusCode = 200; 
+                    response.body = JSON.stringify(data);
+                  }
+                } else {
+                  response.statusCode = 404;
+                  response.body = JSON.stringify({ error: "User not found" });
+                }
+              } catch (err) {
+                response.statusCode = 500;
+                console.error(err);
+                response.body = JSON.stringify({ error: "Internal server error" });
+              }
+            } else {
+              response.statusCode = 400;
+              response.body = JSON.stringify({ error: "Invalid user" });
+            }
+            break;
+
+
           case "GET /student/disclaimer":
           if (event.queryStringParameters && event.queryStringParameters.user_id) {
             const cognito_id = event.queryStringParameters.user_id;

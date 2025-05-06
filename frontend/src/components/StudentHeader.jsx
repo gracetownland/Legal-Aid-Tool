@@ -45,7 +45,7 @@ const StudentHeader = () => {
   }, []);
 
   useEffect(() => {
-    const getNotifications = async () => {
+    const intervalId = setInterval(async () => {
       try {
         const session = await fetchAuthSession();
         const token = session.tokens.idToken;
@@ -63,12 +63,13 @@ const StudentHeader = () => {
         const data = await response.json();
         console.log("NOTIFICATIONS:", data);
         setNotifications(data);
-      }
-      catch (error) {
+      } catch (error) {
         console.error("Error fetching notifications:", error);
       }
-    };
-    getNotifications();
+    }, 30000); // 30-second interval
+  
+    // Cleanup on component unmount
+    return () => clearInterval(intervalId);
   }, []);
 
   useEffect(() => {
