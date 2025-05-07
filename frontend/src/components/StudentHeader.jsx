@@ -61,7 +61,6 @@ const StudentHeader = () => {
           }
         );
         const data = await response.json();
-        console.log("NOTIFICATIONS:", data);
         setNotifications(data);
       } catch (error) {
         console.error("Error fetching notifications:", error);

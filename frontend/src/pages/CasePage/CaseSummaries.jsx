@@ -215,7 +215,6 @@ const SummariesPage = () => {
         )
       );
       setCaseData(data.caseData);
-      console.log(data)
     } catch (error) {
       console.error("Error fetching case summaries:", error);
     } finally {
@@ -368,7 +367,6 @@ const SummariesPage = () => {
   const handleMenuOpen = (event, summaryId) => {
     setAnchorEl(event.currentTarget);
     setSelectedSummaryId(summaryId);
-    console.log(summaryId);
   };
   
   const handleMenuClose = () => {

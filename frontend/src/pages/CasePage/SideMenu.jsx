@@ -42,8 +42,6 @@ const SideMenu = () => {
         });
   
         const data = await res.json();
-
-        console.log(data.messages)
         
         if (data.messages.filter((msg)=> msg.is_read === false).length > 0) {
           setIsUnreadFeedback(true);
@@ -98,14 +96,12 @@ const SideMenu = () => {
             },
         })
         
-        console.log("Test")
       if (!response.ok) throw new Error("Failed to update last viewed timestamp of case in database:");
       } catch (error) {
         console.error("Error editing case: ", error);
       }
     };
 
-    console.log(userRole)
     if (userRole === "student") {
     handleViewCase();
     }

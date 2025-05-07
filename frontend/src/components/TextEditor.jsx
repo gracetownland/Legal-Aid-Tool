@@ -70,7 +70,6 @@ export default function App( {lastSaved, setLastSaved} ) {
 
         if (saveButton) {
             const handleSaveClick = async () => {
-                console.log("Save button clicked");
                 const authSession = await fetchAuthSession();
                 const token = authSession.tokens.idToken;
 
@@ -90,8 +89,6 @@ export default function App( {lastSaved, setLastSaved} ) {
                     if (!response.ok) {
                         throw new Error(`Failed to save notes: ${response.status} ${response.statusText}`);
                     }
-
-                    console.log("Notes saved successfully");
                     
                     // Update last saved timestamp
                     const now = new Date();

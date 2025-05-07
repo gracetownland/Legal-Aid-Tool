@@ -102,7 +102,6 @@ const InterviewAssistant = () => {
       const session = await fetchAuthSession();
       const token = session.tokens.idToken;
       const cognito_id = session.tokens.idToken.payload.sub;
-      console.log("Token: ", token);
       try {
         const response = await fetch(
           `${import.meta.env.VITE_API_ENDPOINT}student/case_page?case_id=${caseId}&cognito_id=${cognito_id}`,
@@ -117,7 +116,6 @@ const InterviewAssistant = () => {
 
         if (!response.ok) throw new Error("Case not found");
         const data = await response.json();
-        console.log("Case data: ", data);
         setCaseData(data.caseData);
 
         const userRole =
@@ -151,7 +149,6 @@ const InterviewAssistant = () => {
         if (!response.ok) throw new Error("Messages not found");
 
         const data = await response.json();
-        console.log("Messages data: ", data);
 
         // Transform fetched data and clean user messages
         const formattedMessages = data.map((msg) => ({
@@ -252,7 +249,6 @@ const InterviewAssistant = () => {
       // Await the AI response before updating the messages
       setIsAItyping(true);
       const llmResponse = await getAIResponse(userInput);
-      console.log("LLM Responded with: ", llmResponse);
 
       setMessages((prevMessages) => [
         ...prevMessages,
@@ -347,7 +343,6 @@ const InterviewAssistant = () => {
 
         const data = await response.json();
         const res = data.llm_output.llm_output;
-        console.log("Success:", data);
 
         setMessageCounter((prevCounter) => prevCounter + 1); // Increment message counter on frontend
         const counter_response = await fetch(

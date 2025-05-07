@@ -106,7 +106,6 @@ const CaseOverview = () => {
         const data = await response.json();
         setCaseData(data.caseData);
         setSummaries(data.summaries);
-        console.log(data);
       } catch (error) {
         console.error("Error fetching case data:", error);
         setCaseData(null);
@@ -148,8 +147,6 @@ const CaseOverview = () => {
     try {
       const session = await fetchAuthSession();
       const token = session.tokens.idToken;
-
-      console.log("Edited case: ", editedCase)
 
       const response = await fetch(
         `${import.meta.env.VITE_API_ENDPOINT}student/edit_case?case_id=${encodeURIComponent(caseId)}`,

@@ -134,7 +134,6 @@ export const StudentHomepage = () => {
           return fetchUserAttributes().then((userAttributes) => {
             const token = session.tokens.idToken;
             const tokenstring = session.tokens.idToken.toString();
-            console.log("token for user:", tokenstring);
             const cognito_id = session.tokens.idToken.payload.sub;
             return fetch(
               `${
@@ -162,7 +161,6 @@ export const StudentHomepage = () => {
         .then((data) => {
           setCases(data);
           setLoading(false);
-          console.log(data);
         })
         .catch((error) => {
           console.error("Error fetching cases:", error);

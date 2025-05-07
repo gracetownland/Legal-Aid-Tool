@@ -67,7 +67,6 @@ const [selectedTranscription, setSelectedTranscription] = useState(null);
       }
 
       const data = await response.json();
-      console.log(data);
       setTranscriptions(data);
     } catch (error) {
       console.error("Error fetching transcriptions:", error);
@@ -173,8 +172,6 @@ const [selectedTranscription, setSelectedTranscription] = useState(null);
     const cognitoToken = tokens.idToken.toString();
     const cognitoId = tokens.idToken.payload.sub;
 
-    console.log("file id", audioFileId);
-
     const response = await fetch(
       `${import.meta.env.VITE_API_ENDPOINT}student/audio_to_text?` +
       `audio_file_id=${encodeURIComponent(audioFileId)}&` +
@@ -246,22 +243,18 @@ const [selectedTranscription, setSelectedTranscription] = useState(null);
   const setupWebSocket = (cognitoToken, audioFileId) => {
     return new Promise((resolve, reject) => {
       const url = constructTranscriptionWebSocketUrl(cognitoToken, audioFileId);
-      console.log("Connecting to WebSocket:", url);
   
       const ws = new WebSocket(url, "graphql-ws");
       wsRef.current = ws;
   
       ws.onopen = () => {
-        console.log("WebSocket connection opened");
         ws.send(JSON.stringify({ type: "connection_init" }));
       };
   
       ws.onmessage = ({ data }) => {
         const msg = JSON.parse(data);
-        console.log("WebSocket message received:", msg);
   
         if (msg.type === "connection_ack") {
-          console.log("WebSocket connection acknowledged");
           ws.send(JSON.stringify({
             id: audioFileId,
             type: "start",
@@ -283,9 +276,7 @@ const [selectedTranscription, setSelectedTranscription] = useState(null);
               }
             }
           }));
-          console.log("Subscription message sent for audioFileId:", audioFileId);
         } else if (msg.type === "data" && msg.payload?.data?.onNotify?.message === "transcription_complete") {
-          console.log("Transcription complete message received via WebSocket");
           ws.close();
            // ✅ Refresh transcriptions in real-time
           fetchTranscriptions();
@@ -302,7 +293,6 @@ const [selectedTranscription, setSelectedTranscription] = useState(null);
       };
   
       ws.onclose = () => {
-        console.log("WebSocket connection closed");
         wsRef.current = null;
       };
     });
