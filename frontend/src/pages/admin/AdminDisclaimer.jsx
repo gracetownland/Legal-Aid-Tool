@@ -31,7 +31,6 @@ export default function Disclaimer() {
       });
 
       const data = await response.json();
-      console.log(data);
       if (data?.disclaimer_text) {
         setCurrentDisclaimer(data.disclaimer_text);
         setLastUpdated(data.last_updated);

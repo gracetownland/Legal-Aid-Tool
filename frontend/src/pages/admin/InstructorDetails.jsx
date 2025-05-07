@@ -42,7 +42,6 @@ const InstructorDetails = ({ instructorData, onBack }) => {
   const [selectedStudent, setSelectedStudent] = useState(null);  // Track the selected student
 
   useEffect(() => {
-    console.log("Instructor:", instructor)
     // Fetch all students
     const fetchStudents = async () => {
       try {
@@ -95,7 +94,6 @@ const InstructorDetails = ({ instructorData, onBack }) => {
       );
       if (response.ok) {
         const data = await response.json();
-        console.log(data);
         setAssignedStudents(data);
       } else {
         console.error("Failed to fetch assigned students:", response.statusText);
@@ -227,9 +225,6 @@ const InstructorDetails = ({ instructorData, onBack }) => {
     try {
       const session = await fetchAuthSession();
       const token = session.tokens.idToken;
-      
-
-      console.log("Unassigning student:", studentId);
   
       // Unassign student from instructor
       const response = await fetch(

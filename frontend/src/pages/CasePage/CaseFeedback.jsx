@@ -39,7 +39,6 @@ const FeedbackPage = () => {
       const data = await res.json();
       setMessages(data.messages || []);
       setCaseData(data.caseData || {});
-      console.log("messages: ", data.messages[0].message_content);
     };
 
     fetchCaseData();
@@ -63,9 +62,7 @@ const FeedbackPage = () => {
               if (
                 entry.isIntersecting &&
                 document.visibilityState === "visible"
-              ) {
-                console.log(`Message ${messageId} has been in view for 0 seconds`); // Change to desired time
-                
+              ) {               
                 
                 readMessage(messageId);
 

@@ -37,7 +37,6 @@ export default function AIControlPanel() {
   const fetchAndSetPrompts = async () => {
     setLoading(true);
     const allprompts = await fetchCurrentPrompts();
-    console.log("All prompts:", allprompts);
     
     if (allprompts.length > 0) {
       setCurrentPrompt(allprompts[0].prompt);
@@ -76,7 +75,6 @@ export default function AIControlPanel() {
     };
 
     fetchMessageLimit();
-    console.log("Message limit:", messageLimit);
   }, []);
 
   const saveMessageLimit = async () => {

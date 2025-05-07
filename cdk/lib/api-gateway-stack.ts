@@ -19,6 +19,7 @@ import { Asset } from "aws-cdk-lib/aws-s3-assets";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
 import * as ssm from "aws-cdk-lib/aws-ssm";
+import * as logs from "aws-cdk-lib/aws-logs";
 
 
 export class ApiGatewayStack extends cdk.Stack {
@@ -294,6 +295,11 @@ export class ApiGatewayStack extends cdk.Stack {
 
     const data = Fn.transform("AWS::Include", { Location: asset.s3ObjectUrl });
 
+    const accessLogGroup = new logs.LogGroup(this, `${id}-ApiAccessLogs`, {
+      retention: logs.RetentionDays.ONE_WEEK,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
     // Create the API Gateway REST API
     this.api = new apigateway.SpecRestApi(this, `${id}-APIGateway`, {
       apiDefinition: apigateway.AssetApiDefinition.fromInline(data),
@@ -302,10 +308,22 @@ export class ApiGatewayStack extends cdk.Stack {
       deploy: true,
       cloudWatchRole: true,
       deployOptions: {
-        metricsEnabled: true,
+        stageName: "prod",
         loggingLevel: apigateway.MethodLoggingLevel.ERROR,
         dataTraceEnabled: true,
-        stageName: "prod",
+        metricsEnabled: true,
+        accessLogDestination: new apigateway.LogGroupLogDestination(accessLogGroup),
+        accessLogFormat: apigateway.AccessLogFormat.jsonWithStandardFields({
+          caller: true,
+          httpMethod: true,
+          ip: true,
+          protocol: true,
+          requestTime: true,
+          resourcePath: true,
+          responseLength: true,
+          status: true,
+          user: true,
+        }),
         methodOptions: {
           "/*/*": {
             throttlingRateLimit: 100,
