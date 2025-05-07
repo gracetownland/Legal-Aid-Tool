@@ -24,6 +24,8 @@ import StudentHeader from "../../components/StudentHeader";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { fetchAuthSession, fetchUserAttributes } from "aws-amplify/auth";
 import DeleteIcon from "@mui/icons-material/Delete";
+import ArchiveIcon from "@mui/icons-material/Archive";
+import UnarchiveIcon from '@mui/icons-material/Unarchive';
 
 const theme = createTheme({
   palette: {
@@ -118,6 +120,68 @@ const ViewAllCases = () => {
     setOpenDialog(false);
     setSelectedCaseId(null);
   };
+
+  const handleArchiveCase = async () => {
+    try {
+      const session = await fetchAuthSession();
+      const token = session.tokens.idToken;
+      const cognito_id = token.payload.sub;
+  
+      const response = await fetch(
+        `${import.meta.env.VITE_API_ENDPOINT}student/archive_case?case_id=${selectedCaseId}&cognito_id=${cognito_id}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: token,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+  
+      if (!response.ok) throw new Error("Failed to archive case");
+  
+      setCases((prev) =>
+        prev.map((c) =>
+          c.case_id === selectedCaseId ? { ...c, status: "Archived" } : c
+        )
+      );
+      handleMenuClose();
+    } catch (err) {
+      console.error("Archive failed:", err);
+    }
+  };
+  
+  const handleUnarchiveCase = async () => {
+    try {
+      const session = await fetchAuthSession();
+      const token = session.tokens.idToken;
+      const cognito_id = token.payload.sub;
+  
+      const response = await fetch(
+        `${import.meta.env.VITE_API_ENDPOINT}student/unarchive_case?case_id=${selectedCaseId}&cognito_id=${cognito_id}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: token,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+  
+      if (!response.ok) throw new Error("Failed to unarchive case");
+  
+      setCases((prev) =>
+        prev.map((c) =>
+          c.case_id === selectedCaseId ? { ...c, status: "In Progress" } : c
+        )
+      );
+      handleMenuClose();
+    } catch (err) {
+      console.error("Unarchive failed:", err);
+    }
+  };
+  
+  
 
   const handleDeleteCase = async () => {
     try {
@@ -283,6 +347,8 @@ const ViewAllCases = () => {
           <Button onClick={handleDeleteCase} sx={{color: "white", backgroundColor: "#fe3030", paddingX: 3, textTransform: "none", borderRadius: 5, '&:hover':{backgroundColor:'#d22'}}}>
             Delete
           </Button>
+
+          
         </DialogActions>
       </Dialog>
 
@@ -300,6 +366,19 @@ const ViewAllCases = () => {
                                     <DeleteIcon sx={{ mr: 1 }} />
                                     Delete
                                     </MenuItem>
+
+                                    {cases.find(c => c.case_id === selectedCaseId)?.status === "Archived" ? (
+    <MenuItem onClick={handleUnarchiveCase}>
+      <UnarchiveIcon sx={{ mr: 1 }} />
+      Unarchive
+    </MenuItem>
+  ) : (
+    <MenuItem onClick={handleArchiveCase}>
+      <ArchiveIcon sx={{ mr: 1 }} />
+      Archive
+    </MenuItem>
+  )}
+
                                 </Menu>
     </ThemeProvider>
   );

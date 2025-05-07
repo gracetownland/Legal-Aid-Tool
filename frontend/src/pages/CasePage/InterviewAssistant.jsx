@@ -796,59 +796,59 @@ const InterviewAssistant = () => {
                 }}
               >
                 <TextField
-                  placeholder="Type here..."
-                  variant="outlined"
-                  fullWidth
-                  multiline
-                  value={userInput}
-                  onChange={(e) => setUserInput(e.target.value)}
-                  sx={{
-                    maxHeight: "300px",
-                    overflowY: "auto",
-                    mr: "0.5em",
-                    ml: "1em",
-                    backgroundColor: "var(--background)",
-                    "& .MuiOutlinedInput-notchedOutline": {
-                      borderColor: "var(--border)",
-                      borderRadius: 10,
-                    },
-                    "&:hover .MuiOutlinedInput-notchedOutline": {
-                      borderColor: "var(--border)",
-                    },
-                  }}
-                  onKeyDown={handleKeyPress}
-                  InputLabelProps={{
-                    style: {
-                      backgroundColor: "transparent",
-                      color: "var(--text)",
-                    },
-                  }}
-                  InputProps={{
-                    style: { backgroundColor: "transparent", color: "var(--text)" },
-                  }}
-                />
+  placeholder={
+    caseData?.status === "Archived"
+      ? "This case is archived. Unarchive to continue using the assistant."
+      : "Type here..."
+  }
+  variant="outlined"
+  fullWidth
+  multiline
+  value={userInput}
+  onChange={(e) => setUserInput(e.target.value)}
+  onKeyDown={handleKeyPress}
+  disabled={caseData?.status === "Archived"}
+  sx={{
+    maxHeight: "300px",
+    overflowY: "auto",
+    mr: "0.5em",
+    ml: "1em",
+    backgroundColor: caseData?.status === "Archived" ? "var(--background)" : "var(--background)",
+    "& .MuiOutlinedInput-notchedOutline": {
+      borderColor: "var(--border)",
+      borderRadius: 10,
+    },
+    "&:hover .MuiOutlinedInput-notchedOutline": {
+      borderColor: "var(--border)",
+    },
+  }}
+  InputProps={{
+    style: {
+      backgroundColor: "transparent",
+      color: "var(--text)",
+    },
+  }}
+/>
 
-                <Button
-                  variant="contained"
-                  sx={{
-                    color: "#ffffff",
-                    backgroundColor: "var(--secondary)",
-                    minHeight: "55px",
-                    borderRadius: 10,
-                    minWidth: "55px",
-                    minHeight: "55px",
-                    mr: "2em",
-                    fontFamily: "Inter",
-                    "&:hover": {
-                      backgroundColor: "var(--primary)",
-                    }
-                  }}
-                  style={{ boxShadow: "none" }}
-                  onClick={handleSendMessage}
-                  disabled={isAItyping || (messageCounter >= messageLimit)}  /* Disable if AI hasn't responded */
-                >
-                  <ArrowUpwardRoundedIcon sx={{ color: "white" }} />
-                </Button>
+<Button
+  variant="contained"
+  sx={{
+    color: "#ffffff",
+    backgroundColor: "var(--secondary)",
+    minHeight: "55px",
+    borderRadius: 10,
+    minWidth: "55px",
+    mr: "2em",
+    fontFamily: "Inter",
+    "&:hover": {
+      backgroundColor: "var(--primary)",
+    },
+  }}
+  onClick={handleSendMessage}
+  disabled={isAItyping || (messageCounter >= messageLimit) || caseData?.status === "Archived"}
+>
+  <ArrowUpwardRoundedIcon sx={{ color: "white" }} />
+</Button>
                 <p style={{position: "fixed", bottom: 2, left: 65, right: 0, width: '100%', fontFamily: 'Outfit', fontSize: '0.9rem', color: "var(--placeholder-text)"}}>AI can make mistakes. Please check important information and citations.</p>
               </Box>
             </Box>

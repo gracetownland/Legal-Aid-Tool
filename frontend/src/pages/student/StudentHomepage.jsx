@@ -9,6 +9,7 @@ import { fetchAuthSession, fetchUserAttributes } from 'aws-amplify/auth';
 import { AppBar } from "@mui/material";
 import Disclaimer from "../../components/Disclaimer";
 import DeleteIcon from '@mui/icons-material/Delete';
+import ArchiveIcon from '@mui/icons-material/Archive';
 ring.register();
 
 import {
@@ -90,6 +91,37 @@ export const StudentHomepage = () => {
   const handleMenuClose = () => {
     setAnchorEl(null); // Close the menu
   };
+  
+  // Handle archive action from the menu
+  const handleArchiveFromMenu = async (case_id) => {
+    if (!case_id) return;
+
+    try {
+      const session = await fetchAuthSession();
+      const token = session.tokens.idToken;
+      const cognito_id = session.tokens.idToken.payload.sub;
+
+      const response = await fetch(
+        `${import.meta.env.VITE_API_ENDPOINT}student/archive_case?case_id=${case_id}&cognito_id=${cognito_id}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: token,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to delete the case");
+      }
+      handleMenuClose();
+      // Remove deleted case from state
+      setCases((prevCases) => prevCases.filter((caseItem) => caseItem.case_id !== selectedCaseId));
+    } catch (error) {
+      console.error("Error deleting case:", error);
+    }
+  };
 
   // Handle delete action from the menu
   const handleDeleteFromMenu = async () => {
@@ -159,7 +191,8 @@ export const StudentHomepage = () => {
           return response.json(); // Parse response JSON if not 404
         })
         .then((data) => {
-          setCases(data);
+          const activeCases = data.filter((c) => c.status !== "Archived");
+          setCases(activeCases);
           setLoading(false);
         })
         .catch((error) => {
@@ -437,6 +470,10 @@ export const StudentHomepage = () => {
                                   <MenuItem onClick={() => handleOpenDialog(caseItem.case_id)}>
                                     <DeleteIcon sx={{ mr: 1 }} />
                                     Delete
+                                    </MenuItem>
+                                  <MenuItem onClick={() => handleArchiveFromMenu(caseItem.case_id)}>
+                                    <ArchiveIcon sx={{ mr: 1 }} />
+                                    Archive
                                     </MenuItem>
                                 </Menu>
                               </CardActions>
