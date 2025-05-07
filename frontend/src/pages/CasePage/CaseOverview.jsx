@@ -14,6 +14,8 @@ import SendIcon from "@mui/icons-material/Send";
 import FeedbackIcon from '@mui/icons-material/Feedback';
 import NotFound from "../NotFound";
 import Chip from "@mui/material/Chip";
+import ArchiveIcon from '@mui/icons-material/Archive';
+import UnarchiveIcon from '@mui/icons-material/Unarchive';
 
 const CaseOverview = () => {
   const { caseId } = useParams();
@@ -65,6 +67,54 @@ const CaseOverview = () => {
         setSnackbar({ open: true, message: "Failed to send case for review.", severity: "error" });
       }
     };
+
+    const handleArchive = async () => {
+  try {
+    const session = await fetchAuthSession();
+    const token = session.tokens.idToken;
+    const cognito_id = token.payload.sub;
+
+    const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}student/archive_case?case_id=${caseId}&cognito_id=${cognito_id}`, {
+      method: "PUT",
+      headers: {
+        Authorization: token,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) throw new Error("Failed to archive case");
+
+    setCaseData(prev => ({ ...prev, status: "Archived" }));
+    setSnackbar({ open: true, message: "Case archived successfully.", severity: "success" });
+  } catch (error) {
+    console.error("Error archiving case:", error);
+    setSnackbar({ open: true, message: "Failed to archive case.", severity: "error" });
+  }
+};
+    const handleUnarchive = async () => {
+      try {
+        const session = await fetchAuthSession();
+        const token = session.tokens.idToken;
+        const cognito_id = token.payload.sub;
+    
+        const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}student/unarchive_case?case_id=${caseId}&cognito_id=${cognito_id}`, {
+          method: "PUT",
+          headers: {
+            Authorization: token,
+            "Content-Type": "application/json",
+          },
+        });
+    
+        if (!response.ok) throw new Error("Failed to unarchive case");
+    
+        setCaseData(prev => ({ ...prev, status: "In Progress" }));
+        setSnackbar({ open: true, message: "Case successfully unarchived.", severity: "success" });
+      } catch (error) {
+        console.error("Error unarchiving case:", error);
+        setSnackbar({ open: true, message: "Failed to unarchive case.", severity: "error" });
+      }
+    };
+    
 
   useEffect(() => {
     if (caseData) {
@@ -199,49 +249,91 @@ const CaseOverview = () => {
               </Box>
             ) : (
               <>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexDirection: "row" }}>
-              <h2 style={{ display: "flex", alignItems: "center", gap: "1em", fontFamily: "Outfit", fontSize: '20pt', marginBottom: '0.5rem', fontWeight: '600' }}>Case Details</h2>
-                <div style={{ display: "flex", alignItems: "center", gap: "1em" }}>
-                
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "1em", marginBottom: '0.5rem' }}>
+  <h2 style={{ fontFamily: "Outfit", fontSize: '20pt', fontWeight: '600', margin: 0 }}>
+    Case Details
+  </h2>
 
-                <div
-                  onClick={() => setEditMode(!editMode)}
-                  style={{
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transition: 'transform 0.2s ease',
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-                >
-                  {editMode ? (
-                    <div style={{display: 'flex', flexDirection: 'row', gap: '0.5em', alignItems: 'center'}}>
-                    
-                    <EditOffIcon
-                      style={{
-                        fontSize: '25px',
-                        transform: 'scaleX(1)',
-                      }}
-                    />
-                    <p>Cancel Edit Case</p>
-                    </div>
-                  ) : (
-                    <div style={{display: 'flex', flexDirection: 'row', gap: '0.5em', alignItems: 'center'}}>
-                    
-                    <EditIcon
-                      style={{
-                        fontSize: '25px',
-                        transform: 'scaleX(1)',
-                      }}
-                    />
-                    <p>Edit Case</p>
-                    </div>
-                  )}
-                </div>
-                </div>
-                </div>
+  <div style={{ display: "flex", gap: "1em", flexWrap: "wrap" }}>
+    {caseData.status === "Archived" ? (
+      <Button
+      
+    startIcon={<UnarchiveIcon />}
+        variant="outlined"
+        color="primary"
+        sx={{
+          fontFamily: "Outfit",
+          textTransform: "none",
+          borderRadius: 5,
+          height: "40px",
+          borderColor: "var(--border)",
+          color: "var(--text)",
+          "&:hover": {
+            backgroundColor: "var(--background2)",
+            borderColor: "var(--primary)",
+          },
+        }}
+        onClick={handleUnarchive}
+      >
+        Unarchive Case
+      </Button>
+    ) : (
+      <Button
+      
+    startIcon={<ArchiveIcon />}
+      sx={{
+        
+        textTransform: "none",
+        fontFamily: 'Inter',
+        fontWeight: 350,
+        px: 2,
+        color: "white",
+        width: "fit-content",
+        backgroundColor:
+          caseData.status === "Archived" ? "#ccc" : "var(--secondary)",
+        py: 1,
+        borderRadius: 10,
+        transition: "0.2s ease",
+        boxShadow: "none",
+        "&:hover": {
+          boxShadow: "none",
+          backgroundColor: "var(--primary)"
+          },
+        }}
+        onClick={handleArchive}
+      >
+        Archive Case
+      </Button>
+    )}
+
+    <div
+      onClick={() => setEditMode(!editMode)}
+      style={{
+        cursor: 'pointer',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        transition: 'transform 0.2s ease',
+      }}
+      onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
+      onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+    >
+      {editMode ? (
+        <div style={{ display: 'flex', flexDirection: 'row', gap: '0.5em', alignItems: 'center' }}>
+          <EditOffIcon style={{ fontSize: '25px' }} />
+          <p>Cancel Edit Case</p>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'row', gap: '0.5em', alignItems: 'center' }}>
+          <EditIcon style={{ fontSize: '25px' }} />
+          <p>Edit Case</p>
+        </div>
+      )}
+    </div>
+  </div>
+</div>
+
+
                 
 
                 
@@ -343,32 +435,54 @@ const CaseOverview = () => {
       />
     ))}
     </div>
-    <Button
-      variant="contained"
-      color="primary"
-      startIcon={<SendIcon />}
-      onClick={handleSendForReview}
-      disabled={caseData.status === "Sent to Review" || instructors.length === 0}
-      sx={{
-        textTransform: "none",
-        fontFamily: 'Inter',
-        fontWeight: 450,
-        px: 3,
-        color: "white",
-        width: "fit-content",
-        backgroundColor: "var(--secondary)",
-        py: 1.5,
-        borderRadius: 10,
-        transition: "0.2s ease",
+    <Stack direction="column" spacing={1} alignItems="flex-start">
+  <Button
+    variant="contained"
+    color="primary"
+    startIcon={<SendIcon />}
+    onClick={handleSendForReview}
+    disabled={
+      caseData.status === "Sent to Review" ||
+      instructors.length === 0 ||
+      caseData.status === "Archived"
+    }
+    sx={{
+      textTransform: "none",
+      fontFamily: 'Inter',
+      fontWeight: 450,
+      px: 3,
+      color: "white",
+      width: "fit-content",
+      backgroundColor:
+        caseData.status === "Archived" ? "#ccc" : "var(--secondary)",
+      py: 1.5,
+      borderRadius: 10,
+      transition: "0.2s ease",
+      boxShadow: "none",
+      "&:hover": {
         boxShadow: "none",
-        "&:hover": {
-          boxShadow: "none",
-          backgroundColor: "var(--primary)",
-        }
+        backgroundColor:
+          caseData.status === "Archived" ? "#ccc" : "var(--primary)",
+      },
+    }}
+  >
+    Send Case for Review
+  </Button>
+
+  {caseData.status === "Archived" && (
+    <Typography
+      sx={{
+        fontStyle: "italic",
+        fontSize: "0.85rem",
+        color: "#888",
+        fontFamily: "Outfit",
       }}
     >
-      Send Case for Review
-    </Button>
+      This case is archived. You must unarchive it to enable review.
+    </Typography>
+  )}
+</Stack>
+
     </div>
   )}
 </Stack>

@@ -443,28 +443,37 @@ const handleDelete = async () => {
                             <Typography variant="h4" fontWeight={400} fontSize={20} mb={0} fontFamily="Outfit" textAlign="left">
                             For Case: "{caseData.case_title}"
                             </Typography>
+                            
+{caseData?.status === "Archived" && (
+  <Typography sx={{ mt: 1, color: "gray", fontStyle: "italic", fontFamily: "Outfit" }}>
+    This case is archived. Unarchive the case to upload new audio.
+  </Typography>
+)}
                             </div>
                           )}
+                          <Stack>
 
-              <Button 
-                variant="contained" 
-                color="primary" 
-                startIcon={<CloudUploadIcon />}
-                onClick={openUploadDialog}
-                sx={{
-                  backgroundColor: "var(--secondary)",
-                  color: "white",
-                  textTransform: "none",
-                  "&:hover": {
-                    backgroundColor: "var(--primary)",
-                  },
-                  boxShadow: "none", // Optional: removes default MUI shadow
-                  borderRadius: 5, // Optional: for consistent button shape
-                  fontFamily: "Outfit", // Optional: if you're using this font
-                }}
-              >
-                Upload Audio
-              </Button>
+<Button 
+  variant="contained" 
+  color="primary" 
+  startIcon={<CloudUploadIcon />}
+  onClick={openUploadDialog}
+  disabled={caseData?.status === "Archived"}
+  sx={{
+    backgroundColor: caseData?.status === "Archived" ? "#ccc" : "var(--secondary)",
+    color: "white",
+    textTransform: "none",
+    "&:hover": {
+      backgroundColor: caseData?.status === "Archived" ? "#ccc" : "var(--primary)",
+    },
+    boxShadow: "none",
+    borderRadius: 5,
+    fontFamily: "Outfit",
+  }}
+>
+  Upload Audio
+</Button>
+</Stack>
             </Stack>
 
             {transcriptions.length > 0 ? (
