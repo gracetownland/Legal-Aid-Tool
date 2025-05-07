@@ -5,16 +5,25 @@ import {
   TextField,
   Card,
   Typography,
-  CircularProgress
+  CircularProgress, 
+  IconButton,
+  CardContent,
+  Divider
 } from "@mui/material";
+
+import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import AdminHeader from "../../components/AdminHeader";
 
 export default function Disclaimer() {
   const [currentDisclaimer, setCurrentDisclaimer] = useState("");
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [lastUpdated, setLastUpdated] = useState("");
   const [updatedBy, setUpdatedBy] = useState("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [previousDisclaimers, setPreviousDisclaimers] = useState([]);
+  const [restoring, setRestoring] = useState(false);
 
   const fetchDisclaimer = async () => {
     setLoading(true);
@@ -31,10 +40,12 @@ export default function Disclaimer() {
       });
 
       const data = await response.json();
-      if (data?.disclaimer_text) {
-        setCurrentDisclaimer(data.disclaimer_text);
-        setLastUpdated(data.last_updated);
-        setUpdatedBy(`${data.first_name} ${data.last_name}`);
+      console.log(data[0]);
+      if (data[0]?.disclaimer_text) {
+        setCurrentDisclaimer(data[0].disclaimer_text);
+        setLastUpdated(data[0].last_updated);
+        setUpdatedBy(`${data[0].first_name} ${data[0].last_name}`);
+        setPreviousDisclaimers(data.slice(1));
       }
     } catch (err) {
       console.error("Failed to fetch disclaimer:", err);
@@ -42,6 +53,32 @@ export default function Disclaimer() {
       setLoading(false);
     }
   };
+
+  const restoreDisclaimer = async () => {
+      setRestoring(true);
+  
+      const session = await fetchAuthSession();
+      var token = session.tokens.idToken
+      const cognito_id = session.tokens.idToken.payload.sub
+
+      const response = await fetch(
+        `${import.meta.env.VITE_API_ENDPOINT}admin/disclaimer?cognito_id=${cognito_id}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: token,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            system_prompt: previousDisclaimers[currentIndex].disclaimer_text,
+          }),
+        }
+      );
+  
+      fetchDisclaimer();
+      
+      setRestoring(false);
+    };
 
   const saveDisclaimer = async () => {
     setSaving(true);
@@ -90,26 +127,16 @@ export default function Disclaimer() {
           backgroundColor: "transparent",
         }}
       >
-        <Typography variant="h5" gutterBottom>
-          <strong>Current Disclaimer</strong>
-        </Typography>
+        <h1 style={{ fontSize: '30px', textAlign: 'left', marginBottom: "10px" }}><strong>Current Disclaimer</strong></h1>
 
         {lastUpdated && (
           <Typography
             variant="caption"
-            sx={{ color: "#888", marginBottom: 1, display: "block" }}
+            sx={{ color: "#888", marginBottom: 1, display: "block", textAlign: "left" }}
           >
             Last updated: {new Date(lastUpdated).toLocaleString()}
           </Typography>
         )}
-
-        <Typography
-          variant="body2"
-          sx={{ marginBottom: 2, color: "var(--text-light)" }}
-        >
-          This text appears at the start of every page in the application.
-          Editing it will update the live disclaimer.
-        </Typography>
 
         <TextField
           value={currentDisclaimer}
@@ -124,15 +151,124 @@ export default function Disclaimer() {
           onClick={saveDisclaimer}
           disabled={saving}
           sx={{
-            marginTop: 2,
             backgroundColor: "var(--secondary)",
             color: "white",
-            "&:hover": { backgroundColor: "var(--primary)" },
+            height: "40px",
+            width: "100%",
+            marginTop: "25px",
+            marginBottom: "10px",
+            "&:hover": {
+              backgroundColor: "var(--primary)",
+            },
+            "&:disabled": {
+              backgroundColor: "var(--border)",
+              color: "white",
+              cursor: "not-allowed",
+            },
           }}
         >
           {saving ? "Saving..." : "Save Disclaimer"}
         </Button>
       </Card>
+
+      {previousDisclaimers.length > 0 ? (
+              <Card sx={{ 
+                background: "transparent", 
+                color: "var(--text)", 
+                marginTop: '20px',
+                border: "1px solid var(--border)", 
+                boxShadow: 'none',
+                alignItems: 'center',          
+                paddingX: "35px",
+                paddingY: "20px",
+                textAlign: 'left',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', justifyContent: 'space-between' }}>
+                 {/* History Navigation */}
+                 <h1 style={{ fontSize: '30px', margin: '10px' }}><strong>Previous Disclaimers</strong></h1>
+      
+                 <div>
+                 <IconButton 
+                  onClick={() => setCurrentIndex((prev) => Math.max(prev - 1, 0))}
+                  disabled={currentIndex === 0}
+                  sx={{
+                    color: "var(--text)",
+                    "&:disabled": { color: "var(--border)" }
+                  }}
+                >
+                  <ArrowBackIosIcon />
+                </IconButton>
+                
+      
+                <IconButton 
+                  onClick={() => setCurrentIndex((prev) => Math.min(prev + 1, previousDisclaimers.length - 1))}
+                  disabled={currentIndex === previousDisclaimers.length - 1}
+                  sx={{
+                    color: "var(--text)",
+                    "&:disabled": { color: "var(--border)" }
+                  }}
+                >
+                  <ArrowForwardIosIcon />
+                </IconButton>
+                </div>
+                </div>
+              <Card sx={{ 
+                background: "transparent", 
+                color: "var(--text)", 
+                border: "1px solid var(--border)", 
+                boxShadow: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}>
+                
+      
+                <CardContent sx={{ flexGrow: 1, textAlign: 'center' }}>
+                <Typography variant="caption" sx={{ color: "var(--text-light)", marginTop: "5px", display: "block", textAlign: "left" }}>
+                {new Date(previousDisclaimers[currentIndex].last_updated).toLocaleString()}
+                  </Typography>
+      
+                  <Typography variant="body1" sx={{ whiteSpace: 'pre-line' , textAlign: "left" }}>
+                    {previousDisclaimers[currentIndex].disclaimer_text}
+                  </Typography>
+                  
+                </CardContent>
+      
+                
+              
+              </Card>
+              <div>
+  <Button
+    onClick={restoreDisclaimer}
+    disabled={saving}
+    sx={{
+      backgroundColor: "var(--secondary)",
+      color: "white",
+      height: "40px",
+      width: "100%",
+      marginTop: "25px",
+      marginBottom: "10px",
+      "&:hover": {
+        backgroundColor: "var(--primary)",
+      },
+      "&:disabled": {
+        backgroundColor: "var(--border)",
+        color: "white",
+        cursor: "not-allowed",
+      },
+    }}
+  >
+    {restoring ? "Restoring..." : "Restore Disclaimer"}
+  </Button>
+</div>
+              </Card>
+              
+            ) : (
+              <Typography variant="body1" sx={{ color: "#808080", textAlign: "center", marginTop: "20px" }}>
+                No previous prompts available.
+              </Typography>
+              
+            )}
     </div>
   );
 }

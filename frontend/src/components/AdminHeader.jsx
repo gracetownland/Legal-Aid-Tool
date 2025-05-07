@@ -5,6 +5,8 @@ import { useNavigate } from "react-router-dom";
 import HomeIcon from "@mui/icons-material/Home";
 import SettingsIcon from "@mui/icons-material/Settings";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import DescriptionIcon from "@mui/icons-material/Description";
+
 
 // Amplify
 import { signOut, fetchAuthSession, fetchUserAttributes } from "aws-amplify/auth";
@@ -135,8 +137,8 @@ const AdminHeader = () => {
           onClick={() => navigate("/disclaimer")}
           className="flex flex-col items-center bg-transparent text-[var(--header-text)] hover:text-gray-600 focus:outline-none transition-all duration-200"
         >
-          <SettingsIcon fontSize="large" />
-          <span className="mt-1">Disclaimer Settings</span>
+          <DescriptionIcon fontSize="large" />
+          <span className="mt-1">Disclaimer</span>
         </button>
 
         {/* Account Menu */}
