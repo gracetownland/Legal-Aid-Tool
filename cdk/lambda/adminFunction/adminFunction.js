@@ -246,8 +246,10 @@ exports.handler = async (event) => {
   try {
     const result = await sqlConnectionTableCreator`
     SELECT d.disclaimer_text, d.last_updated, u.first_name, u.last_name, u.user_email
-    FROM disclaimers d
-    LEFT JOIN users u ON d.user_id = u.user_id;
+      FROM disclaimers d
+      LEFT JOIN users u ON d.user_id = u.user_id
+      ORDER BY d.last_updated DESC
+      LIMIT 1;
   `;
   response.body = JSON.stringify(result[0]);
   
