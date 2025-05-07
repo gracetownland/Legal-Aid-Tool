@@ -117,7 +117,6 @@ const StudentDetails = () => {
   const { studentId } = useParams();
   const location = useLocation();
   const { simulation_group_id, student } = location.state;
-  // console.log(student);
   const [tabs, setTabs] = useState([]);
   const [sessions, setSessions] = useState({});
   const [activeTab, setActiveTab] = useState(0);
@@ -181,7 +180,6 @@ const StudentDetails = () => {
   
         if (response.ok) {
           const data = await response.json();
-          console.log(data);
           setCompletionStatuses(data); // Set state with completion statuses
         } else {
           console.error("Failed to fetch completion statuses:", response.statusText);

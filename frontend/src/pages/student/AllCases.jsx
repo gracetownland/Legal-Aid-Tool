@@ -124,8 +124,6 @@ const ViewAllCases = () => {
       const session = await fetchAuthSession();
       const token = session.tokens.idToken;
       const cognito_id = token.payload.sub;
-      console.log("cognito_id:", cognito_id);
-      console.log("selectedCaseId:", selectedCaseId);
 
       const response = await fetch(
         `${import.meta.env.VITE_API_ENDPOINT}student/delete_case?case_id=${selectedCaseId}&cognito_id=${cognito_id}`,

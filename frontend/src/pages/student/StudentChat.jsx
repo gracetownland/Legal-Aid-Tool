@@ -212,7 +212,6 @@ const StudentChat = ({ group, patient, setPatient, setGroup }) => {
   
       if (response.ok) {
         const data = await response.json();
-        console.log(data);
         const infoFiles = Object.entries(data.info_files).map(
           ([fileName, fileDetails]) => ({
             name: fileName,

@@ -37,7 +37,6 @@ const InstructorHomepage = () => {
         );
         if (response.ok) {
           const data = await response.json();
-          console.log(data);  // Log the data to see if it's in the expected format
           setSubmittedCases(data);
           
           // Create a unique list of students based on user_id

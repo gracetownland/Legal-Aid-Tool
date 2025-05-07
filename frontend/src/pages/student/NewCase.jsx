@@ -64,12 +64,6 @@ const NewCaseForm = () => {
       name: fileNameWithoutExtension,
       type: normalizedType,
     });
-  
-    console.log({
-      file: file,
-      name: fileNameWithoutExtension,
-      type: normalizedType,
-    });
   };
   
   const handleJurisdictionChange = (event) => {
@@ -99,25 +93,15 @@ const NewCaseForm = () => {
     };
 
     try {
-      console.log("Submitting the case with data:", caseData);
-
       const { tokens } = await fetchAuthSession();
       if (!tokens || !tokens.idToken)
         throw new Error("Authentication failed. No valid token.");
-      console.log("Authentication successful, tokens obtained.");
 
       const userAttributes = await fetchUserAttributes();
       const cognito_id = tokens.idToken.payload.sub;
       const token = tokens.idToken;
 
-      console.log("User attributes fetched, cognito_id:", cognito_id);
-
       // Step 1: Create the case in the database
-      console.log("Creating the case in the database...");
-
-      console.log(caseData);
-      console.log(JSON.stringify(caseData));
-
       const response = await fetch(
         `${import.meta.env.VITE_API_ENDPOINT}student/case?` +
           `user_id=${encodeURIComponent(cognito_id)}`,
@@ -132,7 +116,6 @@ const NewCaseForm = () => {
       );
 
       const data = await response.json();
-      console.log("Response from creating case:", data);
 
       // Check for guardrails or other errors
       if (!response.ok) {
@@ -151,8 +134,6 @@ const NewCaseForm = () => {
         province: formData.province,
         statute: formData.statuteDetails,
       };
-
-      console.log("Updating the case with the generated title...");
       
       const updateResponse = await fetch(
         `${import.meta.env.VITE_API_ENDPOINT}student/edit_case?case_id=${data.case_id}`,
@@ -175,7 +156,6 @@ const NewCaseForm = () => {
       }
 
       // Step 4: Continue with the rest of the logic (e.g., generating the legal summary)
-      console.log("Generating legal matter summary...");
       
       const init_llm_response = await fetch(
         `${import.meta.env.VITE_API_ENDPOINT}student/text_generation?case_id=${data.case_id}`,
@@ -203,14 +183,12 @@ const NewCaseForm = () => {
         );
       }
 
-      console.log("Legal summary generated, redirecting to interview assistant...");
       // Step 5: Redirect to the interview-assistant page
       navigate(`/case/${data.case_id}/interview-assistant`);
     } catch (err) {
       console.error("Error occurred:", err);
       setError(err.message);
     } finally {
-      console.log("Submission process completed.");
       setIsSubmitting(false);
     }
   };

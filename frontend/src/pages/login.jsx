@@ -84,7 +84,6 @@ const Login = () => {
         if (user.isSignedIn) {
           const session = await fetchAuthSession();
           const token = session.tokens.idToken;
-          console.log("Token:", token);
           const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}student/create_user?user_email=${encodeURIComponent(email)}&username=${encodeURIComponent(email)}&first_name=${encodeURIComponent(firstName)}&last_name=${encodeURIComponent(lastName)}`, {
             method: "POST",
             headers: {
@@ -93,7 +92,6 @@ const Login = () => {
             },
           });
           const data = await response.json();
-          console.log("Response from backend:", data);
           window.location.reload();
         }
       }
@@ -119,7 +117,6 @@ const Login = () => {
       if (user.isSignedIn) {
         const session = await fetchAuthSession();
         const token = session.tokens.idToken;
-        console.log("Token:", token);
         // Fetch user data after auto-login
         const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}/student/create_user?user_email=${encodeURIComponent(email)}&username=${encodeURIComponent(email)}&first_name=${encodeURIComponent(firstName)}&last_name=${encodeURIComponent(lastName)}`, {
           method: "POST",
@@ -129,7 +126,6 @@ const Login = () => {
           },
         });
         const data = await response.json();
-        console.log("Response from backend:", data);
         window.location.reload();
       }
     } catch (err) {

@@ -63,9 +63,7 @@ const FeedbackPage = () => {
                 entry.isIntersecting &&
                 document.visibilityState === "visible"
               ) {               
-                
                 readMessage(messageId);
-
               }
             }, 0); // Change desired time here (e.g., 1000ms = 1 second)
   
