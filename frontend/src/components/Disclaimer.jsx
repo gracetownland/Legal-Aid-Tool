@@ -7,6 +7,36 @@ import { on } from 'events';
 export default function Disclaimer({ onClick }) {
   const [checked, setChecked] = useState(false);
   const [visible, setVisible] = useState(true);
+  const [disclaimerText, setDisclaimerText] = useState("");
+
+  useEffect(() => {
+    const fetchDisclaimer = async () => {
+      try {
+        const session = await fetchAuthSession();
+        const token = session.tokens.idToken;
+        const cognito_id = session.tokens.idToken.payload.sub;
+
+        const response = await fetch(
+          `${import.meta.env.VITE_API_ENDPOINT}student/get_disclaimer?user_id=${cognito_id}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: token,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        const data = await response.json();
+        setDisclaimerText(data?.disclaimer_text || "No disclaimer available.");
+      } catch (error) {
+        console.error("Error fetching disclaimer:", error);
+        setDisclaimerText("Error loading disclaimer.");
+      }
+    };
+
+    fetchDisclaimer();
+  }, []);
 
   const handleCheckboxChange = (event) => {
     setChecked(event.target.checked);
@@ -61,12 +91,7 @@ export default function Disclaimer({ onClick }) {
       >
         <h2 className="text-2xl font-bold mb-4 text-[var(--header-text)]">Disclaimer</h2>
         <p className="text-sm text-gray-500 mb-4 text-justify px-4">
-          This is a tool designed to help Allard students in a clinical setting analyze the case before them and develop areas for legal and factual inquiry.  
-          <br /> <br />
-          This tool is <strong>not</strong> meant to answer your clients’ questions – only you with the help of your supervisor can do that. It was not designed to provide legal advice, definitively respond to any legal issue or set of circumstances or provide all of the relevant law.  <br /> <br />
-          Any legal or factual information provided by the tool needs to be independently verified by you, especially cases and their correct citations.  Users need to assume that the information provided may have errors, be out of date, or be missing relevant legal or factual analysis. 
-          <br /> <br />
-          This tool can be a very useful starting place, prompt or supplemental tool for your research, but is <strong>never on its own an adequate basis</strong> for your analysis of the law or relevant facts of the case. 
+          {disclaimerText}
         </p>
         <div>
         <Checkbox

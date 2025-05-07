@@ -217,42 +217,46 @@ exports.handler = async (event) => {
           });
         }
       break;
+      case "POST /admin/disclaimer": // Change to POST if inserting a new record
+          try {
+              console.log("Disclaimer update initiated");
+
+              // Ensure event.body exists and is valid JSON
+              if (!event.body) throw new Error("Request body is missing");
+
+              const { disclaimer_text } = JSON.parse(event.body);
+
+              if (!disclaimer_text) throw new Error("Missing 'disclaimer_text' in request body");
+
+              // Insert new prompt into system_prompt table
+              const insertPrompt = await sqlConnectionTableCreator`
+                  INSERT INTO "disclaimers" (disclaimer_text)
+                  VALUES (${disclaimer_text})
+                  RETURNING *;
+              `;
+
+              response.body = JSON.stringify(insertPrompt[0]); // Return inserted record
+          } catch (err) {
+              response.statusCode = 500;
+              console.error("Error inserting system prompt:", err);
+              response.body = JSON.stringify({ error: err.message || "Internal server error" });
+          }
+          break;
       case "GET /admin/disclaimer":
   try {
-    const disclaimers = await sqlConnectionTableCreator`
-      SELECT disclaimer_text, last_updated
-      FROM disclaimers
-      ORDER BY last_updated DESC;
-    `;
-    response.body = JSON.stringify(disclaimers);
+    const result = await sqlConnectionTableCreator`
+    SELECT d.disclaimer_text, d.last_updated, u.first_name, u.last_name, u.user_email
+    FROM disclaimers d
+    LEFT JOIN users u ON d.user_id = u.user_id;
+  `;
+  response.body = JSON.stringify(result[0]);
+  
   } catch (err) {
     console.error("Error fetching disclaimers:", err);
     response.statusCode = 500;
     response.body = JSON.stringify({ error: "Failed to fetch disclaimers" });
   }
   break;
-  case "POST /admin/disclaimer":
-    try {
-      if (!event.body) throw new Error("Missing request body");
-  
-      const { text } = JSON.parse(event.body);
-      if (!text) throw new Error("Missing 'text' field in request body");
-  
-      const inserted = await sqlConnectionTableCreator`
-        INSERT INTO disclaimers (disclaimer_text)
-        VALUES (${text})
-        RETURNING *;
-      `;
-  
-      response.statusCode = 200;
-      response.body = JSON.stringify(inserted[0]);
-    } catch (err) {
-      console.error("Error inserting disclaimer:", err);
-      response.statusCode = 500;
-      response.body = JSON.stringify({ error: err.message || "Internal server error" });
-    }
-    break;
-  
       case "POST /admin/elevate_instructor":
         if (
           event.queryStringParameters != null &&
@@ -366,7 +370,7 @@ exports.handler = async (event) => {
       DELETE FROM "instructor_students"
       WHERE instructor_id = ${user_id};
     `;
-    
+
             response.statusCode = 200;
             response.body = JSON.stringify({
               message: `User role updated to student for ${user_id} and all instructor enrolments deleted.`,

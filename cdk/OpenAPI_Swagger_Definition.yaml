@@ -378,6 +378,94 @@ paths:
         passthroughBehavior: "when_no_match"
         httpMethod: "POST"
         type: "aws_proxy"
+  /student/get_disclaimer:
+    options:
+      summary: CORS support
+      description: Enable CORS by returning correct headers
+      responses:
+        200:
+          $ref: "#/components/responses/Success"
+      x-amazon-apigateway-integration:
+        type: mock
+        requestTemplates:
+          application/json: |
+            {
+              "statusCode" : 200
+            }
+        responses:
+          default:
+            statusCode: "200"
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key'"
+              method.response.header.Access-Control-Allow-Methods: "'*'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+            responseTemplates:
+              application/json: |
+                {}
+    get:
+      tags:
+        - Student
+      summary: Get disclaimer of a student
+      operationId: get_disclaimer_GET
+      parameters:
+        - in: query
+          name: user_id
+          required: true
+          schema:
+            type: string
+          description: The ID of the user
+      responses:
+        "200":
+          description: disclaimer object
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    message_id:
+                      type: string
+                    session_id:
+                      type: string
+                    student_sent:
+                      type: boolean
+                    message_content:
+                      type: string
+                    time_sent:
+                      type: string
+                      format: date-time
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "session_id query parameter is required"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Session not found"
+        "500":
+          description: Internal Server Error
+      security:
+        - studentAuthorizer: []
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${studentFunction.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
+
 
   /student/recent_cases:
     options:
@@ -4342,6 +4430,106 @@ paths:
         passthroughBehavior: "when_no_match"
         httpMethod: "POST"
         type: "aws_proxy"
+  /admin/disclaimer:
+    options:
+      summary: CORS support
+      description: Enable CORS by returning correct headers
+      responses:
+        200:
+          $ref: "#/components/responses/Success"
+      x-amazon-apigateway-integration:
+        type: mock
+        requestTemplates:
+          application/json: |
+            {
+              "statusCode" : 200
+            }
+        responses:
+          default:
+            statusCode: "200"
+            responseParameters:
+              method.response.header.Access-Control-Allow-Headers: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key'"
+              method.response.header.Access-Control-Allow-Methods: "'*'"
+              method.response.header.Access-Control-Allow-Origin: "'*'"
+            responseTemplates:
+              application/json: |
+                {}
+    get:
+      tags:
+        - Admin
+      summary: Get all previous disclaimer entries
+      operationId: get_admin_disclaimers
+      responses:
+        "200":
+          description: List of previous disclaimers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    disclaimer_text:
+                      type: string
+                    last_updated:
+                      type: string
+                      format: date-time
+        "500":
+          description: Internal Server Error
+      security:
+        - adminAuthorizer: []
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${adminFunction.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
+
+    post:
+      tags:
+        - Admin
+      summary: Save a new disclaimer
+      operationId: post_admin_disclaimer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - disclaimer_text
+              properties:
+                disclaimer_text:
+                  type: string
+                user_id:
+                  type: string
+                  description: UUID of the admin user making the update
+      responses:
+        "200":
+          description: Saved disclaimer entry
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  disclaimer_text:
+                    type: string
+                  last_updated:
+                    type: string
+                    format: date-time
+        "400":
+          description: Missing or invalid request
+        "500":
+          description: Internal Server Error
+      security:
+        - adminAuthorizer: []
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${adminFunction.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
+
   /admin/lower_instructor:
     options:
       summary: CORS support
@@ -4373,11 +4561,11 @@ paths:
       operationId: admin_lower_instructor_POST
       parameters:
         - in: query
-          name: email
+          name: cognito_id
           required: true
           schema:
             type: string
-          description: Email of the user to be lowered from instructor to student
+          description: ID of the user to be lowered from instructor to student
       responses:
         "200":
           description: Instructor role lowered to student

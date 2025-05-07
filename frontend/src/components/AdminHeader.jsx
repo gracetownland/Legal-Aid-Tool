@@ -131,6 +131,14 @@ const AdminHeader = () => {
           <span className="mt-1">AI Settings</span>
         </button>
 
+        <button
+          onClick={() => navigate("/disclaimer")}
+          className="flex flex-col items-center bg-transparent text-[var(--header-text)] hover:text-gray-600 focus:outline-none transition-all duration-200"
+        >
+          <SettingsIcon fontSize="large" />
+          <span className="mt-1">Disclaimer Settings</span>
+        </button>
+
         {/* Account Menu */}
         <div
           className="relative"

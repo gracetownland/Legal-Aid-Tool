@@ -259,6 +259,52 @@ exports.handler = async (event) => {
   }
   break;
 
+  case "GET /student/get_disclaimer":
+  if (event.queryStringParameters && event.queryStringParameters.user_id) {
+    const cognito_id = event.queryStringParameters.user_id;
+
+    try {
+      // Step 1: Get internal user_id
+      const user = await sqlConnection`
+        SELECT user_id FROM "users" WHERE cognito_id = ${cognito_id};
+      `;
+
+      const user_id = user[0]?.user_id;
+
+      if (!user_id) {
+        response.statusCode = 404;
+        response.body = JSON.stringify({ error: "User not found" });
+        break;
+      }
+
+      // Step 2: Fetch the latest disclaimer
+      const disclaimer = await sqlConnection`
+        SELECT disclaimer_text, last_updated
+        FROM disclaimers
+        ORDER BY last_updated DESC
+        LIMIT 1;
+      `;
+
+      if (!disclaimer.length) {
+        response.statusCode = 404;
+        response.body = JSON.stringify({ message: "No disclaimer found" });
+        break;
+      }
+
+      response.statusCode = 200;
+      response.body = JSON.stringify(disclaimer[0]);
+
+    } catch (err) {
+      console.error("Error fetching disclaimer:", err);
+      response.statusCode = 500;
+      response.body = JSON.stringify({ error: "Internal server error" });
+    }
+  } else {
+    response.statusCode = 400;
+    response.body = JSON.stringify({ error: "Missing user_id" });
+  }
+  break;
+
   case "GET /student/recent_cases":
   if (event.queryStringParameters && event.queryStringParameters.user_id) {
     const cognito_id = event.queryStringParameters.user_id;
