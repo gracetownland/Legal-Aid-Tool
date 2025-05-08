@@ -127,7 +127,7 @@ VPC Configuration:
 
 ## 1.2 Security Configuration
 
-![Security Configuration](images/SecurityConfiguration.png)
+![Security Configuration](media/SecurityConfiguration.png)
 
 
 This diagram illustrates how our architecture handles key security aspects by leveraging AWS services tailored for each security domain. Identity Services, including AWS IAM and Amazon Cognito, ensure secure authentication and access control. Data Protection is enforced through AWS Secrets Manager and AWS KMS for secure storage and encryption. Infrastructure Protection relies on AWS WAF, AWS Shield, and AWS Systems Manager to safeguard against threats. Detection Services such as Security Hub, Amazon GuardDuty, and Amazon CloudWatch provide continuous monitoring and threat detection
