@@ -119,14 +119,6 @@ VPC Configuration:
   - Triggers (Pre-Sign-Up, Post-Confirmation, Post-Authentication) manage user provisioning.
   - Secures real-time data sync via AppSync with Lambda authorizers
 
-- **Amazon SQS:**
-  - Facilitates real-time data synchronization and GraphQL APIs
-  - Integrated with Cognito for secure, authenticated access
-  - Employs server-side encryption using AWS-managed keys
-  - Connects to Lambda functions for data processing and custom business logic
-  - Configured with IAM roles to enforce least-privilege access control
-  - Supports secure WebSocket connections for live data updates
-
 - **Amazon ECR:**
   - Lambda functions utilize Docker images stored in Amazon ECR 
   - Images are securely pulled over the internet via the NAT Gateway
@@ -350,18 +342,6 @@ lambdaRole.addToPolicy(
 );
 ```
 
-
-#### SQS Queue Security (Lambda-Only Access):
-```typescript 
-messagesQueue.addToResourcePolicy(
-  new iam.PolicyStatement({
-    actions: ["sqs:SendMessage"],
-    principals: [new iam.ServicePrincipal("lambda.amazonaws.com")],
-    resources: [messagesQueue.queueArn],
-  })
-);
-```
-
 ### 8.3 Lambda Function Access & Invocation
 
 
@@ -377,7 +357,6 @@ messagesQueue.addToResourcePolicy(
 | `adjustUserRoles`                   |  Private        | Cognito **Post-Authentication** trigger   | **Cognito internal trigger** only          |
 | `TextGenLambdaDockerFunc`           |  Private        | student | **student** group users                    |
 | `GeneratePreSignedURLFunc`          |  Private        | instructor | **instructor** group users                 |
-| `DataIngestLambdaDockerFunc`        |  Private        | S3 Event (S3 PUT/DELETE)                  | Triggered by **S3 events** only            |
 | `GetFilesFunction`                  |  Private        | instructor | **instructor** group users                 |
 | `DeleteFileFunc`                    |  Private        | instructor | **instructor** group users                 |
 | `DeleteModuleFunc`                  |  Private        | instructor | **instructor** group users                 |
