@@ -18,7 +18,7 @@ This document outlines the existing network and security configurations implemen
 
 ## 1. Network Architecture
 
-![Network Architecture Diagram](images/NetworkDiagram.png)
+![Network Architecture Diagram](media/NetworkDiagram.png)
 
 
 ### 1.1 VPC & Subnets  
@@ -69,7 +69,7 @@ VPC Configuration:
 
   #### How objects in S3 are accessed:
 
-  ![S3 Workflow Diagram](images/s3-workflow.png)
+  ![S3 Workflow Diagram](media/s3-workflow.png)
 
   The above diagram illustrates the use of S3 pre-signed URLs in our architecture. The process works as follows:
 
