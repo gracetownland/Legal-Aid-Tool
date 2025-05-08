@@ -74,6 +74,119 @@ Two configurations exist; one for light mode, and one for dark mode; changing th
   }
 ```
 
+## Customizing the Verification Email
+### Modifying Visual Aspects
+To modify the user verification email on sign-up, navigate to `cdk/lib/api-gateway-stack.ts`, and look for a line including `this.userPool = new cognito.UserPool`. A few lines below this line, the verification email's appearence is configured, in HTML. To change the verification email, simply change this HTML to that of your desired verification email. More specifically, the HTML to be altered is within the `emailBody` attribute of `userVerification`.
+
+For reference, the full code is shown below (as it is at the time this documentation was written).
+
+``` javascript
+const userPoolName = `${id}-UserPool`;
+    this.userPool = new cognito.UserPool(this, `${id}-pool`, {
+      userPoolName: userPoolName,
+      signInAliases: {
+        email: true,
+      },
+      selfSignUpEnabled: true,
+      autoVerify: {
+        email: true,
+      },
+      userVerification: {
+        emailSubject: "Legal Aid Tool - Confirmation Code",
+        emailBody:
+          `
+    <html>
+      <head>
+        <style>
+          body {
+            font-family: Outfit, sans-serif;
+            background-color: #F5F5F5;
+            color: #111835;
+            margin: 0;
+            padding: 0;
+            font-size: 16px;
+          }
+          .email-container {
+            background-color: #ffffff;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+          }
+          .header {
+            text-align: center;
+            margin-bottom: 20px;
+          }
+          .header img {
+            width: 100px;
+            height: auto;
+          }
+          .main-content {
+            text-align: center;
+            font-size: 18px;
+            color: #444;
+            margin-bottom: 30px;
+          }
+          .code {
+            display: inline-block;
+            background-color: #111835;
+            color: #ffffff;
+            font-size: 24px;
+            font-weight: bold;
+            padding: 15px 25px;
+            border-radius: 4px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+          }
+          .footer {
+            text-align: center;
+            font-size: 14px;
+            color: #888;
+          }
+          .footer a {
+            color: #546bdf;
+            text-decoration: none;
+          }
+        </style>
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600&display=swap" rel="stylesheet">
+      </head>
+      <body>
+        <div class="email-container">
+          <div class="header">
+            <h1>Legal Aid Tool</h1>
+            <!--<img src="" alt="Legal Aid Tool Logo" width="150" height="auto"/>-->
+          </div>
+          <div class="main-content">
+            <p>Thank you for signing up for Legal Aid Tool!</p>
+            <p>Verify your email by using the code below:</p>
+            <div class="code">{####}</div>
+            <p>If you did not request this verification, please ignore this email.</p>
+          </div>
+          <div class="footer">
+            <p>Please do not reply to this email.</p>
+            <p>Legal Aid Tool, 2025</p>
+          </div>
+        </div>
+      </body>
+    </html>
+          `,
+        emailStyle: cognito.VerificationEmailStyle.CODE,
+      },
+      passwordPolicy: {
+        minLength: 8,
+        requireLowercase: true,
+        requireUppercase: true,
+        requireDigits: true,
+        requireSymbols: false,
+      },
+      accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
+```
+
 ## Extending the API
 
 ### Adding New Endpoints
