@@ -355,12 +355,11 @@ lambdaRole.addToPolicy(
 | `preSignupLambda`                   |  Private        | Cognito **Pre-Sign-Up** trigger           | **Cognito internal trigger** only          |
 | `addStudentOnSignUp`                |  Private        | Cognito **Post-Confirmation** trigger     | **Cognito internal trigger** only          |
 | `adjustUserRoles`                   |  Private        | Cognito **Post-Authentication** trigger   | **Cognito internal trigger** only          |
-| `TextGenLambdaDockerFunc`           |  Private        | student | **student** group users                    |
-| `GeneratePreSignedURLFunc`          |  Private        | instructor | **instructor** group users                 |
-| `GetFilesFunction`                  |  Private        | instructor | **instructor** group users                 |
-| `DeleteFileFunc`                    |  Private        | instructor | **instructor** group users                 |
-| `DeleteModuleFunc`                  |  Private        | instructor | **instructor** group users                 |
-| `DeleteLastMessage`                 |  Private        | student | **student** group users                    |
+| `TextGenLambdaDockerFunc`           |  Private        | student/instructor | **student or instructor** group users                    |
+| `GeneratePreSignedURLFunc`          |  Private        | student/instructor | **student or instructor** group users                 |
+| `CaseGenLambdaDockerFunc`                  |  Private        | student | **student** group users                 |
+| `SummaryLambdaDockerFunction`                    |  Private        | student/instructor | **student or instructor** group users                 |
+| `audioToTextFunc`                  |  Private        | student | **student** group users                 |
 | `adminLambdaAuthorizer`             |  Private        | API Gateway Lambda Authorizer (admin)     | Internal to **API Gateway** for auth checks|
 | `studentLambdaAuthorizer`           |  Private        | API Gateway Lambda Authorizer (student)   | Internal to **API Gateway** for auth checks|
 | `instructorLambdaAuthorizer`        |  Private        | API Gateway Lambda Authorizer (instructor)| Internal to **API Gateway** for auth checks|
