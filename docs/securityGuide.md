@@ -100,7 +100,7 @@ VPC Configuration:
 - **Amazon API Gateway:**
   - Deployed in AWS public cloud space  
   - Protected by regional security controls  
-  - Custom Lambda Authorizers validate user permissions before accessing endpoints
+  - Custom Lambda Authorizers validate user permissions before accessing endpoints for 3 different roles
   - Uses Cognito User Pools for authentication and role-based access control
   - IAM policies restrict API Gateway access based on user roles
 
@@ -111,7 +111,6 @@ VPC Configuration:
 - **AWS AppSync:** 
   - Provides real-time data queries and synchronizes data between clients and backend 
   - Integrated with IAM for authentication and runs in the public cloud space
-  - SQS queues with server-side encryption (SSE) enabled using AWS-managed keys
   - Only specific Lambda functions are granted permissions to send or receive messages
 
 - **Amazon Cognito:** 
