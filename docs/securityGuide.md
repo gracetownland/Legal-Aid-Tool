@@ -279,8 +279,7 @@ encryption: s3.BucketEncryption.S3_MANAGED,
 | **Component**  | **CDK Location**       | **Key Security Control**                                      | **Purpose**                                      |
 |----------------|------------------------|---------------------------------------------------------------|--------------------------------------------------|
 | **RDS**        | `DatabaseStack`         | PostgreSQL (5432) only from private/VPC CIDRs                  | Restricts DB access to internal networks          |
-| **Lambda**     | `ApiGatewayStack`       | IAM policies for Secrets, ENI management, and SQS access       | Limits Lambda access to necessary resources       |
-| **SQS**        | `ApiGatewayStack`       | Lambda-only `SendMessage` access via `addToResourcePolicy`     | Secures SQS queue from unauthorized access        |
+| **Lambda**     | `ApiGatewayStack`       | IAM policies for Secrets and ENI management access       | Limits Lambda access to necessary resources       |
 | **AppSync**    | `ApiGatewayStack`       | Lambda authorizer & `appsync:GraphQL` permissions              | Ensures secure, authenticated access to GraphQL APIs |
 | **RDS Proxy**  | `DatabaseStack`         | IAM-based `rds-db:connect` permissions                         | Adds an extra layer of security between Lambda and RDS |
 
@@ -293,17 +292,6 @@ lambdaRole.addToPolicy(
   new iam.PolicyStatement({
     actions: ["secretsmanager:GetSecretValue"],
     resources: [`arn:aws:secretsmanager:${this.region}:${this.account}:secret:*`],
-  })
-);
-```
-
-#### SQS Queue Security (Lambda-Only Access):
-```
-messagesQueue.addToResourcePolicy(
-  new iam.PolicyStatement({
-    actions: ["sqs:SendMessage"],
-    principals: [new iam.ServicePrincipal("lambda.amazonaws.com")],
-    resources: [messagesQueue.queueArn],
   })
 );
 ```
