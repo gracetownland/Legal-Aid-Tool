@@ -207,6 +207,25 @@ def get_cors_headers():
         "Access-Control-Allow-Credentials": "true"
     }
 
+def customize_pii_markers(transcript_text):
+    """
+    Convert PII markers to custom format
+    e.g., [PII.NAME] -> [NAME], [PII.EMAIL] -> [EMAIL]
+    """
+    pii_replacements = {
+        '[PII.NAME]': '[NAME]',
+        '[PII.EMAIL]': '[EMAIL]',
+        '[PII.PHONE]': '[PHONE]',
+        '[PII.SSN]': '[SSN]',
+        '[PII.CREDIT_DEBIT_NUMBER]': '[CREDIT_CARD]',
+        '[PII.BANK_ACCOUNT_NUMBER]': '[BANK_ACCOUNT]',
+        '[PII.ADDRESS]': '[ADDRESS]'
+    }
+    
+    for pii_marker, custom_marker in pii_replacements.items():
+        transcript_text = transcript_text.replace(pii_marker, custom_marker)
+    
+    return transcript_text
 
 def handler(event, context):
     """
@@ -254,7 +273,12 @@ def handler(event, context):
             },
             ContentRedaction={
                 'RedactionType': 'PII',
-                'RedactionOutput': 'redacted'
+                'RedactionOutput': 'redacted',
+                'PiiEntityTypes': [
+                    'NAME', 'EMAIL', 'PHONE', 'SSN', 
+                    'CREDIT_DEBIT_NUMBER', 'BANK_ACCOUNT_NUMBER', 
+                    'ADDRESS'
+                ]
             }
         )
 
@@ -277,7 +301,8 @@ def handler(event, context):
         # Use basic formatting since speaker labels aren't supported with redaction
         transcript_text = format_diarized_transcript(data)
 
-
+        # Apply custom PII markers
+      #  formatted_transcript = customize_pii_markers(transcript_text)
         
         # 5. Store transcript and notify clients
         add_audio_to_db(audio_file_id, transcript_text)

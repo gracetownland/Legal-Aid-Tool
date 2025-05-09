@@ -28,7 +28,7 @@ export default function Disclaimer({ onClick }) {
         );
 
         const data = await response.json();
-        setDisclaimerText(data?.disclaimer_text || "No disclaimer available.");
+        setDisclaimerText(data?.disclaimer_text || "No Waiver available.");
       } catch (error) {
         console.error("Error fetching disclaimer:", error);
         setDisclaimerText("Error loading disclaimer.");
@@ -89,7 +89,7 @@ export default function Disclaimer({ onClick }) {
           position: 'relative',
         }}
       >
-        <h2 className="text-2xl font-bold mb-4 text-[var(--header-text)]">Disclaimer</h2>
+        <h2 className="text-2xl font-bold mb-4 text-[var(--header-text)]">Waiver</h2>
         <p className="text-sm text-gray-500 mb-4 text-justify px-4">
           {disclaimerText}
         </p>
