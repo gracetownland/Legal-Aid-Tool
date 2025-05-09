@@ -91,7 +91,7 @@ export class DatabaseStack extends Stack {
             }),
             multiAz: false,
             allocatedStorage: 100,
-            maxAllocatedStorage: 115,
+            maxAllocatedStorage: 150,
             allowMajorVersionUpgrade: false,
             autoMinorVersionUpgrade: true,
             backupRetention: Duration.days(7),
