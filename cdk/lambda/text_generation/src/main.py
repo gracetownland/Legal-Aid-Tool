@@ -168,43 +168,6 @@ def setup_guardrail(guardrail_name: str) -> tuple[str, str]:
         logger.info(f"Guardrail Version: {guardrail_version}")
 
     return guardrail_id, guardrail_version
-
-def add_audio_to_db(case_id, audio_text):
-    connection = connect_to_db()
-    if connection is None:
-        logger.error("No database connection available.")
-        return {
-            "statusCode": 500,
-            "body": json.dumps("Database connection failed.")
-        }
-    
-    try:
-        cur = connection.cursor()
-        logger.info("Connected to RDS instance!")
-        cur.execute("""
-            INSERT INTO "cases" (case_id, case_description)
-            VALUES (%s, %s);
-        """, (case_id, audio_text))
-        connection.commit()
-        cur.close()
-        logger.info(f"Successfully added audio to the database for case_id {case_id}")
-        return {
-            "statusCode": 200,
-            "body": json.dumps({
-                "message": "Audio added to the database successfully."
-            })
-        }
-    except Exception as e:
-        logger.error(f"Error adding audio to the database: {e}")
-        if cur:
-            cur.close()
-        connection.rollback()
-        return {
-            "statusCode": 500,
-            "body": json.dumps({
-                "error": "Failed to add audio to the database"
-            })
-        }
     
 
 def get_default_system_prompt():
@@ -365,7 +328,6 @@ def handler(event, context):
             'body': json.dumps('Error fetching system prompt')
         }
     
-    # add_audio_to_db(case_id, case_audio_description)
     case_title, case_type, jurisdiction, case_description, province, statute = get_case_details(case_id)
     if case_title is None or case_type is None or jurisdiction is None or case_description is None or province is None or statute is None:
         logger.error(f"Error fetching case details for case_id: {case_id}")
