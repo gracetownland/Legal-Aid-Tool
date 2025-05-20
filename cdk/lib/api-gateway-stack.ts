@@ -902,7 +902,7 @@ export class ApiGatewayStack extends cdk.Stack {
     });
 
     const audioToTextFunction = new lambda.DockerImageFunction(this, `${id}-audioToTextFunc`, {
-      code: lambda.DockerImageCode.fromImageAsset("./audioToText"),
+      code: lambda.DockerImageCode.fromImageAsset("./lambda/audioToText"),
       timeout: Duration.seconds(300),
       memorySize: 2048,
       vpc: vpcStack.vpc,
@@ -1176,7 +1176,7 @@ export class ApiGatewayStack extends cdk.Stack {
       this,
       `${id}-TextGenLambdaDockerFunction`,
       {
-        code: lambda.DockerImageCode.fromImageAsset("./text_generation"),
+        code: lambda.DockerImageCode.fromImageAsset("./lambda/text_generation"),
         memorySize: 512,
         timeout: cdk.Duration.seconds(300),
         vpc: vpcStack.vpc, // Pass the VPC
@@ -1298,7 +1298,7 @@ export class ApiGatewayStack extends cdk.Stack {
       this,
       `${id}-CaseGenLambdaDockerFunction`,
       {
-        code: lambda.DockerImageCode.fromImageAsset("./case_generation"),
+        code: lambda.DockerImageCode.fromImageAsset("./lambda/case_generation"),
         memorySize: 512,
         timeout: cdk.Duration.seconds(300),
         vpc: vpcStack.vpc, // Pass the VPC
@@ -1376,7 +1376,7 @@ export class ApiGatewayStack extends cdk.Stack {
       this,
       `${id}-SummaryLambdaDockerFunction`,
       {
-        code: lambda.DockerImageCode.fromImageAsset("./summary_generation"),
+        code: lambda.DockerImageCode.fromImageAsset("./lambda/summary_generation"),
         memorySize: 512,
         timeout: cdk.Duration.seconds(300),
         vpc: vpcStack.vpc, // Pass the VPC

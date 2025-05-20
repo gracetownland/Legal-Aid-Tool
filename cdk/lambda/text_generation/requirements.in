@@ -1,0 +1,7 @@
+boto3
+langchain
+langchain-aws
+langchain-postgres
+pymupdf
+psycopg[binary,pool]
+python-dotenv

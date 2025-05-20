@@ -8,7 +8,10 @@
     "build": "tsc",
     "watch": "tsc -w",
     "test": "jest",
-    "cdk": "cdk"
+    "cdk": "cdk",
+    "docker:build-text-gen:dev": "ENVIRONMENT=dev ./scripts/build-and-tag.sh",
+    "docker:build-text-gen:staging": "ENVIRONMENT=staging ./scripts/build-and-tag.sh",
+    "docker:build-text-gen:prod": "ENVIRONMENT=prod ./scripts/build-and-tag.sh"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",

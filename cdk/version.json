@@ -1,0 +1,18 @@
+{
+    "textGeneration": {
+      "major": 1,
+      "minor": 0,
+      "patch": 0,
+      "description": "Text generation service for Legal Aid Tool",
+      "lastUpdated": "2024-01-17",
+      "changeLog": {
+        "1.0.0": {
+          "date": "2024-01-17",
+          "changes": [
+            "Initial release",
+            "Basic text generation functionality"
+          ]
+        }
+      }
+    }
+  }

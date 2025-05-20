@@ -26,9 +26,9 @@ export class DatabaseStack extends Stack {
         /**
          * Create the RDS service-linked role if it doesn't exist
          */
-        // new iam.CfnServiceLinkedRole(this, `${id}-RDSServiceLinkedRole`, {
-        //     awsServiceName: 'rds.amazonaws.com',
-        // });
+        new iam.CfnServiceLinkedRole(this, `${id}-RDSServiceLinkedRole`, {
+            awsServiceName: 'rds.amazonaws.com',
+        });
 
         /**
          * Retrieve a secret from Secret Manager
@@ -91,7 +91,7 @@ export class DatabaseStack extends Stack {
             }),
             multiAz: false,
             allocatedStorage: 100,
-            maxAllocatedStorage: 115,
+            maxAllocatedStorage: 150,
             allowMajorVersionUpgrade: false,
             autoMinorVersionUpgrade: true,
             backupRetention: Duration.days(7),
