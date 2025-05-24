@@ -5,6 +5,8 @@ import * as codebuild from "aws-cdk-lib/aws-codebuild";
 import * as codepipeline from "aws-cdk-lib/aws-codepipeline";
 import * as codepipeline_actions from "aws-cdk-lib/aws-codepipeline-actions";
 import * as iam from "aws-cdk-lib/aws-iam";
+import { Source } from "aws-cdk-lib/aws-codebuild";
+
 
 interface LambdaConfig {
   name: string;           // Module name (e.g., "textGeneration")
@@ -37,18 +39,8 @@ export class CICDStack extends cdk.Stack {
       iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonEC2ContainerRegistryPowerUser")
     );
 
-    // Add Lambda update permissions
-    codeBuildRole.addToPolicy(
-      new iam.PolicyStatement({
-        effect: iam.Effect.ALLOW,
-        actions: ["lambda:UpdateFunctionCode"],
-        resources: [`arn:aws:lambda:${this.region}:${this.account}:function:*`]
-      })
-    );
-
     // Create artifacts for pipeline
     const sourceOutput = new codepipeline.Artifact();
-    const buildOutputs: { [key: string]: codepipeline.Artifact } = {};
 
     // Create the pipeline
     const pipeline = new codepipeline.Pipeline(this, 'DockerImagePipeline', {
@@ -88,11 +80,9 @@ export class CICDStack extends cdk.Stack {
       cdk.Tags.of(ecrRepo).add("module", lambda.name);
       cdk.Tags.of(ecrRepo).add("env", envName);
 
-      // Create build output artifact
-      buildOutputs[lambda.name] = new codepipeline.Artifact(`${lambda.name}Output`);
 
       // Create CodeBuild project
-      const buildProject = new codebuild.Project(this, `${lambda.name}BuildProject`, {
+      const buildProject = new codebuild.PipelineProject(this, `${lambda.name}BuildProject`, {
         projectName: `${id}-${lambda.name}Builder`,
         role: codeBuildRole,
         environment: {
@@ -121,29 +111,20 @@ export class CICDStack extends cdk.Stack {
             },
             build: {
               commands: [
-                'echo "Current working directory:"',
-                'pwd',
-                'echo "Top-level directory contents:"',
-                'ls -la',
-                'echo "Recursively listing all files:"',
-                'find .',
-                `cd $CODEBUILD_SRC_DIR/${lambda.sourceDir}`,
-                'echo Building Docker image...',
-                'docker build -t $REPOSITORY_URI:latest .'
+                'echo "CODEBUILD_SRC_DIR: $CODEBUILD_SRC_DIR"',
+                'echo "Listing contents..."',
+                'find $CODEBUILD_SRC_DIR',
+                // build the Docker image from the correct path
+                'echo "Building Docker image..."',
+                'docker build -t $REPOSITORY_URI:latest $CODEBUILD_SRC_DIR/' + lambda.sourceDir + ' -f $CODEBUILD_SRC_DIR/' + lambda.sourceDir + '/Dockerfile'
               ]
             },
             post_build: {
               commands: [
                 'docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG',
-                'docker push $REPOSITORY_URI:latest',
-                'docker push $REPOSITORY_URI:$IMAGE_TAG',
-                'aws lambda update-function-code --function-name $LAMBDA_FUNCTION_NAME --image-uri $REPOSITORY_URI:$IMAGE_TAG',
-                'echo "{\"name\":\"$MODULE_NAME\",\"imageUri\":\"$REPOSITORY_URI:$IMAGE_TAG\"}" > imageDefinition.json'
+                'docker push $REPOSITORY_URI:$IMAGE_TAG'
               ]
             }
-          },
-          artifacts: {
-            files: ['imageDefinition.json']
           }
         })
       });
@@ -156,8 +137,7 @@ export class CICDStack extends cdk.Stack {
         new codepipeline_actions.CodeBuildAction({
           actionName: `Build_${lambda.name}`,
           project: buildProject,
-          input: sourceOutput,
-          outputs: [buildOutputs[lambda.name]],
+          input: sourceOutput
         })
       );
     });
