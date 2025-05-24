@@ -20,6 +20,9 @@ WORKDIR ${LAMBDA_TASK_ROOT}
 RUN pip-compile requirements.in && \
     pip install --no-cache-dir -r requirements.txt
 
+RUN pip list
+
+
 # Copy the rest of the code
 COPY src/ ${LAMBDA_TASK_ROOT}
 
