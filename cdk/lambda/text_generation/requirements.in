@@ -5,3 +5,8 @@ langchain-postgres==0.0.11
 pymupdf
 psycopg2-binary==2.9.9
 python-dotenv
+
+# Block psycopg3
+psycopg==0
+psycopg-c==0
+psycopg-binary==0
