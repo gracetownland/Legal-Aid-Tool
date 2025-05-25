@@ -20,14 +20,16 @@ const env = {
 const StackPrefix = app.node.tryGetContext("StackPrefix");
 const environment = app.node.tryGetContext("environmentName");
 const version = app.node.tryGetContext("versionNumber");
+const githubOwner = app.node.tryGetContext("githubOwner"); 
+const githubRepo = app.node.tryGetContext("githubRepo");
 
 
 const vpcStack = new VpcStack(app, `${StackPrefix}-VpcStack`, { env, stackPrefix: StackPrefix, });
 const dbStack = new DatabaseStack(app, `${StackPrefix}-Database`, vpcStack, { env });
 const cicdStack = new CICDStack(app, `${StackPrefix}-CICD`, {
   env,
-  githubOwner: 'Praj-na',
-  githubRepo: 'Legal-Aid-Tool',
+  githubOwner: githubOwner,
+  githubRepo: githubRepo,
   environmentName: 'dev',
   lambdaFunctions: [
     {
@@ -51,7 +53,8 @@ const cicdStack = new CICDStack(app, `${StackPrefix}-CICD`, {
 const apiStack = new ApiGatewayStack(app, `${StackPrefix}-Api`, dbStack, vpcStack, { 
   env, 
   environmentName: environment,  
-  versionNumber: version  
+  versionNumber: version,
+  stackPrefix: StackPrefix  
 });
 
 const dbFlowStack = new DBFlowStack(app, `${StackPrefix}-DBFlow`, vpcStack, dbStack, apiStack, { env });
