@@ -39,6 +39,14 @@ export class CICDStack extends cdk.Stack {
       iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonEC2ContainerRegistryPowerUser")
     );
 
+    codeBuildRole.addToPolicy(new iam.PolicyStatement({
+  actions: ['lambda:UpdateFunctionCode'],
+  resources: [
+    `arn:aws:lambda:${this.region}:${this.account}:function:*`, // or specify per function
+  ],
+}));
+
+
     // Create artifacts for pipeline
     const sourceOutput = new codepipeline.Artifact();
 
@@ -75,6 +83,24 @@ export class CICDStack extends cdk.Stack {
         imageTagMutability: ecr.TagMutability.IMMUTABLE,
         removalPolicy: cdk.RemovalPolicy.RETAIN,
       });
+
+      ecrRepo.addToResourcePolicy(new iam.PolicyStatement({
+  sid: "LambdaPullAccess",
+  effect: iam.Effect.ALLOW,
+  principals: [new iam.ServicePrincipal("lambda.amazonaws.com")],
+  actions: [
+    "ecr:GetDownloadUrlForLayer",
+    "ecr:BatchGetImage",
+    "ecr:BatchCheckLayerAvailability",
+  ],
+  conditions: {
+    StringEquals: {
+      "aws:SourceAccount": this.account,
+    }
+  }
+}));
+
+
       
       this.ecrRepositories[lambda.name] = ecrRepo;
       cdk.Tags.of(ecrRepo).add("module", lambda.name);
@@ -122,7 +148,9 @@ export class CICDStack extends cdk.Stack {
             post_build: {
               commands: [
                 'docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG',
-                'docker push $REPOSITORY_URI:$IMAGE_TAG'
+                'docker push $REPOSITORY_URI:$IMAGE_TAG',
+                'echo Updating Lambda function...',
+                'aws lambda update-function-code --function-name $LAMBDA_FUNCTION_NAME --image-uri $REPOSITORY_URI:$IMAGE_TAG --region $AWS_REGION'
               ]
             }
           }

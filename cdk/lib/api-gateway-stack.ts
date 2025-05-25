@@ -28,6 +28,7 @@ import { Stack, StackProps } from "aws-cdk-lib";
 interface ApiGatewayStackProps extends cdk.StackProps {
   environmentName?: string; // e.g., "dev" or "prod"
   versionNumber?: string;   // e.g., "1.2.0"
+  stackPrefix?: string;
 }
 
 export class ApiGatewayStack extends cdk.Stack {
@@ -49,115 +50,7 @@ export class ApiGatewayStack extends cdk.Stack {
     (this.layerList[name] = layer);
   public getLayers = () => this.layerList;
   private readonly stackProps: ApiGatewayStackProps;
-  
-  private createDockerBuildProject(
-  id: string, 
-  moduleName: string, 
-  lambdaFunction: lambda.DockerImageFunction,
-  sourceDir: string
-): codebuild.Project {
-  // Define environment tag and version
-  const envTag = this.stackProps?.environmentName || "dev";
-  const versionNumber = this.stackProps?.versionNumber || "1.0.0";
-  
-  // Create repository with unique name
-  const repoName = `${id.toLowerCase()}-${moduleName.toLowerCase()}`;
-  const ecrRepo = new ecr.Repository(this, `${moduleName}Repo`, {
-    repositoryName: repoName,
-    removalPolicy: cdk.RemovalPolicy.RETAIN
-  });
-  
-  // Grant Lambda permission to pull from ECR
-  ecrRepo.grantPull(lambdaFunction);
-  
-  // Create CodeBuild project
-  const dockerBuildProject = new codebuild.Project(this, `${moduleName}BuildProject`, {
-    projectName: `${id}-${moduleName}Builder`,
-    environment: {
-      buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
-      privileged: true,
-      environmentVariables: {
-        AWS_ACCOUNT_ID: { value: this.account },
-        AWS_REGION: { value: this.region },
-        ENVIRONMENT_NAME: { value: envTag },
-        MODULE_NAME: { value: moduleName },
-        VERSION: { value: versionNumber },
-        LAMBDA_FUNCTION_NAME: { value: lambdaFunction.functionName },
-        REPO_NAME: { value: repoName }
-      }
-    },
-    buildSpec: codebuild.BuildSpec.fromObject({
-      version: '0.2',
-      phases: {
-        pre_build: {
-          commands: [
-            'echo "Logging in to Amazon ECR..."',
-            'aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com',
-            'VERSION_TAG=$MODULE_NAME-$ENVIRONMENT_NAME-$VERSION',
-            'IMAGE_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO_NAME',
-            'aws ecr create-repository --repository-name $REPO_NAME || echo "Repository may already exist"'
-          ]
-        },
-        build: {
-          commands: [
-            `cd ${sourceDir}`,
-    'echo "Building Docker image from real project code..."',
-    'ls -la',                      // Optional debug
-    'docker build -t $IMAGE_URI:latest . -f Dockerfile'
-          ]
-        },
-        post_build: {
-          commands: [
-            'docker tag $IMAGE_URI:latest $IMAGE_URI:$ENVIRONMENT_NAME',
-            'docker tag $IMAGE_URI:latest $IMAGE_URI:$VERSION_TAG',
-            'docker push $IMAGE_URI:latest || echo "Push failed: $?"',
-            'docker push $IMAGE_URI:$ENVIRONMENT_NAME || echo "Push failed: $?"',
-            'docker push $IMAGE_URI:$VERSION_TAG || echo "Push failed: $?"',
-            'aws lambda update-function-code --function-name $LAMBDA_FUNCTION_NAME --image-uri $IMAGE_URI:$VERSION_TAG || echo "Lambda update failed: $?"'
-          ]
-        }
-      }
-    })
-  });
-  
-  dockerBuildProject.addToRolePolicy(
-    new iam.PolicyStatement({
-      effect: iam.Effect.ALLOW,
-      actions: [
-        "lambda:UpdateFunctionConfiguration",
-        "lambda:UpdateFunctionCode",
-        "iam:PassRole",
-        "ecr:GetAuthorizationToken",
-        "ecr:CreateRepository",
-        "ecr:SetRepositoryPolicy",
-        "ecr:GetRepositoryPolicy",
-        "ecr:BatchCheckLayerAvailability",
-        "ecr:GetDownloadUrlForLayer",
-        "ecr:BatchGetImage",
-        "ecr:InitiateLayerUpload",
-        "ecr:UploadLayerPart",
-        "ecr:CompleteLayerUpload",
-        "ecr:PutImage"
-      ],
-      resources: ["*"]
-    })
-  );
-  
-  dockerBuildProject.addToRolePolicy(
-    new iam.PolicyStatement({
-      effect: iam.Effect.ALLOW,
-      actions: ["lambda:UpdateFunctionCode"],
-      resources: [lambdaFunction.functionArn]
-    })
-  );
-  
-  return dockerBuildProject;
-}
 
-
-
-
-  
   constructor(
     scope: Construct,
     id: string,
@@ -337,11 +230,11 @@ export class ApiGatewayStack extends cdk.Stack {
         emailStyle: cognito.VerificationEmailStyle.CODE,
       },
       passwordPolicy: {
-        minLength: 8,
+        minLength: 12,
         requireLowercase: true,
         requireUppercase: true,
         requireDigits: true,
-        requireSymbols: false,
+        requireSymbols: true
       },
       accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
@@ -1290,7 +1183,16 @@ const textGenLambdaDockerFunc = new lambda.DockerImageFunction(
   this,
   `${id}-TextGenLambdaDockerFunction`,
   {
-    code: lambda.DockerImageCode.fromImageAsset("./lambda/text_generation"),
+    code: lambda.DockerImageCode.fromEcr(
+      ecr.Repository.fromRepositoryName(
+        this,
+        'TextGenRepository',
+        `${this.stackProps.stackPrefix}-cicd-textgeneration` 
+      ),
+      {
+        tagOrDigest: 'latest' // You can specify a specific tag or use 'latest'
+      }
+    ),
     memorySize: 512,
     timeout: cdk.Duration.seconds(300),
     vpc: vpcStack.vpc,
@@ -1304,14 +1206,6 @@ const textGenLambdaDockerFunc = new lambda.DockerImageFunction(
       TABLE_NAME_PARAM: tableNameParameter.parameterName,
     },
   }
-);
-
-// Create Docker build project for text generation
-const textGenBuildProject = this.createDockerBuildProject(
-  id,
-  "textGeneration", 
-  textGenLambdaDockerFunc,
-  "./lambda/text_generation"
 );
 
     
@@ -1419,23 +1313,33 @@ const textGenBuildProject = this.createDockerBuildProject(
 
 
     const caseGenLambdaDockerFunc = new lambda.DockerImageFunction(
-      this,
-      `${id}-CaseGenLambdaDockerFunction`,
+  this,
+  `${id}-CaseLambdaDockerFunction`,
+  {
+    code: lambda.DockerImageCode.fromEcr(
+      ecr.Repository.fromRepositoryName(
+        this,
+        'CaseGenRepository',
+        `${this.stackProps.stackPrefix}-cicd-casegeneration` 
+      ),
       {
-        code: lambda.DockerImageCode.fromImageAsset("./lambda/case_generation"),
-        memorySize: 512,
-        timeout: cdk.Duration.seconds(300),
-        vpc: vpcStack.vpc, // Pass the VPC
-        functionName: `${id}-CaseLambdaDockerFunction`,
-        environment: {
-          SM_DB_CREDENTIALS: db.secretPathAdminName,
-          RDS_PROXY_ENDPOINT: db.rdsProxyEndpointAdmin,
-          REGION: this.region,
-          BEDROCK_LLM_PARAM: bedrockLLMParameter.parameterName,
-          TABLE_NAME_PARAM: tableNameParameter.parameterName,
-        },
+        tagOrDigest: 'latest' // You can specify a specific tag or use 'latest'
       }
-    );
+    ),
+    memorySize: 512,
+    timeout: cdk.Duration.seconds(300),
+    vpc: vpcStack.vpc,
+    functionName: `${id}-CaseLambdaDockerFunction`,
+    environment: {
+      SM_DB_CREDENTIALS: db.secretPathAdminName,
+      RDS_PROXY_ENDPOINT: db.rdsProxyEndpointAdmin,
+      REGION: this.region,
+      BEDROCK_LLM_PARAM: bedrockLLMParameter.parameterName,
+      EMBEDDING_MODEL_PARAM: embeddingModelParameter.parameterName,
+      TABLE_NAME_PARAM: tableNameParameter.parameterName,
+    },
+  }
+);
 
     // Override the Logical ID of the Lambda Function to get ARN in OpenAPI
     const cfnCaseGenDockerFunc = caseGenLambdaDockerFunc.node
@@ -1497,24 +1401,33 @@ const textGenBuildProject = this.createDockerBuildProject(
 
 
     const summaryLambdaDockerFunc = new lambda.DockerImageFunction(
-      this,
-      `${id}-SummaryLambdaDockerFunction`,
+  this,
+  `${id}-SummaryLambdaDockerFunction`,
+  {
+    code: lambda.DockerImageCode.fromEcr(
+      ecr.Repository.fromRepositoryName(
+        this,
+        'TextGenRepository',
+        `${this.stackProps.stackPrefix}-cicd-summarygeneration` 
+      ),
       {
-        code: lambda.DockerImageCode.fromImageAsset("./lambda/summary_generation"),
-        memorySize: 512,
-        timeout: cdk.Duration.seconds(300),
-        vpc: vpcStack.vpc, // Pass the VPC
-        functionName: `${id}-SummaryLambdaDockerFunction`,
-        environment: {
-          SM_DB_CREDENTIALS: db.secretPathAdminName,
-          RDS_PROXY_ENDPOINT: db.rdsProxyEndpointAdmin,
-          REGION: this.region,
-          TABLE_NAME: "DynamoDB-Conversation-Table",
-          BEDROCK_LLM_PARAM: bedrockLLMParameter.parameterName,
-          TABLE_NAME_PARAM: tableNameParameter.parameterName,
-        },
+        tagOrDigest: 'latest' // You can specify a specific tag or use 'latest'
       }
-    );
+    ),
+    memorySize: 512,
+    timeout: cdk.Duration.seconds(300),
+    vpc: vpcStack.vpc,
+    functionName: `${id}-SummaryLambdaDockerFunction`,
+    environment: {
+      SM_DB_CREDENTIALS: db.secretPathAdminName,
+      RDS_PROXY_ENDPOINT: db.rdsProxyEndpointAdmin,
+      REGION: this.region,
+      BEDROCK_LLM_PARAM: bedrockLLMParameter.parameterName,
+      EMBEDDING_MODEL_PARAM: embeddingModelParameter.parameterName,
+      TABLE_NAME_PARAM: tableNameParameter.parameterName,
+    },
+  }
+);
 
     // Override the Logical ID of the Lambda Function to get ARN in OpenAPI
     const cfnSummaryDockerFunc = summaryLambdaDockerFunc.node
