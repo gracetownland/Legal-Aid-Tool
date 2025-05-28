@@ -7,7 +7,7 @@ LABEL maintainer="UBC Law" \
       description="Text generation Lambda function for Legal Aid Tool"
 
 # Install system dependencies
-RUN yum -y install postgresql-devel gcc libpq
+RUN yum -y install postgresql-devel gcc libpq python3-devel
 
 # Install pip-tools first
 RUN pip install --no-cache-dir pip-tools
