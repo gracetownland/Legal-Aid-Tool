@@ -1,30 +1,25 @@
 FROM public.ecr.aws/lambda/python:3.11
 
-LABEL maintainer="UBC Law" \
-      module="textGeneration" \
-      version="1.0.0" \
-      environment="dev" \
-      description="Text generation Lambda function for Legal Aid Tool"
+# 1. Install build tools and PostgreSQL client headers
+RUN yum install -y \
+    gcc \
+    python3-devel \
+    postgresql-devel \
+    libpq-devel \
+    make
 
-# Install system dependencies
-RUN yum -y install postgresql-devel gcc libpq python3-devel
+# 2. Upgrade pip + install pip-tools
+RUN pip install --upgrade pip
+RUN pip install pip-tools
 
-# Install pip-tools first
-RUN pip install --no-cache-dir pip-tools
+# 3. Copy and install dependencies
+COPY requirements.in .
+RUN pip-compile requirements.in
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy requirements.in
-COPY requirements.in ${LAMBDA_TASK_ROOT}
+# 4. Copy your application code
+COPY . .
 
-# Compile and install dependencies
-WORKDIR ${LAMBDA_TASK_ROOT}
-RUN pip-compile requirements.in && \
-    pip install --no-cache-dir -r requirements.txt
-
-RUN pip list
-
-
-# Copy the rest of the code
-COPY src/ ${LAMBDA_TASK_ROOT}
-
-# Set the CMD to your handler
-CMD [ "main.handler" ]
+# Set the CMD if you're using a Lambda handler
+CMD ["main.handler"]
