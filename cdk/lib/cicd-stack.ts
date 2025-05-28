@@ -5,6 +5,8 @@ import * as codebuild from "aws-cdk-lib/aws-codebuild";
 import * as codepipeline from "aws-cdk-lib/aws-codepipeline";
 import * as codepipeline_actions from "aws-cdk-lib/aws-codepipeline-actions";
 import * as iam from "aws-cdk-lib/aws-iam";
+import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as ec2 from "aws-cdk-lib/aws-ec2";
 import { Source } from "aws-cdk-lib/aws-codebuild";
 
 
@@ -15,7 +17,6 @@ interface LambdaConfig {
 }
 
 interface CICDStackProps extends cdk.StackProps {
-  githubOwner: string;
   githubRepo: string;
   githubBranch?: string;
   environmentName?: string;
@@ -24,6 +25,42 @@ interface CICDStackProps extends cdk.StackProps {
 
 export class CICDStack extends cdk.Stack {
   public readonly ecrRepositories: { [key: string]: ecr.Repository } = {};
+  
+  public createDockerLambdaFunction(
+  id: string,
+  functionName: string,
+  repoName: string,
+  vpc: ec2.IVpc,
+  environment: { [key: string]: string },
+  role: iam.IRole,
+  logicalId?: string // Add this parameter
+): lambda.DockerImageFunction {
+  
+  const lambdaFunction = new lambda.DockerImageFunction(this, id, {
+    code: lambda.DockerImageCode.fromEcr(
+      this.ecrRepositories[repoName],
+      {
+        tagOrDigest: `${repoName}-dev-latest`
+      }
+    ),
+    functionName: functionName,
+    vpc: vpc,
+    environment: environment,
+    role: role,
+    timeout: cdk.Duration.seconds(300),
+    memorySize: 2048,
+  });
+  
+  // Set logical ID if provided
+  if (logicalId) {
+    const cfnFunction = lambdaFunction.node.defaultChild as lambda.CfnFunction;
+    cfnFunction.overrideLogicalId(logicalId);
+  }
+  
+  return lambdaFunction;
+}
+
+
 
   constructor(scope: Construct, id: string, props: CICDStackProps) {
     super(scope, id, props);
@@ -55,13 +92,18 @@ export class CICDStack extends cdk.Stack {
       pipelineName: `${id}-DockerImagePipeline`,
     });
 
+    const username = cdk.aws_ssm.StringParameter.valueForStringParameter(
+          this,
+          "lat-owner-name"
+        );
+
     // Add source stage
     pipeline.addStage({
       stageName: 'Source',
       actions: [
         new codepipeline_actions.GitHubSourceAction({
           actionName: 'GitHub',
-          owner: props.githubOwner,
+          owner: username,
           repo: props.githubRepo,
           branch: props.githubBranch ?? 'main',
           oauthToken: cdk.SecretValue.secretsManager('github-personal-access-token', {
@@ -125,36 +167,34 @@ export class CICDStack extends cdk.Stack {
           REPOSITORY_URI: { value: ecrRepo.repositoryUri }
         },
         buildSpec: codebuild.BuildSpec.fromObject({
-          version: '0.2',
-          phases: {
-            pre_build: {
-              commands: [
-                'echo Logging in to Amazon ECR...',
-                'aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com',
-                'COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)',
-                'IMAGE_TAG=${MODULE_NAME}-${ENVIRONMENT}-${COMMIT_HASH}'
-              ]
-            },
-            build: {
-              commands: [
-                'echo "CODEBUILD_SRC_DIR: $CODEBUILD_SRC_DIR"',
-                'echo "Listing contents..."',
-                'find $CODEBUILD_SRC_DIR',
-                // build the Docker image from the correct path
-                'echo "Building Docker image..."',
-                'docker build -t $REPOSITORY_URI:latest $CODEBUILD_SRC_DIR/' + lambda.sourceDir + ' -f $CODEBUILD_SRC_DIR/' + lambda.sourceDir + '/Dockerfile'
-              ]
-            },
-            post_build: {
-              commands: [
-                'docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG',
-                'docker push $REPOSITORY_URI:$IMAGE_TAG',
-                'echo Updating Lambda function...',
-                'aws lambda update-function-code --function-name $LAMBDA_FUNCTION_NAME --image-uri $REPOSITORY_URI:$IMAGE_TAG --region $AWS_REGION'
-              ]
-            }
-          }
-        })
+  version: '0.2',
+  phases: {
+    pre_build: {
+      commands: [
+        'echo Logging in to Amazon ECR...',
+        'aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com',
+        'COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)',
+        'IMAGE_TAG=${MODULE_NAME}-${ENVIRONMENT}-${COMMIT_HASH}',
+        'export DOCKER_HOST=unix:///var/run/docker.sock'
+      ]
+    },
+    build: {
+      commands: [
+        'echo "Building Docker image..."',
+        'docker build -t $REPOSITORY_URI:$IMAGE_TAG $CODEBUILD_SRC_DIR/' + lambda.sourceDir + ' -f $CODEBUILD_SRC_DIR/' + lambda.sourceDir + '/Dockerfile'
+      ]
+    },
+    post_build: {
+      commands: [
+         'docker tag $REPOSITORY_URI:$IMAGE_TAG $REPOSITORY_URI:${MODULE_NAME}-${ENVIRONMENT}-latest',
+          'docker push $REPOSITORY_URI:$IMAGE_TAG',
+          'docker push $REPOSITORY_URI:${MODULE_NAME}-${ENVIRONMENT}-latest',
+          'echo Updating Lambda function...',
+          'aws lambda update-function-code --function-name $LAMBDA_FUNCTION_NAME --image-uri $REPOSITORY_URI:${MODULE_NAME}-${ENVIRONMENT}-latest --region $AWS_REGION',
+      ]
+    }
+  }
+})
       });
 
       // Grant permissions to push to ECR

@@ -26,9 +26,7 @@ import * as ecr from 'aws-cdk-lib/aws-ecr';
 import { Stack, StackProps } from "aws-cdk-lib";
 
 interface ApiGatewayStackProps extends cdk.StackProps {
-  environmentName?: string; // e.g., "dev" or "prod"
-  versionNumber?: string;   // e.g., "1.2.0"
-  stackPrefix?: string;
+  ecrRepositories: { [key: string]: ecr.Repository };
 }
 
 export class ApiGatewayStack extends cdk.Stack {
@@ -49,14 +47,13 @@ export class ApiGatewayStack extends cdk.Stack {
   public addLayer = (name: string, layer: LayerVersion) =>
     (this.layerList[name] = layer);
   public getLayers = () => this.layerList;
-  private readonly stackProps: ApiGatewayStackProps;
 
   constructor(
     scope: Construct,
     id: string,
     db: DatabaseStack,
     vpcStack: VpcStack,
-    props?: ApiGatewayStackProps
+    props: ApiGatewayStackProps
   ) {
     super(scope, id, props);
 
@@ -1184,13 +1181,9 @@ const textGenLambdaDockerFunc = new lambda.DockerImageFunction(
   `${id}-TextGenLambdaDockerFunction`,
   {
     code: lambda.DockerImageCode.fromEcr(
-      ecr.Repository.fromRepositoryName(
-        this,
-        'TextGenRepository',
-        `${this.stackProps.stackPrefix}-cicd-textgeneration` 
-      ),
+      props.ecrRepositories["textGeneration"], 
       {
-        tagOrDigest: 'latest' // You can specify a specific tag or use 'latest'
+        tagOrDigest: "latest",      // or whatever tag you're using
       }
     ),
     memorySize: 512,
@@ -1204,6 +1197,7 @@ const textGenLambdaDockerFunc = new lambda.DockerImageFunction(
       BEDROCK_LLM_PARAM: bedrockLLMParameter.parameterName,
       EMBEDDING_MODEL_PARAM: embeddingModelParameter.parameterName,
       TABLE_NAME_PARAM: tableNameParameter.parameterName,
+      TABLE_NAME: "DynamoDB-Conversation-Table",
     },
   }
 );
@@ -1316,14 +1310,10 @@ const textGenLambdaDockerFunc = new lambda.DockerImageFunction(
   this,
   `${id}-CaseLambdaDockerFunction`,
   {
-    code: lambda.DockerImageCode.fromEcr(
-      ecr.Repository.fromRepositoryName(
-        this,
-        'CaseGenRepository',
-        `${this.stackProps.stackPrefix}-cicd-casegeneration` 
-      ),
+   code: lambda.DockerImageCode.fromEcr(
+      props.ecrRepositories["caseGeneration"], 
       {
-        tagOrDigest: 'latest' // You can specify a specific tag or use 'latest'
+        tagOrDigest: "latest",      // or whatever tag you're using
       }
     ),
     memorySize: 512,
@@ -1337,6 +1327,7 @@ const textGenLambdaDockerFunc = new lambda.DockerImageFunction(
       BEDROCK_LLM_PARAM: bedrockLLMParameter.parameterName,
       EMBEDDING_MODEL_PARAM: embeddingModelParameter.parameterName,
       TABLE_NAME_PARAM: tableNameParameter.parameterName,
+      TABLE_NAME: "DynamoDB-Conversation-Table",
     },
   }
 );
@@ -1405,13 +1396,9 @@ const textGenLambdaDockerFunc = new lambda.DockerImageFunction(
   `${id}-SummaryLambdaDockerFunction`,
   {
     code: lambda.DockerImageCode.fromEcr(
-      ecr.Repository.fromRepositoryName(
-        this,
-        'TextGenRepository',
-        `${this.stackProps.stackPrefix}-cicd-summarygeneration` 
-      ),
+      props.ecrRepositories["summaryGeneration"], 
       {
-        tagOrDigest: 'latest' // You can specify a specific tag or use 'latest'
+        tagOrDigest: "latest",      // or whatever tag you're using
       }
     ),
     memorySize: 512,
@@ -1425,6 +1412,7 @@ const textGenLambdaDockerFunc = new lambda.DockerImageFunction(
       BEDROCK_LLM_PARAM: bedrockLLMParameter.parameterName,
       EMBEDDING_MODEL_PARAM: embeddingModelParameter.parameterName,
       TABLE_NAME_PARAM: tableNameParameter.parameterName,
+      TABLE_NAME: "DynamoDB-Conversation-Table",
     },
   }
 );
