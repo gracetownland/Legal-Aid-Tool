@@ -4,4 +4,4 @@ langchain-aws
 pymupdf
 python-dotenv
 langchain_postgres
-psycopg[c]==3.1.18
+psycopg[binary]==3.1.18
