@@ -4,4 +4,4 @@ langchain-aws
 pymupdf
 psycopg2-binary==2.9.9
 python-dotenv
-langchaine_postgres
+langchain_postgres
