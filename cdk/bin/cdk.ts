@@ -28,7 +28,7 @@ const dbStack = new DatabaseStack(app, `${StackPrefix}-Database`, vpcStack, { en
 const cicdStack = new CICDStack(app, `${StackPrefix}-CICD`, {
   env,
   githubRepo: githubRepo,
-  environmentName: 'dev',
+  environmentName: environment,
   lambdaFunctions: [
     {
       name: 'textGeneration',
