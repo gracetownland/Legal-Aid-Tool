@@ -2,6 +2,7 @@ boto3
 langchain
 langchain-aws
 pymupdf
+langchain-postgres
+psycopg2-binary==2.9.9
 python-dotenv
-langchain_postgres
-psycopg[binary]==3.1.18
+langchain_community
