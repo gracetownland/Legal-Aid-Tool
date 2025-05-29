@@ -36,6 +36,11 @@ const cicdStack = new CICDStack(app, `${StackPrefix}-CICD`, {
       sourceDir: 'cdk/lambda/text_generation'
     },
     {
+      name: 'audioToText',
+      functionName: `${StackPrefix}-Api-audioToTextFun`,
+      sourceDir: 'cdk/lambda/audioToText'
+    },
+    {
       name: 'caseGeneration',
       functionName: `${StackPrefix}-Api-CaseLambdaDockerFunction`,
       sourceDir:'cdk/lambda/case_generation'
