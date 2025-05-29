@@ -909,21 +909,29 @@ export class ApiGatewayStack extends cdk.Stack {
       role: coglambdaRole,
     });
 
-    const audioToTextFunction = new lambda.DockerImageFunction(this, `${id}-audioToTextFunc`, {
-      code: lambda.DockerImageCode.fromImageAsset("./lambda/audioToText"),
-      timeout: Duration.seconds(300),
-      memorySize: 2048,
-      vpc: vpcStack.vpc,
-      environment: {
-        AUDIO_BUCKET: audioStorageBucket.bucketName,
+    const audioToTextFunction = new lambda.DockerImageFunction(
+  this,
+  `${id}-audioToTextFunc`,
+  {
+    code: lambda.DockerImageCode.fromEcr(
+      props.ecrRepositories["audioToText"], 
+      {
+        tagOrDigest: "latest",      // or whatever tag you're using
+      }
+    ),
+    memorySize: 512,
+    timeout: cdk.Duration.seconds(300),
+    vpc: vpcStack.vpc,
+    functionName: `${id}-audioToTextFunc`,
+    environment: {
+      SAUDIO_BUCKET: audioStorageBucket.bucketName,
         SM_DB_CREDENTIALS: db.secretPathUser.secretName,
         RDS_PROXY_ENDPOINT: db.rdsProxyEndpoint,
         APPSYNC_API_URL: this.eventApi.graphqlUrl,
         REGION: this.region,
-      },
-      functionName: `${id}-audioToTextFunc`,
-      role: coglambdaRole,
-    });
+    },
+  }
+);
 
 
     // textToLlmQueue.grantSendMessages(audioToTextFunction);

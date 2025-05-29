@@ -186,11 +186,10 @@ export class CICDStack extends cdk.Stack {
     },
     post_build: {
       commands: [
-         'docker tag $REPOSITORY_URI:$IMAGE_TAG $REPOSITORY_URI:${MODULE_NAME}-${ENVIRONMENT}-latest',
-          'docker push $REPOSITORY_URI:$IMAGE_TAG',
-          'docker push $REPOSITORY_URI:${MODULE_NAME}-${ENVIRONMENT}-latest',
-          'echo Updating Lambda function...',
-          'aws lambda update-function-code --function-name $LAMBDA_FUNCTION_NAME --image-uri $REPOSITORY_URI:${MODULE_NAME}-${ENVIRONMENT}-latest --region $AWS_REGION',
+        'docker tag $REPOSITORY_URI:$IMAGE_TAG $REPOSITORY_URI:latest',
+        'docker push $REPOSITORY_URI:$IMAGE_TAG',
+    'docker push $REPOSITORY_URI:latest',
+    'echo Updating Lambda function...',
       ]
     }
   }
