@@ -124,6 +124,7 @@ export class CICDStack extends cdk.Stack {
         repositoryName: repoName,
         imageTagMutability: ecr.TagMutability.IMMUTABLE,
         removalPolicy: cdk.RemovalPolicy.RETAIN,
+        imageScanOnPush: true,
       });
 
       ecrRepo.addToResourcePolicy(new iam.PolicyStatement({
