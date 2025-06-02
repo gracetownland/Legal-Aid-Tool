@@ -122,7 +122,7 @@ export class CICDStack extends cdk.Stack {
       const repoName = `${id.toLowerCase()}-${lambda.name.toLowerCase()}`;
       const ecrRepo = new ecr.Repository(this, `${lambda.name}Repo`, {
         repositoryName: repoName,
-        imageTagMutability: ecr.TagMutability.IMMUTABLE,
+        imageTagMutability: ecr.TagMutability.MUTABLE,
         removalPolicy: cdk.RemovalPolicy.RETAIN,
         imageScanOnPush: true,
       });
