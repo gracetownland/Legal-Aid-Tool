@@ -116,7 +116,7 @@ Moreover, you will need to upload your github username to Amazon SSM Parameter S
 
 ```bash
 aws ssm put-parameter ^
-    --name "Lat-owner-name" ^
+    --name "lat-owner-name" ^
     --value "<YOUR-GITHUB-USERNAME>" ^
     --type String ^
     --profile <YOUR-PROFILE-NAME>
@@ -128,7 +128,7 @@ aws ssm put-parameter ^
 
 ```cmd
 aws ssm put-parameter ^
-    --name "Lat-owner-name" ^
+    --name "lat-owner-name" ^
     --value "<YOUR-GITHUB-USERNAME>" ^
     --type String ^
     --profile <YOUR-PROFILE-NAME>
@@ -141,7 +141,7 @@ aws ssm put-parameter ^
 
 ```powershell
 aws ssm put-parameter `
-    --name "Lat-owner-name" `
+    --name lat-owner-name" `
     --value "<YOUR-GITHUB-USERNAME>" `
     --type String `
     --profile <YOUR-PROFILE-NAME>
@@ -273,13 +273,16 @@ If you have trouble running the above command, try removing all the \ and run it
 cdk deploy --all \
  --parameters <your-stack-prefix>-Amplify:githubRepoName=Legal-Aid-Tool \
  --context StackPrefix=<your-stack-prefix> \
+ --context environment=dev \ 
+ --context version=1.2.0 \ 
+ --context githubRepo=Legal-Aid-Tool \ 
  --profile <your-profile-name>
 ```
 
 For example: 
 
 ```
-cdk deploy --all --parameters LegalAidTool-Amplify:githubRepoName=Legal-Aid-Tool --context StackPrefix=LegalAidTool --profile <your-profile-name>
+cdk deploy --all --parameters LegalAidTool-Amplify:githubRepoName=Legal-Aid-Tool --context StackPrefix=LegalAidTool --context environment=dev --context version=1.2.0 --context githubRepo=Legal-Aid-Tool --profile <your-profile-name>
 ```
 
 ## Post-Deployment
