@@ -7,5 +7,5 @@ langchain-community
 langchain-postgres
 pymupdf
 psycopg[binary,pool]
-psycopg2-binary
+psycopg2-binary==2.9.9
 python-dotenv
