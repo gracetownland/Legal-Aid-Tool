@@ -1,7 +1,7 @@
 boto3
 langchain
 langchain-aws
-langchain-postgres==0.0.5 
+langchain-postgres
 psycopg2-binary==2.9.9
 python-dotenv
 langchain_community
