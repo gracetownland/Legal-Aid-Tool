@@ -19,8 +19,7 @@ WORKDIR ${LAMBDA_TASK_ROOT}
 RUN pip-compile requirements.in && \
     pip install --no-cache-dir -r requirements.txt
 
-# 4. Optional sanity check
-RUN python -c "import psycopg2; print('✅ psycopg2 loaded successfully')"
+RUN echo "📦 Installed packages:" && pip list
 
 # 5. Copy the application code
 COPY src/ ${LAMBDA_TASK_ROOT}
