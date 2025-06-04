@@ -1,28 +1,21 @@
 FROM public.ecr.aws/lambda/python:3.11
 
-# 1. Install system dependencies (and clean up cache)
-RUN yum install -y \
-    gcc \
-    python3-devel \
-    postgresql-devel \
-    libpq-devel \
-    make && \
-    yum clean all
+# Install system dependencies for psycopg etc.
+RUN yum -y install postgresql-devel gcc libpq
 
-# 2. Upgrade pip + install pip-tools
-RUN pip install --upgrade pip
-RUN pip install pip-tools
+# Install pip-tools for dependency management
+RUN pip install --no-cache-dir pip-tools
 
-# 3. Copy and compile requirements
+# Copy requirements.in
 COPY requirements.in ${LAMBDA_TASK_ROOT}
+
+# Compile and install dependencies
 WORKDIR ${LAMBDA_TASK_ROOT}
 RUN pip-compile requirements.in && \
     pip install --no-cache-dir -r requirements.txt
 
-RUN echo "📦 Installed packages:" && pip list
-
-# 5. Copy the application code
+# Copy your actual source code
 COPY src/ ${LAMBDA_TASK_ROOT}
 
-# 6. Set the Lambda handler
+# Set the handler
 CMD [ "main.handler" ]
