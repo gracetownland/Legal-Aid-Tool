@@ -1,20 +1,24 @@
 FROM public.ecr.aws/lambda/python:3.11
 
-# Install system dependencies for psycopg etc.
-RUN yum -y install postgresql-devel gcc libpq
+# Install system dependencies needed by psycopg2-binary
+RUN yum install -y \
+    gcc \
+    python3-devel \
+    postgresql-devel \
+    libpq-devel \
+    make
 
-# Install pip-tools for dependency management
+# Upgrade pip and install pip-tools
+RUN pip install --upgrade pip
 RUN pip install --no-cache-dir pip-tools
 
-# Copy requirements.in
+# Copy requirements.in and install dependencies
 COPY requirements.in ${LAMBDA_TASK_ROOT}
-
-# Compile and install dependencies
 WORKDIR ${LAMBDA_TASK_ROOT}
 RUN pip-compile requirements.in && \
     pip install --no-cache-dir -r requirements.txt
 
-# Copy your actual source code
+# Copy the source code
 COPY src/ ${LAMBDA_TASK_ROOT}
 
 # Set the handler
