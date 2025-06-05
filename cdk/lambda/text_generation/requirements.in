@@ -1,7 +1,10 @@
 boto3
+botocore
 langchain
+langchain-core
 langchain-aws
+langchain-community
 langchain-postgres
-psycopg2-binary==2.9.9
+psycopg[binary]==3.1.18
 python-dotenv
-langchain_community
+pymupdf
