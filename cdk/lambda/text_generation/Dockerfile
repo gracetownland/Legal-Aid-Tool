@@ -4,9 +4,10 @@ RUN yum install -y \
     gcc \
     python3-devel \
     postgresql15-devel \
-    postgresql15-libs \  # ⬅️ ADD THIS LINE
+    postgresql15-libs \
     libpq-devel \
     make
+
 
 
 RUN pip install --upgrade pip
