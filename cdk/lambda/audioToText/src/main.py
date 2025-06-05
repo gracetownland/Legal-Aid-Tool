@@ -20,7 +20,7 @@ s3 = boto3.client("s3", region_name=os.environ.get("AWS_REGION"))
 DB_SECRET_NAME = os.environ["SM_DB_CREDENTIALS"]    # Secrets Manager secret for RDS credentials
 REGION = os.environ["REGION"]                     # AWS region for SSM and other services
 RDS_PROXY_ENDPOINT = os.environ["RDS_PROXY_ENDPOINT"]  # RDS Proxy endpoint
-AUDIO_BUCKET = os.environ.get("SAUDIO_BUCKET")         # S3 bucket where audio files are stored
+AUDIO_BUCKET = os.environ.get("AUDIO_BUCKET")         # S3 bucket where audio files are stored
 APPSYNC_API_URL = os.environ.get("APPSYNC_API_URL")   # AppSync GraphQL endpoint
 
 # AWS clients for Secrets Manager and Parameter Store

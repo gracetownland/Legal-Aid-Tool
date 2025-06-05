@@ -924,7 +924,7 @@ export class ApiGatewayStack extends cdk.Stack {
     vpc: vpcStack.vpc,
     functionName: `${id}-audioToTextFunc`,
     environment: {
-      SAUDIO_BUCKET: audioStorageBucket.bucketName,
+        AUDIO_BUCKET: audioStorageBucket.bucketName,
         SM_DB_CREDENTIALS: db.secretPathUser.secretName,
         RDS_PROXY_ENDPOINT: db.rdsProxyEndpoint,
         APPSYNC_API_URL: this.eventApi.graphqlUrl,
