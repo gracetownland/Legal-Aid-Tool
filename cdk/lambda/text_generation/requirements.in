@@ -4,6 +4,6 @@ langchain
 langchain-core
 langchain-aws
 langchain-community
-psycopg[binary]>=3.1
+psycopg2-binary>=2.9.9
 python-dotenv
 pymupdf
