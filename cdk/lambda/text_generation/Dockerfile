@@ -1,28 +1,28 @@
 FROM public.ecr.aws/lambda/python:3.11
 
-# Install required system libraries
+# Install system dependencies
 RUN yum install -y \
     gcc \
     python3-devel \
-    make \
     postgresql15 \
     postgresql15-devel \
-    postgresql15-libs
+    postgresql15-libs \
+    make
 
-# Upgrade pip + install pip-tools
+# Symlink libpq where Lambda runtime expects it
+RUN ln -sf /usr/pgsql-15/lib/libpq.so.5 /lib64/libpq.so.5
+
+# Upgrade pip and install pip-tools
 RUN pip install --upgrade pip
 RUN pip install pip-tools
 
-# Copy and install dependencies
-COPY requirements.in ${LAMBDA_TASK_ROOT}
-WORKDIR ${LAMBDA_TASK_ROOT}
+# Install Python dependencies
+COPY requirements.in .
 RUN pip-compile requirements.in && \
     pip install --no-cache-dir -r requirements.txt
 
-RUN pip list
-
-# Copy source code
+# Copy application code
 COPY src/ ${LAMBDA_TASK_ROOT}
 
-# Lambda entrypoint
+# Set handler
 CMD ["main.handler"]
