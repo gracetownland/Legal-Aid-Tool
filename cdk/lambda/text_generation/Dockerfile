@@ -18,9 +18,6 @@ WORKDIR ${LAMBDA_TASK_ROOT}
 RUN pip-compile requirements.in && \
     pip install --no-cache-dir -r requirements.txt
 
-# DEBUG: Confirm psycopg and libpq
-RUN pip show psycopg && find / -name "libpq.so*"
-
 # Copy the source code
 COPY src/ ${LAMBDA_TASK_ROOT}
 
