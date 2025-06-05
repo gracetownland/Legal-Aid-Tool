@@ -3,7 +3,11 @@ FROM public.ecr.aws/lambda/python:3.11
 RUN yum install -y \
     gcc \
     python3-devel \
-    libpq-devel
+    postgresql15-devel \
+    postgresql15-libs \  # ⬅️ ADD THIS LINE
+    libpq-devel \
+    make
+
 
 RUN pip install --upgrade pip
 RUN pip install pip-tools
