@@ -10,7 +10,6 @@ import uuid
 
 # from helpers.vectorstore import get_vectorstore_retriever
 from helpers.chat import get_bedrock_llm, get_initial_student_query, get_student_query, create_dynamodb_history_table, get_response
-# # from helpers.canlii import CanLIICitationLinker
 # # Set up basic logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
@@ -292,10 +291,6 @@ def get_case_details(case_id):
 def handler(event, context):
     logger.info("Text Generation Lambda function is called!")
     initialize_constants()
-    
-    
-    # api_key = os.environ.get("CANLII_API_KEY", "")  # Make sure to set this environment variable
-    # citation_linker = CanLIICitationLinker(api_key)
     
     query_params = event.get("queryStringParameters", {})
     case_id = query_params.get("case_id", "")
