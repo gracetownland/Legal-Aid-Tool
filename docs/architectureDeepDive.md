@@ -26,7 +26,7 @@ AWS CodePipeline and CodeBuild automates Docker image builds and Lambda deployme
 
 ### Database Schema
 
-![Database Diagram](./media/database_schema.png)
+![Database Diagram](./media/database-schema.png)
 
 ### RDS Tables
 
