@@ -3,15 +3,15 @@ import json
 import boto3
 import botocore
 import logging
-import psycopg2
+import psycopg
 import time
 import uuid
-from langchain_aws import BedrockEmbeddings
+# from langchain_aws import BedrockEmbeddings
 
-from helpers.vectorstore import get_vectorstore_retriever
+# from helpers.vectorstore import get_vectorstore_retriever
 from helpers.chat import get_bedrock_llm, get_initial_student_query, get_student_query, create_dynamodb_history_table, get_response
-from helpers.canlii import CanLIICitationLinker
-# Set up basic logging
+# # from helpers.canlii import CanLIICitationLinker
+# # Set up basic logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
 
@@ -22,8 +22,6 @@ RDS_PROXY_ENDPOINT = os.environ["RDS_PROXY_ENDPOINT"]
 BEDROCK_LLM_PARAM = os.environ["BEDROCK_LLM_PARAM"]
 EMBEDDING_MODEL_PARAM = os.environ["EMBEDDING_MODEL_PARAM"]
 TABLE_NAME_PARAM = os.environ["TABLE_NAME_PARAM"]
-# CANLII_API_KEY = os.environ.get("CANLII_API_KEY", "")
-CANLII_API_KEY = "yvMWSx8fZH5hSWVjSoSUp7o7pdIS6xW89H6WtZ35"
 # AWS Clients
 secrets_manager_client = boto3.client("secretsmanager")
 ssm_client = boto3.client("ssm", region_name=REGION)
@@ -97,7 +95,7 @@ def connect_to_db():
                 'port': secret["port"]
             }
             connection_string = " ".join([f"{key}={value}" for key, value in connection_params.items()])
-            connection = psycopg2.connect(connection_string)
+            connection = psycopg.connect(connection_string)
             logger.info("Connected to the database!")
         except Exception as e:
             logger.error(f"Failed to connect to database: {e}")

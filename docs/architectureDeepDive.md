@@ -20,9 +20,13 @@ Access is controlled using IAM roles and policies.
 9. For AI-powered text generation (e.g., summarizations, title generation), AWS Lambda triggers Amazon Bedrock, which runs the Llama 3 model after retrieving relevant information from Amazon RDS database.
 10.	The conversation history are stored in Amazon DynamoDB. This provides fast retrieval and scalability, allowing users to view past interactions efficiently.
 
+
+AWS CodePipeline and CodeBuild automates Docker image builds and Lambda deployments for seamless backend updates.
+
+
 ### Database Schema
 
-![Database Diagram](./media/database_schema.png)
+![Database Diagram](./media/database-schema.png)
 
 ### RDS Tables
 
@@ -107,3 +111,12 @@ Access is controlled using IAM roles and policies.
 | `s3_file_path`    | File path to audio on S3                   |
 | `timestamp`       | Timestamp when the audio was uploaded      |
 
+
+### `disclaimers` table
+
+| Column Name       | Description                                |
+| ----------------- | ------------------------------------------ |
+| `disclaimer_id`   | UUID, primary key                          |
+| `disclaimer_text` | Text to be shown to student upon sign up   |
+| `last_updated`    | Date of last update of the disclaimer      |
+| `user_id`         | UUID of user updating (FK to `users`)      |
