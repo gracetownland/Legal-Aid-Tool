@@ -219,7 +219,7 @@ For example,
 ```
 aws secretsmanager create-secret \
     --name LATSecrets \
-    --secret-string '{\"DB_Username\":\"admin_user\"}'\
+    --secret-string '{\"DB_Username\":\"db_admin\"}'\
     --profile <your-profile-name>
 
 ```
