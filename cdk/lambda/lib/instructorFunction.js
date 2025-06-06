@@ -61,20 +61,6 @@ exports.handler = async (event) => {
     sqlConnection = global.sqlConnection;
   }
 
-  // Function to format student full names (lowercase and spaces replaced with "_")
-  const formatNames = (name) => {
-    return name.toLowerCase().replace(/\s+/g, "_");
-  };
-
-  function generateAccessCode() {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    let code = "";
-    for (let i = 0; i < 16; i++) {
-      code += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return code.match(/.{1,4}/g).join("-");
-  }
-
   let data;
   try {
     const pathData = event.httpMethod + " " + event.resource;
@@ -325,77 +311,6 @@ WHERE c.user_id = ANY(${studentIds});
     response.body = JSON.stringify({ error: "cognito_id is required" });
   }
   break;
-
-      case "DELETE /instructor/delete_student":
-        if (
-          event.queryStringParameters != null &&
-          event.queryStringParameters.simulation_group_id &&
-          event.queryStringParameters.instructor_email &&
-          event.queryStringParameters.user_email
-        ) {
-          const { simulation_group_id, instructor_email, user_email } =
-            event.queryStringParameters;
-    
-          try {
-            // Step 1: Get the user ID from the user email
-            const userResult = await sqlConnection`
-              SELECT user_id
-              FROM "users"
-              WHERE user_email = ${user_email}
-              LIMIT 1;
-            `;
-    
-            const userId = userResult[0]?.user_id;
-    
-            if (!userId) {
-              response.statusCode = 404;
-              response.body = JSON.stringify({
-                error: "User not found",
-              });
-              break;
-            }
-    
-            // Step 2: Delete the student from the simulation group enrolments
-            const deleteResult = await sqlConnection`
-              DELETE FROM "enrolments"
-              WHERE simulation_group_id = ${simulation_group_id}
-                AND user_id = ${userId}
-                AND enrolment_type = 'student'
-              RETURNING *;
-            `;
-    
-            if (deleteResult.length > 0) {
-              response.statusCode = 200;
-              response.body = JSON.stringify(deleteResult[0]);
-    
-              // Step 3: Insert into User Engagement Log
-              await sqlConnection`
-                INSERT INTO "user_engagement_log" (
-                  log_id, user_id, simulation_group_id, patient_id, enrolment_id, timestamp, engagement_type
-                )
-                VALUES (
-                  uuid_generate_v4(), ${userId}, ${simulation_group_id}, null, null, 
-                  CURRENT_TIMESTAMP, 'instructor_deleted_student'
-                );
-              `;
-            } else {
-              response.statusCode = 404;
-              response.body = JSON.stringify({
-                error: "Student not found in the simulation group",
-              });
-            }
-          } catch (err) {
-            response.statusCode = 500;
-            console.error(err);
-            response.body = JSON.stringify({ error: "Internal server error" });
-          }
-        } else {
-          response.statusCode = 400;
-          response.body = JSON.stringify({
-            error: "simulation_group_id, user_email, and instructor_email are required",
-          });
-        }
-        break;
       default:
         throw new Error(`Unsupported route: "${pathData}"`);
     }

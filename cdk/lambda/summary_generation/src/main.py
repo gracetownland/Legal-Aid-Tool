@@ -217,7 +217,7 @@ def handler(event, context):
                 "Access-Control-Allow-Origin": "*",
                 "Access-Control-Allow-Methods": "*",
             },
-            'body': json.dumps('Error fetching patient details')
+            'body': json.dumps('Error fetching summary details')
         }
 
     
