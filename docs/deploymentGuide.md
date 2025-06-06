@@ -144,7 +144,7 @@ Moreover, you will need to upload your github username to Amazon SSM Parameter S
 aws ssm put-parameter ^
     --name "lat-owner-name" ^
     --value "<YOUR-GITHUB-USERNAME>" ^
-    --Install Depetype String ^
+    --type String ^
     --profile <YOUR-PROFILE-NAME>
 ```
 </details>
