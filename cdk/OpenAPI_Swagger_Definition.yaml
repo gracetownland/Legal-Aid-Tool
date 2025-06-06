@@ -2540,8 +2540,8 @@ paths:
     get:
       tags:
         - Instructor
-      summary: Get student groups
-      operationId: instructor_student_group_GET
+      summary: Get instructor name
+      operationId: instructor_name_GET
       parameters:
         - in: query
           name: name
@@ -2732,7 +2732,7 @@ paths:
     get:
       tags:
         - Instructor
-      summary: View students enrolled in a group
+      summary: View students assigned to instructor
       operationId: instructor_view_students_GET
       responses:
         "200":
@@ -3014,7 +3014,7 @@ paths:
                   description: ID of student to assign
       responses:
         "200":
-          description: Enrollment created successfully
+          description: Assignment created successfully
         "400":
           description: Bad Request
         "500":
@@ -3055,11 +3055,11 @@ paths:
     get:
       tags:
         - Admin
-      summary: Get all groups for a given instructor where enrolment type is instructor
+      summary: Get all students for a given instructor
       operationId: admin_get_students_GET
       responses:
         "200":
-          description: List of groups
+          description: List of students
           content:
             application/json:
               schema:
@@ -3151,7 +3151,7 @@ paths:
                   description: ID of student to assign
       responses:
         "200":
-          description: Enrollment created successfully
+          description: Assignment created successfully
         "400":
           description: Bad Request
         "500":
@@ -3194,7 +3194,7 @@ paths:
     get:
       tags:
         - Admin
-      summary: Get all groups for a given instructor where enrolment type is instructor
+      summary: Get all students for an instructor
       operationId: admin_get_instructor_students_GET
       parameters:
         - name: instructor_id
@@ -3202,10 +3202,10 @@ paths:
           required: true
           schema:
             type: string
-          description: Id of the instructor to find groups for
+          description: Id of the instructor to find students for
       responses:
         "200":
-          description: List of groups
+          description: List of student ids
           content:
             application/json:
               schema:
