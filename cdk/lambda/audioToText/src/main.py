@@ -277,7 +277,7 @@ def handler(event, context):
             },
             ContentRedaction={
                 'RedactionType': 'PII',
-                'RedactionOutput': 'redacted',
+                'RedactionOutput': 'redacted_and_unredacted',
                 'PiiEntityTypes': [
                     'NAME', 'EMAIL', 'PHONE', 'SSN', 
                     'CREDIT_DEBIT_NUMBER', 'BANK_ACCOUNT_NUMBER', 
@@ -305,12 +305,11 @@ def handler(event, context):
         # Use basic formatting since speaker labels aren't supported with redaction
         transcript_text = format_diarized_transcript(data)
 
-        # amazonq-ignore-next-line
         # Apply custom PII markers
-      #  formatted_transcript = customize_pii_markers(transcript_text)
+        formatted_transcript = customize_pii_markers(transcript_text)
         
         # 5. Store transcript and notify clients
-        add_audio_to_db(audio_file_id, transcript_text)
+        add_audio_to_db(audio_file_id, formatted_transcript)
 
         # amazonq-ignore-next-line
         logger.info(f"About to invoke event notification with audio_file_id={audio_file_id}, file_name={file_name}")
