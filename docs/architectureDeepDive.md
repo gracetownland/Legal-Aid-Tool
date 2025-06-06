@@ -26,7 +26,7 @@ AWS CodePipeline and CodeBuild automates Docker image builds and Lambda deployme
 
 ### Database Schema
 
-![Database Diagram](./media/database_schema.png)
+![Database Diagram](./media/database-schema.png)
 
 ### RDS Tables
 
@@ -111,3 +111,12 @@ AWS CodePipeline and CodeBuild automates Docker image builds and Lambda deployme
 | `s3_file_path`    | File path to audio on S3                   |
 | `timestamp`       | Timestamp when the audio was uploaded      |
 
+
+### `disclaimers` table
+
+| Column Name       | Description                                |
+| ----------------- | ------------------------------------------ |
+| `disclaimer_id`   | UUID, primary key                          |
+| `disclaimer_text` | Text to be shown to student upon sign up   |
+| `last_updated`    | Date of last update of the disclaimer      |
+| `user_id`         | UUID of user updating (FK to `users`)      |
