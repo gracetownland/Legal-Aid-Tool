@@ -15,7 +15,7 @@ This prototype explores how Large Language Models (LLMs) can enhance legal workf
 
 The following architecture diagram illustrates the various AWS components utilized to deliver the solution. For an in-depth explanation of the frontend and backend stacks, please look at the [Architecture Guide](docs/architectureDeepDive.md).
 
-![Alt text](docs/images/architecture.png)
+![Archnitecture Diagram](./media/architecture.png)
 
 ## Deployment Guide
 
