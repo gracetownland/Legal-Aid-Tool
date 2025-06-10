@@ -139,7 +139,7 @@ def get_response(
 
     Args:
     query (str): The student's query string for which a response is needed.
-    patient_name (str): The specific patient that the student needs to diagnose.
+    case_name (str): The specific case that the student needs to analyze.
     llm (ChatBedrock): The language model instance used to generate the response.
     history_aware_retriever: The history-aware retriever instance that provides relevant context documents for the query.
     table_name (str): The DynamoDB table name used to store and retrieve the chat history.
@@ -148,16 +148,6 @@ def get_response(
     Returns:
     dict: A dictionary containing the generated response and the source documents used in the retrieval.
     """
-    
-    # completion_string = """
-    #             Once I, the law student, have give you a diagnosis, politely leave the conversation and wish me goodbye.
-    #             Regardless if I have given you the proper diagnosis or not for the patient you are pretending to be, stop talking to me.
-    #             """
-    # if llm_completion:
-    #     completion_string = """
-    #             Continue this process until you determine that me, the law student, has properly diagnosed the patient you are pretending to be.
-    #             Once the proper diagnosis is provided, include PROPER DIAGNOSIS ACHIEVED in your response and do not continue the conversation.
-    #             """
 
     # Create a system prompt for the question answering
     processed_system_prompt = (

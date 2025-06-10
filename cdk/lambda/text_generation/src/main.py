@@ -3,15 +3,14 @@ import json
 import boto3
 import botocore
 import logging
-import psycopg2
+import psycopg
 import time
 import uuid
-from langchain_aws import BedrockEmbeddings
+# from langchain_aws import BedrockEmbeddings
 
-from helpers.vectorstore import get_vectorstore_retriever
+# from helpers.vectorstore import get_vectorstore_retriever
 from helpers.chat import get_bedrock_llm, get_initial_student_query, get_student_query, create_dynamodb_history_table, get_response
-from helpers.canlii import CanLIICitationLinker
-# Set up basic logging
+# # Set up basic logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
 
@@ -22,8 +21,6 @@ RDS_PROXY_ENDPOINT = os.environ["RDS_PROXY_ENDPOINT"]
 BEDROCK_LLM_PARAM = os.environ["BEDROCK_LLM_PARAM"]
 EMBEDDING_MODEL_PARAM = os.environ["EMBEDDING_MODEL_PARAM"]
 TABLE_NAME_PARAM = os.environ["TABLE_NAME_PARAM"]
-# CANLII_API_KEY = os.environ.get("CANLII_API_KEY", "")
-CANLII_API_KEY = "yvMWSx8fZH5hSWVjSoSUp7o7pdIS6xW89H6WtZ35"
 # AWS Clients
 secrets_manager_client = boto3.client("secretsmanager")
 ssm_client = boto3.client("ssm", region_name=REGION)
@@ -97,7 +94,7 @@ def connect_to_db():
                 'port': secret["port"]
             }
             connection_string = " ".join([f"{key}={value}" for key, value in connection_params.items()])
-            connection = psycopg2.connect(connection_string)
+            connection = psycopg.connect(connection_string)
             logger.info("Connected to the database!")
         except Exception as e:
             logger.error(f"Failed to connect to database: {e}")
@@ -171,7 +168,7 @@ def setup_guardrail(guardrail_name: str) -> tuple[str, str]:
     
 
 def get_default_system_prompt():
-    return '''You are a helpful assistant to me, a UBC law student, who answers with kindness while being concise, so that it is easy to read your responses quickly yet still get valuable information from them. No need to be conversational, just skip to talking about the content. Refer to me, the law student, in the second person. I will provide you with context to a legal case I am interviewing my client about, and you exist to help provide legal context and analysis, relevant issues, possible strategies to defend the client, and other important details in a structured natural language response.
+    return '''You are a helpful assistant to me, a law student, who answers with kindness while being concise, so that it is easy to read your responses quickly yet still get valuable information from them. No need to be conversational, just skip to talking about the content. Refer to me, the law student, in the second person. I will provide you with context to a legal case I am interviewing my client about, and you exist to help provide legal context and analysis, relevant issues, possible strategies to defend the client, and other important details in a structured natural language response.
 
 To me, the law student, when I provide you with context on certain client cases, and you should provide possible follow-up questions for me, the law student, to ask the client to help progress the case more after your initial (concise and easy to read) analysis. These are NOT for the client to ask a lawyer; this is to help me, the law student, learn what kind of questions to ask my client, so in your analysis you should provide follow-up questions for me, the law student, to ask the client as if I were a lawyer.
 
@@ -294,10 +291,6 @@ def get_case_details(case_id):
 def handler(event, context):
     logger.info("Text Generation Lambda function is called!")
     initialize_constants()
-    
-    
-    # api_key = os.environ.get("CANLII_API_KEY", "")  # Make sure to set this environment variable
-    # citation_linker = CanLIICitationLinker(api_key)
     
     query_params = event.get("queryStringParameters", {})
     case_id = query_params.get("case_id", "")

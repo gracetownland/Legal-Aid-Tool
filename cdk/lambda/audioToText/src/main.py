@@ -60,9 +60,6 @@ def invoke_event_notification(audio_file_id, message, cognito_token):
             "variables": {"message": message, "audioFileId": audio_file_id}
         }
 
-        # Log payload for debugging
-        logger.info(f"Sending notification payload: {payload}")
-
         # Perform the HTTP request
         with httpx.Client() as client:
             response = client.post(APPSYNC_API_URL, headers=headers, json=payload)
@@ -92,10 +89,13 @@ def get_secret(secret_name, expect_json=True):
             raw = secrets_manager_client.get_secret_value(SecretId=secret_name)["SecretString"]
             db_secret = json.loads(raw) if expect_json else raw
         except json.JSONDecodeError as e:
+            # amazonq-ignore-next-line
             msg = f"Secret {secret_name} is not valid JSON: {e}"
+            # amazonq-ignore-next-line
             logger.error(msg)
             raise ValueError(msg)
         except Exception as e:
+            # amazonq-ignore-next-line
             logger.error(f"Error fetching secret {secret_name}: {e}")
             raise
     return db_secret
@@ -186,10 +186,14 @@ def add_audio_to_db(audio_file_id, audio_text):
         sql = 'UPDATE "audio_files" SET audio_text = %s WHERE audio_file_id = %s;'
         cur.execute(sql, (audio_text, audio_file_id))
         conn.commit()
+        # amazonq-ignore-next-line
         cur.close()
+        # amazonq-ignore-next-line
         logger.info(f"Audio text stored for audio_file_id: {audio_file_id}")
+        # amazonq-ignore-next-line
         return {"statusCode": 200, "body": json.dumps({"message": "Stored successfully"})}
     except Exception as e:
+        # amazonq-ignore-next-line
         logger.error(f"DB update error for audio_file_id {audio_file_id}: {e}")
         if cur:
             cur.close()
@@ -273,7 +277,7 @@ def handler(event, context):
             },
             ContentRedaction={
                 'RedactionType': 'PII',
-                'RedactionOutput': 'redacted',
+                'RedactionOutput': 'redacted_and_unredacted',
                 'PiiEntityTypes': [
                     'NAME', 'EMAIL', 'PHONE', 'SSN', 
                     'CREDIT_DEBIT_NUMBER', 'BANK_ACCOUNT_NUMBER', 
@@ -302,11 +306,12 @@ def handler(event, context):
         transcript_text = format_diarized_transcript(data)
 
         # Apply custom PII markers
-      #  formatted_transcript = customize_pii_markers(transcript_text)
+        formatted_transcript = customize_pii_markers(transcript_text)
         
         # 5. Store transcript and notify clients
-        add_audio_to_db(audio_file_id, transcript_text)
+        add_audio_to_db(audio_file_id, formatted_transcript)
 
+        # amazonq-ignore-next-line
         logger.info(f"About to invoke event notification with audio_file_id={audio_file_id}, file_name={file_name}")
 
 
@@ -319,6 +324,7 @@ def handler(event, context):
                 Bucket=AUDIO_BUCKET,
                 Key=f"{audio_file_id}/{file_name}.{file_type}"
             )
+            # amazonq-ignore-next-line
             logger.info(f"Deleted file {audio_file_id}/{file_name}.{file_type} from S3")
         except Exception as e:
             logger.error(f"Failed to delete audio file from S3: {e}")

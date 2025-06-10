@@ -69,7 +69,7 @@ exports.handler = async (event) => {
               
               response.statusCode = 200;
               response.body = JSON.stringify({
-                message: "Instructor enrolled and student linked successfully.",
+                message: "Instructor and student linked successfully.",
               });
         
             } catch (err) {
@@ -171,8 +171,6 @@ exports.handler = async (event) => {
             response.body = JSON.stringify({ error: "Missing or invalid 'value' in request body" });
             break;
           }
-      
-          console.log("Updating message limit in SSM:", newValue);
       
           await ssm.send(
             new PutParameterCommand({
@@ -374,7 +372,7 @@ exports.handler = async (event) => {
 
             response.statusCode = 200;
             response.body = JSON.stringify({
-              message: `User role updated to student for ${user_id} and all instructor enrolments deleted.`,
+              message: `User role updated to student for ${user_id} and all instructor assigned deleted.`,
             });
           } catch (err) {
             console.log(err);

@@ -15,7 +15,7 @@ This prototype explores how Large Language Models (LLMs) can enhance legal workf
 
 The following architecture diagram illustrates the various AWS components utilized to deliver the solution. For an in-depth explanation of the frontend and backend stacks, please look at the [Architecture Guide](docs/architectureDeepDive.md).
 
-![Alt text](docs/images/architecture.png)
+![Archnitecture Diagram](./docs/media/architecture.png)
 
 ## Deployment Guide
 
@@ -34,11 +34,7 @@ Please refer to the [Web App User Guide](./docs/userGuide.md) for instructions o
 │   ├── lambda/
 │   ├── layers/
 │   ├── lib/
-|   ├── graphql/
-|   ├── case_generation/
-|   ├── audioToText/
-|   ├── summary_generation/
-│   └── text_generation/
+│   └── graphql/
 
 ├── docs/
 │   ├── userGuide.md
@@ -58,10 +54,6 @@ Please refer to the [Web App User Guide](./docs/userGuide.md) for instructions o
    - `/lambda`: Contains the lambda functions for the project
    - `/layers`: Contains the required layers for lambda functions
    - `/lib`: Contains the deployment code for all infrastructure stacks
-   - `/text_generation`: Contains the code required for the Text Generation. This folder is used by a Lambda function that runs a container which retrieves specific documents and invokes the LLM to generate appropriate responses during a conversation.
-   - `/case_generation`: Contains the code required for the case generation with AI-generated titles. This folder is used by a Lambda function that runs a container which retrieves specific documents and invokes the LLM to generate appropriate responses during a conversation.
-   - `/audioToText`: Contains the code required for the Audio to Text. This folder is used by a Lambda function that runs a container which retrieves specific documents and invokes the LLM to generate appropriate responses during a conversation.
-   - `/summary_generation`: Contains the code required for the Summary Generation. This folder is used by a Lambda function that runs a container which retrieves specific documents and invokes the LLM to generate appropriate responses during a conversation.
    - `/graphql`: Contains the GraphQL schema and resolvers for the API.
 2. `/docs`: Contains documentation for the application.
 3. `/frontend`: Contains the user interface of the general public application
