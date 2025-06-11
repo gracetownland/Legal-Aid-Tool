@@ -1,7 +1,7 @@
 FROM public.ecr.aws/lambda/python:3.11
 
 # # Install system dependencies
-RUN yum -y install postgresql-devel gcc libpq gcc-c++ 
+RUN yum -y install postgresql-devel gcc libpq gcc-c++ make
 
 # Copy requirements.txt
 COPY requirements.txt ${LAMBDA_TASK_ROOT}
