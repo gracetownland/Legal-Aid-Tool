@@ -21,46 +21,11 @@ interface CICDStackProps extends cdk.StackProps {
   githubBranch?: string;
   environmentName?: string;
   lambdaFunctions: LambdaConfig[];
+  pathFilters?: string[];
 }
 
 export class CICDStack extends cdk.Stack {
   public readonly ecrRepositories: { [key: string]: ecr.Repository } = {};
-  
-  public createDockerLambdaFunction(
-  id: string,
-  functionName: string,
-  repoName: string,
-  vpc: ec2.IVpc,
-  environment: { [key: string]: string },
-  role: iam.IRole,
-  logicalId?: string // Add this parameter
-): lambda.DockerImageFunction {
-  
-  const lambdaFunction = new lambda.DockerImageFunction(this, id, {
-    code: lambda.DockerImageCode.fromEcr(
-      this.ecrRepositories[repoName],
-      {
-        tagOrDigest: `${repoName}-dev-latest`
-      }
-    ),
-    functionName: functionName,
-    vpc: vpc,
-    environment: environment,
-    role: role,
-    timeout: cdk.Duration.seconds(300),
-    memorySize: 2048,
-  });
-  
-  // Set logical ID if provided
-  if (logicalId) {
-    const cfnFunction = lambdaFunction.node.defaultChild as lambda.CfnFunction;
-    cfnFunction.overrideLogicalId(logicalId);
-  }
-  
-  return lambdaFunction;
-}
-
-
 
   constructor(scope: Construct, id: string, props: CICDStackProps) {
     super(scope, id, props);
@@ -75,13 +40,6 @@ export class CICDStack extends cdk.Stack {
     codeBuildRole.addManagedPolicy(
       iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonEC2ContainerRegistryPowerUser")
     );
-
-    codeBuildRole.addToPolicy(new iam.PolicyStatement({
-  actions: ['lambda:UpdateFunctionCode'],
-  resources: [
-    `arn:aws:lambda:${this.region}:${this.account}:function:*`, // or specify per function
-  ],
-}));
 
 
     // Create artifacts for pipeline
@@ -102,15 +60,25 @@ export class CICDStack extends cdk.Stack {
       stageName: 'Source',
       actions: [
         new codepipeline_actions.GitHubSourceAction({
-          actionName: 'GitHub',
-          owner: username,
-          repo: props.githubRepo,
-          branch: props.githubBranch ?? 'main',
-          oauthToken: cdk.SecretValue.secretsManager('github-personal-access-token', {
-            jsonField: 'my-github-token',
-          }),
-          output: sourceOutput,
-        }),
+  actionName: 'GitHub',
+  owner: username,
+  repo: props.githubRepo,
+  branch: props.githubBranch ?? 'main',
+  oauthToken: cdk.SecretValue.secretsManager('github-personal-access-token', {
+    jsonField: 'my-github-token',
+  }),
+  output: sourceOutput,
+  trigger: codepipeline_actions.GitHubTrigger.WEBHOOK,
+  ...(props.pathFilters ? {
+    filter: {
+      json: JSON.stringify({
+        push: {
+          paths: props.pathFilters
+        }
+      })
+    }
+  } : {})
+})
       ],
     });
 
@@ -190,7 +158,6 @@ export class CICDStack extends cdk.Stack {
         'docker tag $REPOSITORY_URI:$IMAGE_TAG $REPOSITORY_URI:latest',
         'docker push $REPOSITORY_URI:$IMAGE_TAG',
     'docker push $REPOSITORY_URI:latest',
-    'echo Updating Lambda function...',
       ]
     }
   }
