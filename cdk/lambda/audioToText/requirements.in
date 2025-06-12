@@ -1,0 +1,5 @@
+httpx
+psycopg2-binary
+psycopg[binary,pool]
+boto3
+botocore
