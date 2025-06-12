@@ -104,7 +104,7 @@ export class DatabaseStack extends Stack {
             monitoringInterval: Duration.seconds(60), // enhanced monitoring interval
             parameterGroup: parameterGroup
         });
-        
+
         // Add CIDR ranges of private subnets to inbound rules of RDS
         const dbSecurityGroup = this.dbInstance.connections.securityGroups[0];
         if (vpcStack.privateSubnetsCidrStrings && vpcStack.privateSubnetsCidrStrings.length > 0) {
@@ -163,10 +163,10 @@ export class DatabaseStack extends Stack {
         });
 
         const secretPathAdmin = secretmanager.Secret.fromSecretNameV2(this, 'AdminSecret', this.secretPathAdminName);
-        
+
         const rdsProxyAdmin = this.dbInstance.addProxy(id + '-proxy-admin', {
             secrets: [secretPathAdmin],
-            
+
             vpc: vpcStack.vpc,
             role: rdsProxyRole,
             securityGroups: this.dbInstance.connections.securityGroups,
@@ -195,7 +195,7 @@ export class DatabaseStack extends Stack {
         this.dbInstance.grantConnect(rdsProxyRole);
 
         this.rdsProxyEndpoint = rdsProxy.endpoint;
-        
+
         this.rdsProxyEndpointTableCreator = rdsProxyTableCreator.endpoint;
         this.rdsProxyEndpointAdmin = rdsProxyAdmin.endpoint;
     }

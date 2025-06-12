@@ -6,7 +6,7 @@ import { ApiGatewayStack } from '../lib/api-gateway-stack';
 import { DatabaseStack } from '../lib/database-stack';
 import { DBFlowStack } from '../lib/dbFlow-stack';
 import { VpcStack } from '../lib/vpc-stack';
-import {CICDStack} from '../lib/cicd-stack'
+import { CICDStack } from '../lib/cicd-stack'
 import { AwsSolutionsChecks } from 'cdk-nag';
 import { Aspects } from 'aws-cdk-lib';
 const app = new cdk.App();
@@ -37,25 +37,31 @@ const cicdStack = new CICDStack(app, `${StackPrefix}-CICD`, {
     },
     {
       name: 'audioToText',
-      functionName: `${StackPrefix}-Api-audioToTextFun`,
+      functionName: `${StackPrefix}-Api-audioToTextFunc`,
       sourceDir: 'cdk/lambda/audioToText'
     },
     {
       name: 'caseGeneration',
       functionName: `${StackPrefix}-Api-CaseLambdaDockerFunction`,
-      sourceDir:'cdk/lambda/case_generation'
+      sourceDir: 'cdk/lambda/case_generation'
     },
     {
       name: 'summaryGeneration',
       functionName: `${StackPrefix}-Api-SummaryLambdaDockerFunction`,
       sourceDir: 'cdk/lambda/summary_generation'
     }
-  ]
+  ],
+  pathFilters: [
+    'cdk/lambda/text_generation/**',
+    'cdk/lambda/audioToText/**',
+    'cdk/lambda/case_generation/**',
+    'cdk/lambda/summary_generation/**'
+  ],
 });
 
-const apiStack = new ApiGatewayStack(app, `${StackPrefix}-Api`, dbStack, vpcStack, { 
-  env, 
-  ecrRepositories: cicdStack.ecrRepositories,  
+const apiStack = new ApiGatewayStack(app, `${StackPrefix}-Api`, dbStack, vpcStack, {
+  env,
+  ecrRepositories: cicdStack.ecrRepositories,
 });
 
 const dbFlowStack = new DBFlowStack(app, `${StackPrefix}-DBFlow`, vpcStack, dbStack, apiStack, { env });

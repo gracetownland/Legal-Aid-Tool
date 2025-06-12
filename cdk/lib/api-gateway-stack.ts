@@ -83,7 +83,7 @@ export class ApiGatewayStack extends cdk.Stack {
         enforceSSL: true,
       }
     );
-    
+
     /**
      *
      * Create Integration Lambda layer for aws-jwt-verify
@@ -597,7 +597,7 @@ export class ApiGatewayStack extends cdk.Stack {
       stringValue: "Infinity",
     });
 
-    
+
 
     const lambdaStudentFunction = new lambda.Function(this, `${id}-studentFunction`, {
       runtime: lambda.Runtime.NODEJS_20_X,
@@ -626,7 +626,7 @@ export class ApiGatewayStack extends cdk.Stack {
         ],
         effect: iam.Effect.ALLOW
       })
-    );   
+    );
 
     // Add the permission to the Lambda function's policy to allow API Gateway access
     lambdaStudentFunction.addPermission("AllowApiGatewayInvoke", {
@@ -685,7 +685,7 @@ export class ApiGatewayStack extends cdk.Stack {
         ],
         effect: iam.Effect.ALLOW
       })
-    );    
+    );
 
     const cfnLambda_Instructor = lambdaInstructorFunction.node
       .defaultChild as lambda.CfnFunction;
@@ -910,28 +910,28 @@ export class ApiGatewayStack extends cdk.Stack {
     });
 
     const audioToTextFunction = new lambda.DockerImageFunction(
-  this,
-  `${id}-audioToTextFunc`,
-  {
-    code: lambda.DockerImageCode.fromEcr(
-      props.ecrRepositories["audioToText"], 
+      this,
+      `${id}-audioToTextFunc`,
       {
-        tagOrDigest: "latest",      // or whatever tag you're using
+        code: lambda.DockerImageCode.fromEcr(
+          props.ecrRepositories["audioToText"],
+          {
+            tagOrDigest: "latest",      // or whatever tag you're using
+          }
+        ),
+        memorySize: 512,
+        timeout: cdk.Duration.seconds(300),
+        vpc: vpcStack.vpc,
+        functionName: `${id}-audioToTextFunc`,
+        environment: {
+          AUDIO_BUCKET: audioStorageBucket.bucketName,
+          SM_DB_CREDENTIALS: db.secretPathUser.secretName,
+          RDS_PROXY_ENDPOINT: db.rdsProxyEndpoint,
+          APPSYNC_API_URL: this.eventApi.graphqlUrl,
+          REGION: this.region,
+        },
       }
-    ),
-    memorySize: 512,
-    timeout: cdk.Duration.seconds(300),
-    vpc: vpcStack.vpc,
-    functionName: `${id}-audioToTextFunc`,
-    environment: {
-        AUDIO_BUCKET: audioStorageBucket.bucketName,
-        SM_DB_CREDENTIALS: db.secretPathUser.secretName,
-        RDS_PROXY_ENDPOINT: db.rdsProxyEndpoint,
-        APPSYNC_API_URL: this.eventApi.graphqlUrl,
-        REGION: this.region,
-    },
-  }
-);
+    );
 
 
     // textToLlmQueue.grantSendMessages(audioToTextFunction);
@@ -987,7 +987,7 @@ export class ApiGatewayStack extends cdk.Stack {
       action: "lambda:InvokeFunction",
       sourceArn: `arn:aws:execute-api:${this.region}:${this.account}:${this.api.restApiId}/*/*/student*`,
     });
-      
+
     // Add this to your CDK code where you're setting up the Lambda function's permissions
     audioToTextFunction.addToRolePolicy(
       new iam.PolicyStatement({
@@ -1182,36 +1182,34 @@ export class ApiGatewayStack extends cdk.Stack {
      *
      * Create Lambda with container image for text generation workflow in RAG pipeline
      */
-
-    // Create Lambda with container image for text generation workflow in RAG pipeline
-const textGenLambdaDockerFunc = new lambda.DockerImageFunction(
-  this,
-  `${id}-TextGenLambdaDockerFunction`,
-  {
-    code: lambda.DockerImageCode.fromEcr(
-      props.ecrRepositories["textGeneration"], 
+    const textGenLambdaDockerFunc = new lambda.DockerImageFunction(
+      this,
+      `${id}-TextGenLambdaDockerFunction`,
       {
-        tagOrDigest: "latest",      // or whatever tag you're using
+        code: lambda.DockerImageCode.fromEcr(
+          props.ecrRepositories["textGeneration"],
+          {
+            tagOrDigest: "latest",      // or whatever tag you're using
+          }
+        ),
+        memorySize: 512,
+        timeout: cdk.Duration.seconds(300),
+        vpc: vpcStack.vpc,
+        functionName: `${id}-TextGenLambdaDockerFunction`,
+        environment: {
+          SM_DB_CREDENTIALS: db.secretPathAdminName,
+          RDS_PROXY_ENDPOINT: db.rdsProxyEndpointAdmin,
+          REGION: this.region,
+          BEDROCK_LLM_PARAM: bedrockLLMParameter.parameterName,
+          EMBEDDING_MODEL_PARAM: embeddingModelParameter.parameterName,
+          TABLE_NAME_PARAM: tableNameParameter.parameterName,
+          TABLE_NAME: "DynamoDB-Conversation-Table",
+        },
       }
-    ),
-    memorySize: 512,
-    timeout: cdk.Duration.seconds(300),
-    vpc: vpcStack.vpc,
-    functionName: `${id}-TextGenLambdaDockerFunction`,
-    environment: {
-      SM_DB_CREDENTIALS: db.secretPathAdminName,
-      RDS_PROXY_ENDPOINT: db.rdsProxyEndpointAdmin,
-      REGION: this.region,
-      BEDROCK_LLM_PARAM: bedrockLLMParameter.parameterName,
-      EMBEDDING_MODEL_PARAM: embeddingModelParameter.parameterName,
-      TABLE_NAME_PARAM: tableNameParameter.parameterName,
-      TABLE_NAME: "DynamoDB-Conversation-Table",
-    },
-  }
-);
+    );
 
-    
-    
+
+
     // Override the Logical ID of the Lambda Function to get ARN in OpenAPI
     const cfnTextGenDockerFunc = textGenLambdaDockerFunc.node
       .defaultChild as lambda.CfnFunction;
@@ -1231,12 +1229,12 @@ const textGenLambdaDockerFunc = new lambda.DockerImageFunction(
         actions: [
           "bedrock:CreateGuardrail",
           "bedrock:CreateGuardrailVersion",
-          "bedrock:DeleteGuardrail", 
-          "bedrock:ListGuardrails", 
+          "bedrock:DeleteGuardrail",
+          "bedrock:ListGuardrails",
           "bedrock:InvokeGuardrail",
-          "bedrock:ApplyGuardrail"  
+          "bedrock:ApplyGuardrail"
         ],
-        resources: ["*"], 
+        resources: ["*"],
       })
     );
 
@@ -1264,8 +1262,8 @@ const textGenLambdaDockerFunc = new lambda.DockerImageFunction(
         `arn:aws:bedrock:${this.region}::foundation-model/meta.llama3-70b-instruct-v1:0`,  // Explicitly add the versioned model
         `arn:aws:bedrock:${this.region}::foundation-model/amazon.titan-embed-text-v2:0`,  // If using Titan
       ],
-    });       
-    
+    });
+
     // Attach the corrected Bedrock policy to Lambda
     textGenLambdaDockerFunc.addToRolePolicy(bedrockPolicyStatement);
 
@@ -1315,30 +1313,30 @@ const textGenLambdaDockerFunc = new lambda.DockerImageFunction(
 
 
     const caseGenLambdaDockerFunc = new lambda.DockerImageFunction(
-  this,
-  `${id}-CaseLambdaDockerFunction`,
-  {
-   code: lambda.DockerImageCode.fromEcr(
-      props.ecrRepositories["caseGeneration"], 
+      this,
+      `${id}-CaseLambdaDockerFunction`,
       {
-        tagOrDigest: "latest",      // or whatever tag you're using
+        code: lambda.DockerImageCode.fromEcr(
+          props.ecrRepositories["caseGeneration"],
+          {
+            tagOrDigest: "latest",      // or whatever tag you're using
+          }
+        ),
+        memorySize: 512,
+        timeout: cdk.Duration.seconds(300),
+        vpc: vpcStack.vpc,
+        functionName: `${id}-CaseLambdaDockerFunction`,
+        environment: {
+          SM_DB_CREDENTIALS: db.secretPathAdminName,
+          RDS_PROXY_ENDPOINT: db.rdsProxyEndpointAdmin,
+          REGION: this.region,
+          BEDROCK_LLM_PARAM: bedrockLLMParameter.parameterName,
+          EMBEDDING_MODEL_PARAM: embeddingModelParameter.parameterName,
+          TABLE_NAME_PARAM: tableNameParameter.parameterName,
+          TABLE_NAME: "DynamoDB-Conversation-Table",
+        },
       }
-    ),
-    memorySize: 512,
-    timeout: cdk.Duration.seconds(300),
-    vpc: vpcStack.vpc,
-    functionName: `${id}-CaseLambdaDockerFunction`,
-    environment: {
-      SM_DB_CREDENTIALS: db.secretPathAdminName,
-      RDS_PROXY_ENDPOINT: db.rdsProxyEndpointAdmin,
-      REGION: this.region,
-      BEDROCK_LLM_PARAM: bedrockLLMParameter.parameterName,
-      EMBEDDING_MODEL_PARAM: embeddingModelParameter.parameterName,
-      TABLE_NAME_PARAM: tableNameParameter.parameterName,
-      TABLE_NAME: "DynamoDB-Conversation-Table",
-    },
-  }
-);
+    );
 
     // Override the Logical ID of the Lambda Function to get ARN in OpenAPI
     const cfnCaseGenDockerFunc = caseGenLambdaDockerFunc.node
@@ -1362,7 +1360,7 @@ const textGenLambdaDockerFunc = new lambda.DockerImageFunction(
         actions: [
           "bedrock:CreateGuardrail",
           "bedrock:CreateGuardrailVersion",
-          "bedrock:DeleteGuardrail", 
+          "bedrock:DeleteGuardrail",
           "bedrock:ListGuardrails",
           "bedrock:InvokeGuardrail",
           "bedrock:ApplyGuardrail"
@@ -1385,45 +1383,45 @@ const textGenLambdaDockerFunc = new lambda.DockerImageFunction(
       })
     );
 
-       // Grant access to SSM Parameter Store for specific parameters
-       caseGenLambdaDockerFunc.addToRolePolicy(
-        new iam.PolicyStatement({
-          effect: iam.Effect.ALLOW,
-          actions: ["ssm:GetParameter"],
-          resources: [
-            bedrockLLMParameter.parameterArn,
-            embeddingModelParameter.parameterArn,
-            tableNameParameter.parameterArn,
-          ],
-        })
-      );
+    // Grant access to SSM Parameter Store for specific parameters
+    caseGenLambdaDockerFunc.addToRolePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: ["ssm:GetParameter"],
+        resources: [
+          bedrockLLMParameter.parameterArn,
+          embeddingModelParameter.parameterArn,
+          tableNameParameter.parameterArn,
+        ],
+      })
+    );
 
 
     const summaryLambdaDockerFunc = new lambda.DockerImageFunction(
-  this,
-  `${id}-SummaryLambdaDockerFunction`,
-  {
-    code: lambda.DockerImageCode.fromEcr(
-      props.ecrRepositories["summaryGeneration"], 
+      this,
+      `${id}-SummaryLambdaDockerFunction`,
       {
-        tagOrDigest: "latest",      // or whatever tag you're using
+        code: lambda.DockerImageCode.fromEcr(
+          props.ecrRepositories["summaryGeneration"],
+          {
+            tagOrDigest: "latest",      // or whatever tag you're using
+          }
+        ),
+        memorySize: 512,
+        timeout: cdk.Duration.seconds(300),
+        vpc: vpcStack.vpc,
+        functionName: `${id}-SummaryLambdaDockerFunction`,
+        environment: {
+          SM_DB_CREDENTIALS: db.secretPathAdminName,
+          RDS_PROXY_ENDPOINT: db.rdsProxyEndpointAdmin,
+          REGION: this.region,
+          BEDROCK_LLM_PARAM: bedrockLLMParameter.parameterName,
+          EMBEDDING_MODEL_PARAM: embeddingModelParameter.parameterName,
+          TABLE_NAME_PARAM: tableNameParameter.parameterName,
+          TABLE_NAME: "DynamoDB-Conversation-Table",
+        },
       }
-    ),
-    memorySize: 512,
-    timeout: cdk.Duration.seconds(300),
-    vpc: vpcStack.vpc,
-    functionName: `${id}-SummaryLambdaDockerFunction`,
-    environment: {
-      SM_DB_CREDENTIALS: db.secretPathAdminName,
-      RDS_PROXY_ENDPOINT: db.rdsProxyEndpointAdmin,
-      REGION: this.region,
-      BEDROCK_LLM_PARAM: bedrockLLMParameter.parameterName,
-      EMBEDDING_MODEL_PARAM: embeddingModelParameter.parameterName,
-      TABLE_NAME_PARAM: tableNameParameter.parameterName,
-      TABLE_NAME: "DynamoDB-Conversation-Table",
-    },
-  }
-);
+    );
 
     // Override the Logical ID of the Lambda Function to get ARN in OpenAPI
     const cfnSummaryDockerFunc = summaryLambdaDockerFunc.node
