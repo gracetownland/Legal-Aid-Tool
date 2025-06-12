@@ -23,10 +23,9 @@ Before you deploy, you must have the following installed on your device:
 - [AWS Account](https://aws.amazon.com/account/)
 - [GitHub Account](https://github.com/)
 - [AWS CLI](https://aws.amazon.com/cli/)
-- [AWS CDK](https://docs.aws.amazon.com/cdk/v2/guide/cli.html) *(v2.122.0 > required)*
+- [AWS CDK](https://docs.aws.amazon.com/cdk/v2/guide/cli.html) *(v2.146.0 > required)*
 - [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
 - [node](https://nodejs.org/en/ln/getting-started/how-to-install-nodejs) *(v20.0.0 > required)*
-- [docker](https://www.docker.com/products/docker-desktop/)
 
 ## Pre-Deployment
 ### Create GitHub Personal Access Token
@@ -35,8 +34,6 @@ To deploy this solution, you will need to generate a GitHub personal access toke
 *Note: when selecting the scopes to grant the token (step 8 of the instruction), make sure you select `repo` scope.*
 
 **Once you create a token, please note down its value as you will use it later in the deployment process.**
-
-Docker must also be running for the deployment to work.
 
 ### Enable Models in Bedrock
 
