@@ -7,12 +7,12 @@ Once you have deployed the solution, the following user guide will help you navi
 
 | Index    | Description |
 | -------- | ------- |
-| [Administrator View](#admin-view)  | How the Admnistrator views the project | 
+| [Administrator View](#admin-view)  |The administrator can register instructors | 
 | [Instructor View](#instructor-view)  | How the Instructor/Supervising Lawyer views the project |
 | [Student View](#student-view)  | How the Student views the project |
 
 ## Administrator View
-To sign up as an administrator, you need to sign up regularly first as a student:
+Administrators can sign up by pressing the sign up button and filling in their information.
 ![image](./media/create-account.png)
 
 You then get a confirmation email to verify your email. Once you have a student account, to become an adminstrator, you need to change your user group with Cognito through the AWS Console:
@@ -21,16 +21,23 @@ You then get a confirmation email to verify your email. Once you have a student 
 After clicking the user pool of the project, navigate to "Users" on the left navigation bar and find your email:
 ![image](./media/users.png)
 
-After clicking your email, you can add the 'admin' user group. Start by scrolling down to "Group memberships" and selecting "Add user to group"
-![image](./media/add-user-group.png)
-Select "admin" group from available options: 
-![image](./media/select-admin.png)
-Confirm that the user has been added to the admin group by checking the "group attributes" of the user:
-![image](./media/admin-added.png)
+After clicking your email, you can add the 'admin' user group. Start by scrolling down to "Group memberships" and selecting "Add user to group".  
+Select the "admin" group from available options. And lastly, confirm that the user has been added to the admin group by checking the "group attributes" of the user:
+
+<p>
+  <img src="./media/add-user-group.png" width="30%" style="display:inline-block; margin-right:10px;" />
+  <img src="./media/select-admin.png" width="30%" style="display:inline-block; margin-right:10px;" />
+  <img src="./media/admin-added.png" width="30%" style="display:inline-block;" />
+</p>
+
 
 Once the 'admin' user group is added, delete the 'student' user group:
-![image](./media/delete-student.png)
-![image](./media/admin-only.png)
+
+<p>
+  <img src="./media/delete-student.png" width="45%" style="display:inline-block; margin-right:10px;" />
+  <img src="./media/admin-only.png" width="45%" style="display:inline-block;" />
+</p>
+
 
 Upon logging in as an administrator, they see the following home page:
 ![image](./media/admin-home-page.png)
@@ -58,3 +65,42 @@ On the Waiver Page, the admin can update the waiver which will be shown to stude
 
 
 ## Instructor View
+
+Upon logging in as an instructor, you’re greeted with a homepage that displays the cases submitted for review, the total number of assigned students, and a breakdown of reviewed and pending cases.
+
+![image](./media/instructor-home-page.png)
+
+The instructor can click on total students assigned to see the names of all students. 
+
+![image](./media/instructor-students.png)
+
+Upon clicking on any of the cases, the instructor can see all interactions of the student with the AI Assistant as well as all the summaries, notes and transcriptions. The instructor can then give feed back from the "Case Feedback" tab:
+![image](./media/instructor-feedback.png)
+
+
+## Student View
+Upon logging in as a student, they see this home page with their most recent cases and the statuses of these cases (i.e. In Progress, Sent to Review or Review Feedback)
+
+![image](./media/student-home-page.jpg)
+
+Students can click on a case and see the overview, summaries, transcriptions, notes as well as interact with the AI Assistant. 
+
+To start a new case, students can click on the "New Case" button at the top of the screen. This page opens up a form with information thhe students can fill out about the jursidtiction, broad area of law and give a short description of the case which will then be sent to the AI Assistant. 
+
+![image](./media/student-new-case.jpg)
+
+Upon creating a new case, the AI Assistant gives the student a first general summary of the case with possible next steps and follow-up questions to ask:
+
+![image](./media/student-ai-assistant.png)
+
+The student can also click on the notes icon at the bottom left corner, which opens up a yellow legal pad moveable notes pop-up where the students can note signficant details of the particular case:
+
+![image](./media/student-notes.jpg)
+
+Upon interacting with the AI Assistant, the student can choose to generate a downloadable summary pdf of the information and insights from the LLM by clicking on the "Generate Summary" button below the AI message. This button then generates a downloadable pdf version of a summary which is viewable from the "Case Summaries" page:
+
+<p>
+  <img src="./media/student-generate-summary.png" width="30%" style="display:inline-block; margin-right:10px;" />
+  <img src="./media/student-case-summaries.png" width="30%" style="display:inline-block; margin-right:10px;" />
+  <img src="./media/student-summary.png" width="30%" style="display:inline-block;" />
+</p>
