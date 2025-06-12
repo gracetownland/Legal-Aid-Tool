@@ -136,7 +136,9 @@ export class CICDStack extends cdk.Stack {
           MODULE_NAME: { value: lambda.name },
           LAMBDA_FUNCTION_NAME: { value: lambda.functionName },
           REPO_NAME: { value: repoName },
-          REPOSITORY_URI: { value: ecrRepo.repositoryUri }
+          REPOSITORY_URI: { value: ecrRepo.repositoryUri },
+          GITHUB_USERNAME: { value: username },
+          GITHUB_REPO: { value: props.githubRepo },
         },
         buildSpec: codebuild.BuildSpec.fromObject({
           version: '0.2',
@@ -145,6 +147,24 @@ export class CICDStack extends cdk.Stack {
               commands: [
                 'echo Logging in to Amazon ECR...',
                 'aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com',
+
+                // Manual Git setup
+                'echo "Cloning repo for diff check..."',
+                'git clone https://$GITHUB_TOKEN@github.com/$GITHUB_USERNAME/$GITHUB_REPO.git repo',
+                'cd repo',
+                'git fetch origin',
+                'git checkout $CODEBUILD_RESOLVED_SOURCE_VERSION',
+
+                'PREV_COMMIT=$(git rev-parse HEAD~1 || echo "")',
+                'CHANGED_FILES=$(git diff --name-only $PREV_COMMIT HEAD)',
+                'echo "Changed files:"',
+                'echo "$CHANGED_FILES"',
+
+                'echo "$CHANGED_FILES" | grep "^$PATH_FILTER/" || { echo "No changes in $PATH_FILTER — skipping build."; exit 0; }',
+
+                // Go back to root for build
+                'cd $CODEBUILD_SRC_DIR',
+
                 'COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)',
                 'IMAGE_TAG=${MODULE_NAME}-${ENVIRONMENT}-${COMMIT_HASH}',
                 'export DOCKER_HOST=unix:///var/run/docker.sock'
