@@ -141,10 +141,10 @@ Moreover, you will need to upload your github username to Amazon SSM Parameter S
 <summary>macOS</summary>
 
 ```bash
-aws ssm put-parameter ^
-    --name "lat-owner-name" ^
-    --value "<YOUR-GITHUB-USERNAME>" ^
-    --type String ^
+aws ssm put-parameter \
+    --name "lat-owner-name" \
+    --value "<YOUR-GITHUB-USERNAME>" \
+    --type String \
     --profile <YOUR-PROFILE-NAME>
 ```
 </details>
@@ -167,7 +167,7 @@ aws ssm put-parameter ^
 
 ```powershell
 aws ssm put-parameter `
-    --name lat-owner-name" `
+    --name "lat-owner-name" `
     --value "<YOUR-GITHUB-USERNAME>" `
     --type String `
     --profile <YOUR-PROFILE-NAME>
@@ -184,7 +184,7 @@ You would have to supply a custom database username when deploying the solution 
 ```bash
 aws secretsmanager create-secret \
     --name LATSecrets \
-    --secret-string "{\"DB_Username\":\"<YOUR-DB-USERNAME>\"}"\
+    --secret-string "{\"DB_Username\":\"<YOUR-DB-USERNAME>\"}" 
     --profile <your-profile-name>
 ```
 </details>
@@ -217,10 +217,7 @@ aws secretsmanager create-secret `
 For example,
 
 ```
-aws secretsmanager create-secret \
-    --name LATSecrets \
-    --secret-string '{"DB_Username":"LATDatabaseUser"}' \
-    --profile <your-profile-name>
+aws secretsmanager create-secret --name LATSecrets --secret-string "{\"DB_Username\":\"LATDatabaseUser\"}" --profile <your-profile-name>
 ```
 
 
@@ -290,7 +287,7 @@ cdk bootstrap aws://<YOUR_AWS_ACCOUNT_ID>/<YOUR_ACCOUNT_REGION> --profile <your-
 **Deploy CDK stack**
 You may run the following command to deploy the stacks all at once. Again, replace `<your-profile-name>` with the appropriate AWS profile used earlier. Also replace `<your-stack-prefix>` with the appropriate stack prefix.
 
-The stack prefix will be prefixed onto the physical names of the resources created during deployment.
+The stack prefix will be prefixed onto the physical names of the resources created during deployment. The `environment` parameter specifies the deployment environment (dev, test, prod), and the `version` parameter indicates the application version being deployed.
 
 If you have trouble running the above command, try removing all the \ and run it in one line.
 ```
