@@ -19,7 +19,7 @@ export class VpcStack extends Stack {
       const AWSControlTowerStackSet = ""; // CHANGE TO YOUR CONTROL TOWER STACK SET
       const existingPublicSubnetID: string = ""; // CHANGE IF DEPLOYING WITH EXISTING PUBLIC SUBNET
 
-      const latPrefix= props.stackPrefix
+      const latPrefix = props.stackPrefix
       // const latPrefix = props?.stackPrefix ?? "Legal-Aid-Tool";
 
       this.vpcCidrString = "172.31.94.0/20";
