@@ -25,10 +25,11 @@ After clicking your email, you can add the 'admin' user group. Start by scrollin
 Select the "admin" group from available options. And lastly, confirm that the user has been added to the admin group by checking the "group attributes" of the user:
 
 <p>
-  <img src="./media/add-user-group.png" width="30%" style="display:inline-block; margin-right:10px;" />
-  <img src="./media/select-admin.png" width="30%" style="display:inline-block; margin-right:10px;" />
-  <img src="./media/admin-added.png" width="30%" style="display:inline-block;" />
+  <img src="./media/add-user-group.png" width="45%" style="display:inline-block; margin-right:10px;" />
+  <img src="./media/select-admin.png" width="45%" style="display:inline-block;" />
 </p>
+
+![image](./media/admin-added.png)
 
 
 Once the 'admin' user group is added, delete the 'student' user group:
@@ -101,10 +102,11 @@ The student can also click on the notes icon at the bottom left corner, which op
 Upon interacting with the AI Assistant, the student can choose to generate a downloadable summary pdf of the information and insights from the LLM by clicking on the "Generate Summary" button below the AI message. This button then generates a downloadable pdf version of a summary which is viewable from the "Case Summaries" page:
 
 <p>
-  <img src="./media/student-generate-summary.png" width="30%" style="display:inline-block; margin-right:10px;" />
-  <img src="./media/student-case-summaries.png" width="30%" style="display:inline-block; margin-right:10px;" />
-  <img src="./media/student-summary.png" width="30%" style="display:inline-block;" />
+  <img src="./media/student-generate-summary.png" width="45%" style="display:inline-block; margin-right:10px;" />
+  <img src="./media/student-case-summaries.png" width="45%" style="display:inline-block; margin-right:10px;" />
 </p>
+
+![image](./media/student-summary.png)
 
 The student can also navigate to the "Case Transcriptions" tab to upload audio and transrcibe. 
 
