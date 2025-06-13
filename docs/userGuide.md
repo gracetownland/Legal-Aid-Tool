@@ -58,7 +58,7 @@ In the "AI Settings" page, the administrator can set a daily message limit for e
 ![image](./media/admin-message-limit.png)
 
 In this page, the administrator can also edit the current system prompt and view previous system prompts which will be fed to the AI Assistant.
-![image](./media/admin-system-prompt.png)
+![image](./media/admin-prompt.png)
 
 On the Waiver Page, the admin can update the waiver which will be shown to students upon first sign up:
 ![image](./media/admin-waiver.png)
