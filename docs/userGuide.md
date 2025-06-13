@@ -7,8 +7,8 @@ Once you have deployed the solution, the following user guide will help you navi
 
 | Index    | Description |
 | -------- | ------- |
-| [Administrator View](#admin-view)  |The administrator can register instructors, change system prompts and waiver texts | 
-| [Instructor View](#instructor-view)  | The instructor can view students cases and provide feedback |
+| [Administrator View](#admin-view)  |The administrator can register instructors, change system prompts and waiver. | 
+| [Instructor View](#instructor-view)  | The instructor can view students cases and provide feedback. |
 | [Student View](#student-view)  | The student can start a case, interact with AI Assistant, create summaries and transcribe audio interviews. |
 
 ## Administrator View
