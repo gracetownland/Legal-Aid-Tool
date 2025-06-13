@@ -7,9 +7,9 @@ Once you have deployed the solution, the following user guide will help you navi
 
 | Index    | Description |
 | -------- | ------- |
-| [Administrator View](#admin-view)  |The administrator can register instructors | 
-| [Instructor View](#instructor-view)  | How the Instructor/Supervising Lawyer views the project |
-| [Student View](#student-view)  | How the Student views the project |
+| [Administrator View](#admin-view)  |The administrator can register instructors, change system prompts and waiver texts | 
+| [Instructor View](#instructor-view)  | The instructor can view students cases and provide feedback |
+| [Student View](#student-view)  | The student can start a case, interact with AI Assistant, create summaries and transcribe audio interviews. |
 
 ## Administrator View
 Administrators can sign up by pressing the sign up button and filling in their information.
@@ -61,6 +61,7 @@ In this page, the administrator can also edit the current system prompt and view
 ![image](./media/admin-system-prompt.png)
 
 On the Waiver Page, the admin can update the waiver which will be shown to students upon first sign up:
+![image](./media/admin-waiver.png)
 
 
 
@@ -103,4 +104,11 @@ Upon interacting with the AI Assistant, the student can choose to generate a dow
   <img src="./media/student-generate-summary.png" width="30%" style="display:inline-block; margin-right:10px;" />
   <img src="./media/student-case-summaries.png" width="30%" style="display:inline-block; margin-right:10px;" />
   <img src="./media/student-summary.png" width="30%" style="display:inline-block;" />
+</p>
+
+The student can also navigate to the "Case Transcriptions" tab to upload audio and transrcibe. 
+
+<p>
+  <img src="./media/student-upload-audio.png" width="45%" style="display:inline-block; margin-right:10px;" />
+  <img src="./media/student-transcriptions.png" width="45%" style="display:inline-block;" />
 </p>
