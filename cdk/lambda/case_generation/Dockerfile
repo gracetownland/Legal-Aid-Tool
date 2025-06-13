@@ -9,12 +9,9 @@ RUN pip install psycopg2-binary
 RUN pip install --no-cache-dir pip-tools
 
 # Copy requirements.in instead of requirements.txt
-COPY requirements.in ${LAMBDA_TASK_ROOT}
+COPY requirements.txt ${LAMBDA_TASK_ROOT}
 
-# Set working directory and compile/install Python packages
-WORKDIR ${LAMBDA_TASK_ROOT}
-RUN pip-compile requirements.in && \
-    pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 RUN pip list
     
