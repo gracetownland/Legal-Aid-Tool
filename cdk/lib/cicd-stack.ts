@@ -139,6 +139,11 @@ export class CICDStack extends cdk.Stack {
           REPOSITORY_URI: { value: ecrRepo.repositoryUri },
           GITHUB_USERNAME: { value: username },
           GITHUB_REPO: { value: props.githubRepo },
+          GITHUB_TOKEN: {
+            type: codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
+            value: 'github-personal-access-token:my-github-token'
+          },
+          PATH_FILTER: { value: lambda.sourceDir },
         },
         buildSpec: codebuild.BuildSpec.fromObject({
           version: '0.2',
@@ -147,33 +152,32 @@ export class CICDStack extends cdk.Stack {
               commands: [
                 'echo Logging in to Amazon ECR...',
                 'aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com',
-
-                // Manual Git setup
-                'echo "Cloning repo for diff check..."',
-                'git clone https://$GITHUB_TOKEN@github.com/$GITHUB_USERNAME/$GITHUB_REPO.git repo',
-                'cd repo',
-                'git fetch origin',
-                'git checkout $CODEBUILD_RESOLVED_SOURCE_VERSION',
-
-                'PREV_COMMIT=$(git rev-parse HEAD~1 || echo "")',
-                'CHANGED_FILES=$(git diff --name-only $PREV_COMMIT HEAD)',
-                'echo "Changed files:"',
-                'echo "$CHANGED_FILES"',
-
-                'echo "$CHANGED_FILES" | grep "^$PATH_FILTER/" || { echo "No changes in $PATH_FILTER — skipping build."; exit 0; }',
-
-                // Go back to root for build
-                'cd $CODEBUILD_SRC_DIR',
-
+                'echo "#!/bin/bash" > check_and_build.sh',
+                'echo "set -e" >> check_and_build.sh',
+                'echo "git clone https://$GITHUB_TOKEN@github.com/$GITHUB_USERNAME/$GITHUB_REPO.git repo" >> check_and_build.sh',
+                'echo "cd repo" >> check_and_build.sh',
+                'echo "git fetch origin" >> check_and_build.sh',
+                'echo "git checkout $CODEBUILD_RESOLVED_SOURCE_VERSION" >> check_and_build.sh',
+                'echo "PREV_COMMIT=\\$(git rev-parse HEAD~1 || echo \\"\\")" >> check_and_build.sh',
+                'echo "CHANGED_FILES=\\$(git diff --name-only \\$PREV_COMMIT HEAD)" >> check_and_build.sh',
+                'echo "echo \\"Changed files:\\"" >> check_and_build.sh',
+                'echo "echo \\"\\$CHANGED_FILES\\"" >> check_and_build.sh',
+                'echo "if ! echo \\"\\$CHANGED_FILES\\" | grep -q \\"^$PATH_FILTER/\\"; then" >> check_and_build.sh',
+                'echo "  echo \\"No changes in $PATH_FILTER — skipping build.\\"" >> check_and_build.sh',
+                'echo "  exit 1" >> check_and_build.sh',
+                'echo "fi" >> check_and_build.sh',
+                'echo "exit 0" >> check_and_build.sh',
+                'chmod +x check_and_build.sh',
                 'COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)',
                 'IMAGE_TAG=${MODULE_NAME}-${ENVIRONMENT}-${COMMIT_HASH}',
-                'export DOCKER_HOST=unix:///var/run/docker.sock'
+                'export DOCKER_HOST=unix:///var/run/docker.sock',
+                './check_and_build.sh || { echo "Skipping build due to no changes"; exit 0; }'
               ]
             },
             build: {
               commands: [
                 'echo "Building Docker image..."',
-                'docker build -t $REPOSITORY_URI:$IMAGE_TAG $CODEBUILD_SRC_DIR/' + lambda.sourceDir + ' -f $CODEBUILD_SRC_DIR/' + lambda.sourceDir + '/Dockerfile'
+                `docker build -t $REPOSITORY_URI:$IMAGE_TAG $CODEBUILD_SRC_DIR/${lambda.sourceDir} -f $CODEBUILD_SRC_DIR/${lambda.sourceDir}/Dockerfile`
               ]
             },
             post_build: {
