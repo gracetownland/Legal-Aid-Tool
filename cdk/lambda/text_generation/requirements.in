@@ -1,7 +1,7 @@
 boto3
 botocore
 langchain==0.1.12
-langchain-aws==0.1.0
+langchain-aws==0.2.25
 langchain-core==0.1.32
 psycopg[binary,pool]
 langchain-community==0.0.29
