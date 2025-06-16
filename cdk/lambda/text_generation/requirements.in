@@ -1,10 +1,9 @@
 boto3
 botocore
-langchain==0.1.12
-langchain-aws==0.2.25
-langchain-core==0.1.32
+langchain
+langchain-aws
+langchain-community
+langchain-postgres
 psycopg[binary,pool]
-langchain-community==0.0.29
-langchain-postgres==0.0.2
-psycopg2-binary==2.9.9
+psycopg2-binary
 python-dotenv
