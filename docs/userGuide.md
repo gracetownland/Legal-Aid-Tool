@@ -7,9 +7,9 @@ Once you have deployed the solution, the following user guide will help you navi
 
 | Index    | Description |
 | -------- | ------- |
-| [Administrator View](#admin-view)  |The administrator can register instructors | 
-| [Instructor View](#instructor-view)  | How the Instructor/Supervising Lawyer views the project |
-| [Student View](#student-view)  | How the Student views the project |
+| [Administrator View](#admin-view)  |The administrator can register instructors, change system prompts and waiver. | 
+| [Instructor View](#instructor-view)  | The instructor can view students cases and provide feedback. |
+| [Student View](#student-view)  | The student can start a case, interact with AI Assistant, create summaries and transcribe audio interviews. |
 
 ## Administrator View
 Administrators can sign up by pressing the sign up button and filling in their information.
@@ -25,10 +25,11 @@ After clicking your email, you can add the 'admin' user group. Start by scrollin
 Select the "admin" group from available options. And lastly, confirm that the user has been added to the admin group by checking the "group attributes" of the user:
 
 <p>
-  <img src="./media/add-user-group.png" width="30%" style="display:inline-block; margin-right:10px;" />
-  <img src="./media/select-admin.png" width="30%" style="display:inline-block; margin-right:10px;" />
-  <img src="./media/admin-added.png" width="30%" style="display:inline-block;" />
+  <img src="./media/add-user-group.png" width="45%" style="display:inline-block; margin-right:10px;" />
+  <img src="./media/select-admin.png" width="45%" style="display:inline-block;" />
 </p>
+
+![image](./media/admin-added.png)
 
 
 Once the 'admin' user group is added, delete the 'student' user group:
@@ -58,9 +59,10 @@ In the "AI Settings" page, the administrator can set a daily message limit for e
 ![image](./media/admin-message-limit.png)
 
 In this page, the administrator can also edit the current system prompt and view previous system prompts which will be fed to the AI Assistant.
-![image](./media/admin-system-prompt.png)
+![image](./media/admin-prompt.png)
 
 On the Waiver Page, the admin can update the waiver which will be shown to students upon first sign up:
+![image](./media/admin-waiver.png)
 
 
 
@@ -100,7 +102,15 @@ The student can also click on the notes icon at the bottom left corner, which op
 Upon interacting with the AI Assistant, the student can choose to generate a downloadable summary pdf of the information and insights from the LLM by clicking on the "Generate Summary" button below the AI message. This button then generates a downloadable pdf version of a summary which is viewable from the "Case Summaries" page:
 
 <p>
-  <img src="./media/student-generate-summary.png" width="30%" style="display:inline-block; margin-right:10px;" />
-  <img src="./media/student-case-summaries.png" width="30%" style="display:inline-block; margin-right:10px;" />
-  <img src="./media/student-summary.png" width="30%" style="display:inline-block;" />
+  <img src="./media/student-generate-summary.png" width="45%" style="display:inline-block; margin-right:10px;" />
+  <img src="./media/student-case-summaries.png" width="45%" style="display:inline-block; margin-right:10px;" />
+</p>
+
+![image](./media/student-summary.png)
+
+The student can also navigate to the "Case Transcriptions" tab to upload audio and transrcibe. 
+
+<p>
+  <img src="./media/student-upload-audio.png" width="45%" style="display:inline-block; margin-right:10px;" />
+  <img src="./media/student-transcriptions.png" width="45%" style="display:inline-block;" />
 </p>

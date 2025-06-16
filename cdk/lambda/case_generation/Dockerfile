@@ -15,7 +15,6 @@ COPY requirements.txt ${LAMBDA_TASK_ROOT}
 # Install Python packages
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Show installed packages (optional, for debugging)
 RUN pip list
 
 # Copy source code
