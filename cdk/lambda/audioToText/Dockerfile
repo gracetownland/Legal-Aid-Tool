@@ -3,11 +3,11 @@ FROM public.ecr.aws/lambda/python:3.11
 # Install system dependencies
 RUN yum -y install postgresql-devel gcc libpq
 
-# Copy requirements.in
-COPY requirements.in ${LAMBDA_TASK_ROOT}
+# Copy the requirements.txt (pinned dependencies)
+COPY requirements.txt ${LAMBDA_TASK_ROOT}
 
 # Install Python packages
-RUN pip install --no-cache-dir -r requirements.in
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the source code
 COPY src/ ${LAMBDA_TASK_ROOT}
