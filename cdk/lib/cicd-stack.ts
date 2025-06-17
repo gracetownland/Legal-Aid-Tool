@@ -158,6 +158,11 @@ export class CICDStack extends cdk.Stack {
                 'echo "cd repo" >> check_and_build.sh',
                 'echo "git fetch origin" >> check_and_build.sh',
                 'echo "git checkout $CODEBUILD_RESOLVED_SOURCE_VERSION" >> check_and_build.sh',
+                'echo "# Check if image exists in ECR" >> check_and_build.sh',
+                'echo "if ! aws ecr describe-images --repository-name $REPO_NAME --image-ids imageTag=latest &>/dev/null; then" >> check_and_build.sh',
+                'echo "  echo \\"First deployment or image doesn\'t exist - building without path check\\"" >> check_and_build.sh',
+                'echo "  exit 0" >> check_and_build.sh',
+                'echo "fi" >> check_and_build.sh',
                 'echo "PREV_COMMIT=\\$(git rev-parse HEAD~1 || echo \\"\\")" >> check_and_build.sh',
                 'echo "CHANGED_FILES=\\$(git diff --name-only \\$PREV_COMMIT HEAD)" >> check_and_build.sh',
                 'echo "echo \\"Changed files:\\"" >> check_and_build.sh',
@@ -171,7 +176,7 @@ export class CICDStack extends cdk.Stack {
                 'COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)',
                 'IMAGE_TAG=${MODULE_NAME}-${ENVIRONMENT}-${COMMIT_HASH}',
                 'export DOCKER_HOST=unix:///var/run/docker.sock',
-                './check_and_build.sh || { echo "Skipping build due to no changes"; exit 0; }'
+                './check_and_build.sh || { echo "Skipping build due to no changes"; exit 1; }'
               ]
             },
             build: {

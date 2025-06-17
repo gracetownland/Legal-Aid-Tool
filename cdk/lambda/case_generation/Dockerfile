@@ -15,6 +15,9 @@ COPY requirements.txt ${LAMBDA_TASK_ROOT}
 # Install Python packages
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Install psycopg2 
+RUN pip install psycopg2
+
 RUN pip list
 
 # Copy source code
