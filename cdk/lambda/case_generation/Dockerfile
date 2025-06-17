@@ -1,26 +1,24 @@
 FROM public.ecr.aws/lambda/python:3.11
 
-# Install system dependencies for psycopg
-RUN yum -y install postgresql-devel gcc libpq
+# Install system dependencies for psycopg[binary] and build tools for numpy
+RUN yum -y install postgresql-devel gcc libpq gcc-c++ \
+    && yum clean all \
+    && rm -rf /var/cache/yum # Clean up yum cache to keep image size down
 
-RUN pip install psycopg2-binary
-
-# Install pip-tools for dependency management
-RUN pip install --no-cache-dir pip-tools
-
-# Copy requirements.in instead of requirements.txt
-COPY requirements.in ${LAMBDA_TASK_ROOT}
-
-# Set working directory and compile/install Python packages
+# Set working directory
 WORKDIR ${LAMBDA_TASK_ROOT}
-RUN pip-compile requirements.in && \
-    pip install --no-cache-dir -r requirements.txt
+
+# Copy the *compiled* requirements.txt file
+# This assumes you've already generated requirements.txt using the separate Docker command
+COPY requirements.txt ${LAMBDA_TASK_ROOT}
+
+# Install Python packages
+RUN pip install --no-cache-dir -r requirements.txt
 
 RUN pip list
 
-    
-# Copy the source code
+# Copy source code
 COPY src/ ${LAMBDA_TASK_ROOT}
 
-# Set the Lambda handler
+# Set Lambda handler
 CMD [ "main.handler" ]
