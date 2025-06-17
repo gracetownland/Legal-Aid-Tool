@@ -5,7 +5,7 @@ import logging
 import hashlib
 import uuid
 from datetime import datetime
-import psycopg2
+import psycopg
 import boto3
 from botocore.exceptions import ClientError
 from langchain_aws import ChatBedrockConverse
@@ -84,7 +84,7 @@ def connect_to_db():
                 'port': secret["port"]
             }
             connection_string = " ".join([f"{key}={value}" for key, value in connection_params.items()])
-            connection = psycopg2.connect(connection_string)
+            connection = psycopg.connect(connection_string)
             logger.info("Connected to the database!")
         except Exception as e:
             logger.error(f"Failed to connect to database: {e}")

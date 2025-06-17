@@ -6,7 +6,7 @@ import base64
 import uuid
 import time
 import boto3
-import psycopg2
+import psycopg
 from botocore.exceptions import ClientError
 
 from helpers.chat import get_bedrock_llm, get_response
@@ -69,7 +69,7 @@ def connect_to_db():
         secret = get_secret(DB_SECRET_NAME)
         conn_str = f"host={RDS_PROXY_ENDPOINT} dbname={secret['dbname']} user={secret['username']} password={secret['password']} port={secret['port']}"
         try:
-            connection = psycopg2.connect(conn_str)
+            connection = psycopg.connect(conn_str)
             logger.info("Connected to RDS via proxy")
         except Exception as e:
             logger.error(f"Database connection error: {e}")

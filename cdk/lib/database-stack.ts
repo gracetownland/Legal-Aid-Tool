@@ -99,7 +99,7 @@ export class DatabaseStack extends Stack {
             deletionProtection: true,
             databaseName: "lat",
             publiclyAccessible: false,
-            cloudwatchLogsRetention: logs.RetentionDays.INFINITE,
+            cloudwatchLogsRetention: logs.RetentionDays.THREE_MONTHS,
             storageEncrypted: true, // storage encryption at rest
             monitoringInterval: Duration.seconds(60), // enhanced monitoring interval
             parameterGroup: parameterGroup
