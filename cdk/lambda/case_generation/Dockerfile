@@ -18,7 +18,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Install psycopg2 
 RUN pip install psycopg2
 
-# Show installed packages (optional, for debugging)
 RUN pip list
 
 # Copy source code
