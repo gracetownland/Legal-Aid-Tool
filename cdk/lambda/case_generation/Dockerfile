@@ -1,9 +1,9 @@
 FROM public.ecr.aws/lambda/python:3.11
 
-# Install system dependencies for psycopg[binary] and build tools for numpy
-RUN yum -y install postgresql-devel gcc libpq gcc-c++ \
+RUN yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm \
+    && yum -y install postgresql15-libs postgresql15-devel gcc gcc-c++ \
     && yum clean all \
-    && rm -rf /var/cache/yum # Clean up yum cache to keep image size down
+    && rm -rf /var/cache/yum
 
 # Set working directory
 WORKDIR ${LAMBDA_TASK_ROOT}
