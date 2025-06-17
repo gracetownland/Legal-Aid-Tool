@@ -33,6 +33,12 @@ db_secret = None
 BEDROCK_LLM_ID = None
 TABLE_NAME = None
 
+class CustomJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, uuid.UUID):
+            return str(obj)
+        return super().default(obj)
+
 
 def get_secret(secret_name, expect_json=True):
     global db_secret
@@ -169,7 +175,7 @@ def _response(status, body):
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': '*',
         },
-        'body': json.dumps(body)
+        'body': json.dumps(body, cls=CustomJSONEncoder)
     }
 
 
