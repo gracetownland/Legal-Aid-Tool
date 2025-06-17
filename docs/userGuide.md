@@ -11,11 +11,13 @@ Once you have deployed the solution, the following user guide will help you navi
 | [Instructor View](#instructor-view)  | The instructor can view students cases and provide feedback. |
 | [Student View](#student-view)  | The student can start a case, interact with AI Assistant, create summaries and transcribe audio interviews. |
 
-## Administrator View
-Administrators can sign up by pressing the sign up button and filling in their information.
+All users start by filling their information at the sign up page.  
 ![image](./media/create-account.png)
 
-You then get a confirmation email to verify your email. Once you have a student account, to become an adminstrator, you need to change your user group with Cognito through the AWS Console:
+You then get a confirmation email to verify your email and are registered as a user. 
+
+## Administrator View
+Once you have an account, to become an adminstrator, you need to change your user group with Cognito through the AWS Console:
 ![image](./media/user-pool.png)
 
 After clicking the user pool of the project, navigate to "Users" on the left navigation bar and find your email:
@@ -43,7 +45,7 @@ Once the 'admin' user group is added, delete the 'student' user group:
 Upon logging in as an administrator, they see the following home page:
 ![image](./media/admin-home-page.png)
 
-Clicking the "ADD INSTRUCTOR" button opens a pop-up where the administrator can enter the email address of a user with an account to add them as an administrator:
+Clicking the "ADD INSTRUCTOR" button opens a pop-up where the administrator can enter the email address of a user with an account to add them as an instructor:
 ![image](./media/admin-add-instructor.png)
 
 The administrator can also click an instructor in the list which opens a pop-up of instructor details including their name, email and students they have been assigned to. 
@@ -87,7 +89,7 @@ Upon logging in as a student, they see this home page with their most recent cas
 
 Students can click on a case and see the overview, summaries, transcriptions, notes as well as interact with the AI Assistant. 
 
-To start a new case, students can click on the "New Case" button at the top of the screen. This page opens up a form with information thhe students can fill out about the jursidtiction, broad area of law and give a short description of the case which will then be sent to the AI Assistant. 
+To start a new case, students can click on the "New Case" button at the top of the screen. This page opens up a form with information the students can fill out about the jurisdiction, broad area of law and give a short description of the case which will then be sent to the AI Assistant. 
 
 ![image](./media/student-new-case.jpg)
 
