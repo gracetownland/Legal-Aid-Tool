@@ -81,6 +81,9 @@ The instructor can click on total students assigned to see the names of all stud
 Upon clicking on any of the cases, the instructor can see all interactions of the student with the AI Assistant as well as all the summaries, notes and transcriptions. The instructor can then give feed back from the "Case Feedback" tab:
 ![image](./media/instructor-feedback.png)
 
+On the "All Cases" Page, the instructor can search through cases and filter cases of the students assigned to them by Student Name and Status:
+![image](./media/instructor-all-cases.png)
+
 
 ## Student View
 Upon logging in as a student, they see this home page with their most recent cases and the statuses of these cases (i.e. In Progress, Sent to Review or Review Feedback)
@@ -97,7 +100,7 @@ Upon creating a new case, the AI Assistant gives the student a first general sum
 
 ![image](./media/student-ai-assistant.png)
 
-The student can also click on the notes icon at the bottom left corner, which opens up a yellow legal pad moveable notes pop-up where the students can note signficant details of the particular case:
+The student can also click on the notes icon at the bottom left corner, which opens up a yellow legal pad moveable notes pop-up where the students can note significant details of the particular case:
 
 ![image](./media/student-notes.jpg)
 
