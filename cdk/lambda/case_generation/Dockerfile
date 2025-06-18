@@ -8,8 +8,7 @@ RUN yum -y install postgresql-devel gcc libpq gcc-c++ \
 # Set working directory
 WORKDIR ${LAMBDA_TASK_ROOT}
 
-# Copy the *compiled* requirements.txt file
-# This assumes you've already generated requirements.txt using the separate Docker command
+# Copy the requirements.txt file
 COPY requirements.txt ${LAMBDA_TASK_ROOT}
 
 # Install Python packages

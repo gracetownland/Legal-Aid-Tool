@@ -67,8 +67,8 @@ Here you can learn about the API the project uses: [API Documentation](./docs/ap
 Steps to implement optional modifications such as changing the colours of the application can be found
 [here](./docs/modificationGuide.md).
 
-### Credits
-This application was architected and developed by Prajna Nayak, Zayan Sheikh, and Kanish Khanna, with project assistance by Harleen Chahal. Thanks to the UBC Cloud Innovation Centre Technical and Project Management teams for their guidance and support.
+## Credits
+This application was architected and developed by [Prajna Nayak](https://www.linkedin.com/in/prajna-nayak-807b1a247/), [Zayan Sheikh](https://www.linkedin.com/in/zayans/), and [Kanish Khanna](https://www.linkedin.com/in/kanishkhanna/), with project assistance by [Harleen Chahal](https://www.linkedin.com/in/harleen-chahal-713569141/6). Thanks to the UBC Cloud Innovation Centre Technical and Project Management teams for their guidance and support.
 
 ## License
 
