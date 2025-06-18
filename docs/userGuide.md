@@ -119,3 +119,11 @@ The student can also navigate to the "Case Transcriptions" tab to upload audio a
   <img src="./media/student-upload-audio.png" width="45%" style="display:inline-block; margin-right:10px;" />
   <img src="./media/student-transcriptions.png" width="45%" style="display:inline-block;" />
 </p>
+
+The student can choose to delete or archive a case by clicking on the 3 dots on the bottom right corner of the case box:
+
+![image](./media/student-delete-archive-case.png)
+
+On the all cases page, students can search through cases by description or titles and view all cases including archived cases:
+
+![image](./media/student-all-cases.png)
