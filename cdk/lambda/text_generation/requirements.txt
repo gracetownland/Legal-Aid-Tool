@@ -24,7 +24,6 @@ boto3==1.38.37
     #   langchain-aws
 botocore==1.38.37
     # via
-    #   -r /app/requirements.in
     #   boto3
     #   s3transfer
 certifi==2025.6.15
@@ -98,6 +97,7 @@ mypy-extensions==1.1.0
     # via typing-inspect
 numpy==1.26.4
     # via
+    #   -r /app/requirements.in
     #   langchain-aws
     #   langchain-community
     #   langchain-postgres
@@ -115,16 +115,14 @@ propcache==0.3.2
     # via
     #   aiohttp
     #   yarl
-psycopg[binary,pool]==3.2.9
+psycopg[binary]==3.2.9
     # via
     #   -r /app/requirements.in
     #   langchain-postgres
 psycopg-binary==3.2.9
     # via psycopg
 psycopg-pool==3.2.6
-    # via
-    #   langchain-postgres
-    #   psycopg
+    # via langchain-postgres
 psycopg2-binary==2.9.10
     # via -r /app/requirements.in
 pydantic==2.11.7
