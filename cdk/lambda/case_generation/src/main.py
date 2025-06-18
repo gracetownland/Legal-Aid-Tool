@@ -246,11 +246,11 @@ def handler(event, context):
 
         try:
             case_title = handle_generate_title(case_id, case_type, jurisdiction, case_desc, province)
-            return _response(200, {'case_id': case_id, 'case_hash': case_hash, 'case_title': capitalize_title(case_title)})
+            return _response(200, {'case_id': str(case_id), 'case_hash': case_hash, 'case_title': capitalize_title(case_title)})
         except Exception as e:
             logger.warning(f"Title generation failed: {e}", exc_info=True)
             return _response(200, {
-                'case_id': case_id,
+                'case_id': str(case_id),
                 'case_hash': case_hash,
                 'warning': 'Case created but title generation failed.'
             })
