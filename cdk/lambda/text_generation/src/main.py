@@ -130,7 +130,7 @@ def setup_guardrail(guardrail_name: str) -> tuple[str, str]:
         logger.info(f"Creating new guardrail: {guardrail_name}")
         response = bedrock_client.create_guardrail(
             name=guardrail_name,
-            description='Block prompt attacks only',
+            description='Block prompt attacks and PII',
             topicPolicyConfig={
                 'topicsConfig': [
                     {
@@ -147,8 +147,17 @@ def setup_guardrail(guardrail_name: str) -> tuple[str, str]:
                     }
                 ]
             },
-            blockedInputMessaging='Sorry, I cannot process inputs that appear to contain prompt manipulation attempts.',
-            blockedOutputsMessaging='Sorry, I cannot respond to that request.'
+            sensitiveInformationPolicyConfig={
+                'piiEntitiesConfig': [
+                    {'type': 'EMAIL', 'action': 'BLOCK'},
+                    {'type': 'PHONE', 'action': 'BLOCK'},
+                    {'type': 'NAME', 'action': 'BLOCK'},
+                    {'type': 'ADDRESS', 'action': 'BLOCK'},
+                    {'type': 'SSN', 'action': 'BLOCK'}
+                ]
+            },
+            blockedInputMessaging='Sorry, I cannot process inputs that appear to contain prompt manipulation attempts or personal information.',
+            blockedOutputsMessaging='Sorry, I cannot respond to that request as it may contain Personal Information.'
         )
 
         logger.info("Waiting 5 seconds for guardrail status to become READY...")
@@ -338,7 +347,7 @@ def handler(event, context):
         logger.info(f"Processing student question: {question}")
         student_query = get_student_query(question)
 
-        guardrail_id, guardrail_version = setup_guardrail('prompt-attack-guardrail')
+        guardrail_id, guardrail_version = setup_guardrail('comprehensive-guardrails')
 
         guard_response = bedrock_runtime.apply_guardrail(
             guardrailIdentifier=guardrail_id,
@@ -350,8 +359,16 @@ def handler(event, context):
             # Add debug logging to see the full guardrail response
             logger.info(f"Guardrail response: {json.dumps(guard_response)}")
             
-            error_message = ("Sorry, I cannot process your case because it appears to contain prompt manipulation attempts. "
-                            "Please submit a query case without any instructions attempting to manipulate the system.")
+            # Check if it's a PII issue or prompt attack
+            error_message = "Sorry, I cannot process your request."
+            for assessment in guard_response.get('assessments', []):
+                if 'sensitiveInformationPolicy' in assessment:
+                    error_message = ("Sorry, I cannot process your request because it appears to contain personal information. "
+                                    "Please submit your query without including personal identifiable information.")
+                    break
+                else:
+                    error_message = ("Sorry, I cannot process your request because it appears to contain prompt manipulation attempts. "
+                                    "Please submit a query without any instructions attempting to manipulate the system.")
                 
             return {
                 'statusCode': 400,
