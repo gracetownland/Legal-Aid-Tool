@@ -70,11 +70,6 @@ Automatically generates a case title based on inputs like case type, jurisdictio
     - Initializes the ChatBedrockConverse model with specified parameters
     - Default temperature is 0.7 for creative title generation
     - Default max_tokens is 150 to keep titles concise
-- `get_response(case_type: str, llm: ChatBedrockConverse, jurisdiction: str = None, case_description: str = None, province: str = None)`:
-    - Constructs a prompt with legal title generation guidelines
-    - Incorporates case details into the prompt
-    - Ensures titles are under 100 characters
-    - Avoids including PII or specific region names
 - `setup_guardrail(guardrail_name: str)`:
     - Creates or retrieves a Bedrock guardrail for content filtering
     - Blocks sensitive information like emails, phone numbers, and names
@@ -98,7 +93,7 @@ Summarizes the contents of a conversation history from DynamoDB, creating a prof
     - Retrieves conversation history from DynamoDB for a specific case
     - Converts DynamoDB format to a structured message list
     - Formats messages with role (user/assistant) and timestamp
-- `generate_lawyer_summary(messages: list, llm: ChatBedrockConverse, case_type: str = None, case_description: str = None, jurisdiction: str = None)`:
+- `generate_lawyer_summary(messages: list, llm: ChatBedrockConverse, case_type: str, case_description: str, jurisdiction: str)`:
     - Creates a professional legal summary from conversation history
     - Formats the summary with clear headings and sections
     - Includes legal analysis, key facts, parties involved, and recommendations
