@@ -4,7 +4,7 @@ import time
 import random
 import logging
 import boto3
-import psycopg2
+import psycopg
 import urllib.request
 import httpx
 
@@ -133,7 +133,7 @@ def connect_to_db():
         # Build connection string for psycopg2
         conn_str = " ".join(f"{k}={v}" for k, v in params.items())
         try:
-            connection = psycopg2.connect(conn_str)
+            connection = psycopg.connect(conn_str)
             logger.info("Connected to the database.")
         except Exception as e:
             logger.error(f"Database connection failed: {e}")
