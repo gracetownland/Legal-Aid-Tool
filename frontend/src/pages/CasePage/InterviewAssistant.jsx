@@ -337,11 +337,23 @@ const InterviewAssistant = () => {
           }
         );
 
+        const data = await response.json();
+
+        // Check if guardrails were triggered
+        if (response.status === 400 && data.error) {
+          setIsAItyping(false);
+          // setSnackbar({
+          //   open: true,
+          //   message: data.error,
+          //   severity: "warning",
+          // });
+          return "I'm sorry, but I cannot process that request due to content guidelines. Please rephrase your question without including personal information (names, addresses, phone numbers, etc.).";
+        }
+
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
 
-        const data = await response.json();
         const res = data.llm_output.llm_output;
 
         setMessageCounter((prevCounter) => prevCounter + 1); // Increment message counter on frontend
@@ -362,7 +374,7 @@ const InterviewAssistant = () => {
       } catch (error) {
         console.error("Error:", error);
         setIsAItyping(false);
-        return error;
+        return "I'm sorry, there was an error processing your request.";
       }
     }
 
