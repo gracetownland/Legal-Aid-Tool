@@ -62,6 +62,10 @@ Please refer to the [Web App User Guide](./docs/userGuide.md) for instructions o
 
 Here you can learn about the API the project uses: [API Documentation](./docs/api-documentation.pdf).
 
+## Dependency Management
+
+For information on how Python dependencies are locked and managed across Lambda functions, see the [Dependency Management Guide](./docs/dependencyManagement.md).
+
 ## Modification Guide
 
 Steps to implement optional modifications such as changing the colours of the application can be found
