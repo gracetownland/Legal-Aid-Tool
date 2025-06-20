@@ -25,13 +25,21 @@ Each Lambda function uses a two-file approach:
 
 ### 2. Locking Process
 
-Dependencies were locked using pip-tools within Docker containers to ensure consistency:
+Dependencies were locked using pip-tools within locally built Docker containers to ensure consistency. 
+
+Steps: 
 
 ```bash
-# Example for case_generation Lambda
-docker run --rm -v ${PWD}:/app -w /app public.ecr.aws/lambda/python:3.11 bash -c "
-  pip install pip-tools && 
-  pip-compile cdk/lambda/case_generation/requirements.in
+# Navigate to the Lambda function directory
+cd cdk/lambda/case_generation
+
+# Build the Docker image
+docker build -t case-gen-image .
+
+# Run pip-tools inside the container
+docker run --rm -v ${PWD}:/app -w /app case-gen-image bash -c "
+  pip install pip-tools &&
+  pip-compile requirements.in
 "
 ```
 
@@ -62,7 +70,7 @@ botocore==1.38.37
 ### Adding New Dependencies
 
 1. **Add to requirements.in:**
-   Within the requirements.in file, add the new package required (with specific version or not).
+   Add the new package to requirements.in. You may optionally specify a version (e.g., openai==1.3.5 or just openai).
 
 2. **Build Docker image locally:**
    ```bash
@@ -82,8 +90,35 @@ botocore==1.38.37
    "
    ```
 
-4. **Commit and push the new changes:**
-   
+4. **Commit and Push Changes:**
+   After regenerating requirements.txt, commit and push the updated files to trigger the deployment pipeline.
+
+   **Option 1: Using Git in the Terminal**
+   ```bash
+   Copy
+   Edit
+   # Stage the updated files
+   git add requirements.in requirements.txt
+
+   # Commit with a descriptive message
+   git commit -m "Add new dependency to case_generation Lambda"
+
+   # Push to your working branch (e.g., main or dev)
+   git push origin <branch-name>
+   ```
+
+   **Option 2: Using Git in Your IDE (e.g., VS Code)**
+   1. Go to the Source Control tab.
+
+   2. You’ll see requirements.in and requirements.txt listed under Changes.
+
+   3. Write a commit message (e.g., “Add new dependency to case_generation Lambda”).
+
+   4. Click ✓ Commit.
+
+   5. Click the … menu or right-click → Push to send your changes to the remote repository.
+
+Once the push is complete, CodePipeline will automatically detect the change, rebuild the Docker image, and redeploy the Lambda function.
 
 ### Updating Existing Dependencies
 
@@ -93,16 +128,26 @@ botocore==1.38.37
    # To: langchain==0.4.0
    ```
 
-2. **Build and regenerate:**
+2. **Build Docker image locally:**
    ```bash
-   # Navigate to Lambda directory and build
+   # Navigate to the Lambda function directory
    cd cdk/lambda/case_generation
-   docker build -t case-gen-image .
    
-   # Regenerate requirements.txt
+   # Build the Docker image locally
+   docker build -t case-gen-image .
+   ```
+
+3. **Regenerate requirements.txt:**
+   ```bash
+   # Run pip-compile inside the built container
    docker run --rm -v ${PWD}:/app -w /app case-gen-image bash -c "
      pip install pip-tools && 
-     pip-compile --upgrade requirements.in
+     pip-compile requirements.in
    "
    ```
+
+4. **Commit and Push Changes:**
+
+Once `requirements.txt` has been updated, commit and push the changes to trigger the CI/CD pipeline and redeploy the updated Lambda function.
+
 
