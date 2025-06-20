@@ -32,7 +32,6 @@ VPC Configuration:
 |-------------|----------------|------------------------------------|
 | Private     | ca-central-1a  | Lambda                             |
 | Private     | ca-central-1b  | RDS Proxy, Amazon RDS              |
-| Private     | ca-central-1c  | Backup RDS                         |
 | Public      | ca-central-1   | NAT Gateway, Internet Gateway      |
 
 
@@ -484,18 +483,20 @@ Amazon Elastic Container Registry (ECR) provides a secure, scalable private cont
    - [Learn more](https://docs.aws.amazon.com/AmazonECR/latest/userguide/repository-policies.html)
 
 2. **TLS Enforcement**  
-   - All ECR API calls must use TLS 1.2 or higher, ensuring data in transit is secure
+   - All ECR API calls must use TLS 1.2 or higher, ensuring data in transit is secure. 
 
 3. **IAM Roles & Policies**  
-   - There are permissions (e.g., `ecr:GetAuthorizationToken`, `ecr:BatchGetImage`) that control who can push/pull images
+   - There are permissions (e.g., `ecr:GetAuthorizationToken`, `ecr:BatchGetImage`) that control who can push/pull images. 
 
 5. **Lifecycle Policies**  
-   - Automatically remove outdated images to minimize storage costs and reduce the attack surface
+   - Automatically remove outdated images to minimize storage costs and reduce the attack surface. 
+
+6. **Image Scanning**  
+   - All ECR repos have image scanning enabled to detect vulnerabilites and remediate issues. 
 
 ---
 
 
 **Recommendation:**  
-- Enable image scanning on push to detect vulnerabilities and remediate issues 
 - Regularly review ECR logs in **AWS CloudTrail** to identify suspicious or unauthorized access attempts
 - Implement **lifecycle policies** to retain only the most recent, patched images for better security and cost efficiency

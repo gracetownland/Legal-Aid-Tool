@@ -13,8 +13,8 @@ In all 3 functions, the Bedrock LLM is configured with:
 ```python
 def get_bedrock_llm(
     bedrock_llm_id: str,
-    temperature: float = 0,
-    max_tokens: int = 4096,
+    temperature: float,
+    max_tokens: int,
 ) -> ChatBedrock:
     """
     Retrieve a Bedrock LLM instance based on the provided model ID.
