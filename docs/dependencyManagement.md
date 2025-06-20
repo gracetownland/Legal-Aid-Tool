@@ -95,8 +95,6 @@ botocore==1.38.37
 
    **Option 1: Using Git in the Terminal**
    ```bash
-   Copy
-   Edit
    # Stage the updated files
    git add requirements.in requirements.txt
 
