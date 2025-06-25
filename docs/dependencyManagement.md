@@ -73,6 +73,9 @@ botocore==1.38.37
    Add the new package to requirements.in. You may optionally specify a version (e.g., langchain==1.3.5 or just langchain).
 
 2. **Build Docker image locally:**
+   Open the Docker Desktop app and keep it running during this process. 
+   In the terminal run the following commands in order to build the Docker image locally.
+
    ```bash
    # Navigate to the Lambda function directory
    cd cdk/lambda/case_generation
@@ -81,7 +84,11 @@ botocore==1.38.37
    docker build -t case-gen-image .
    ```
 
+
+
 3. **Regenerate requirements.txt:**
+   Once the image has been built, run this command in the terminal to compile the requirements and regenerate the requirements.txt version:
+
    ```bash
    # Run pip-compile inside the built container
    docker run --rm -v ${PWD}:/app -w /app case-gen-image bash -c "
@@ -127,6 +134,8 @@ Once the push is complete, CodePipeline will automatically detect the change, re
    ```
 
 2. **Build Docker image locally:**
+   Make sure to keep Docker Desktop running during this process. 
+   
    ```bash
    # Navigate to the Lambda function directory
    cd cdk/lambda/case_generation
