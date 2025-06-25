@@ -21,6 +21,10 @@ All functions use AWS Bedrock models with the following shared configuration:
 Text generation is used in the interview assistant and allows users to ask follow up questions based on case information and AI responses. 
 
 ### Key Functions
+- `setup_guardrail(guardrail_name: str)`:
+    - Creates or retrieves a Bedrock guardrail for content filtering
+    - Blocks sensitive information like emails, phone numbers, and names
+    - Returns guardrail ID and version for use with the LLM
 - `create_dynamodb_history_table(table_name: str)`:
     - Creates a DynamoDB table for storing chat history if it doesn't exist
 - `get_student_query(raw_query: str)`:
