@@ -39,6 +39,28 @@ const Login = () => {
   const [isConfirmingSignUp, setIsConfirmingSignUp] = useState(false); 
   const [logo, setLogo] = useState("logo_dark.svg");
 
+  // Password validation state
+  const [passwordRequirements, setPasswordRequirements] = useState({
+    minLength: false,
+    hasLowercase: false,
+    hasUppercase: false,
+    hasNumber: false,
+    hasSpecialChar: false,
+    passwordsMatch: false,
+  });
+
+  // Check password requirements
+  const checkPasswordRequirements = (password, confirmPwd = confirmPassword) => {
+    setPasswordRequirements({
+      minLength: password.length >= 12,
+      hasLowercase: /[a-z]/.test(password),
+      hasUppercase: /[A-Z]/.test(password),
+      hasNumber: /\d/.test(password),
+      hasSpecialChar: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+      passwordsMatch: password === confirmPwd && password !== '',
+    });
+  };
+
   const updateLogoBasedOnTheme = () => {
     const isDarkMode = window.matchMedia("(prefers-color-scheme: dark)").matches;
     setLogo(isDarkMode ? "/logo_dark.svg" : "/logo_light.svg");
@@ -218,9 +240,9 @@ const Login = () => {
         </div>
       </Grid> */}
 
-      <Grid item xs={12} sm={6} sx={{ display: "flex", justifyContent: "center", alignItems: "center", p: 4, transition: "all 0.3s ease", opacity: 0, animation: 'fadeIn 0.6s forwards', height: '100vh',  backgroundColor: 'var(--background2)' }}>
-        <Box sx={{ width: "100%", maxWidth: 500, animation: 'slideUp 0.6s ease-out', border: "1px solid var(--border)", borderRadius: 2, padding: 4, backgroundColor: "var(--background)" }}>
-          <Typography variant="h5" fontWeight={600} textAlign="left" mb={3} sx={{ color: "var(--text)", fontFamily: "Outfit", fontSize: 26, transition: "all 0.3s ease", }}>
+      <Grid item xs={12} sm={6} sx={{ display: "flex", justifyContent: "center", alignItems: "center", p: 2, transition: "all 0.3s ease", opacity: 0, animation: 'fadeIn 0.6s forwards', minHeight: '100vh',  backgroundColor: 'var(--background2)' }}>
+        <Box sx={{ width: "100%", maxWidth: 420, animation: 'slideUp 0.6s ease-out', border: "1px solid var(--border)", borderRadius: 2, padding: 2, backgroundColor: "var(--background)" }}>
+          <Typography variant="h5" fontWeight={600} textAlign="left" mb={2} sx={{ color: "var(--text)", fontFamily: "Outfit", fontSize: 22, transition: "all 0.3s ease", }}>
           <div style={{ opacity: 0, animation: 'fadeIn 0.6s forwards', display: 'flex', alignItems: 'center', gap: '8px'}}>
           <img src={logo} alt="Logo" style={{ width: "50px", height: "50px" }} />
             {isReset ? "Reset Password" : isSignUp ? "Create Account" : "Legal Aid Tool"}
@@ -271,10 +293,24 @@ const Login = () => {
                 ) : (
                   <>
                     {isSignUp && (
-                      <>
-                        <TextField fullWidth label="First Name" variant="outlined" margin="normal" value={firstName} onChange={(e) => setFirstName(e.target.value)} sx={inputStyles} />
-                        <TextField fullWidth label="Last Name" variant="outlined" margin="normal" value={lastName} onChange={(e) => setLastName(e.target.value)} sx={inputStyles} />
-                      </>
+                      <Box sx={{ display: 'flex', gap: 2 }}>
+                        <TextField 
+                          label="First Name" 
+                          variant="outlined" 
+                          margin="normal" 
+                          value={firstName} 
+                          onChange={(e) => setFirstName(e.target.value)} 
+                          sx={{ ...inputStyles, flex: 1 }} 
+                        />
+                        <TextField 
+                          label="Last Name" 
+                          variant="outlined" 
+                          margin="normal" 
+                          value={lastName} 
+                          onChange={(e) => setLastName(e.target.value)} 
+                          sx={{ ...inputStyles, flex: 1 }} 
+                        />
+                      </Box>
                     )}
                     <TextField
                       fullWidth
@@ -297,7 +333,10 @@ const Login = () => {
                       margin="normal"
                       autoComplete="current-password"
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        if (isSignUp) checkPasswordRequirements(e.target.value);
+                      }}
                       InputProps={{
                         startAdornment: <InputAdornment position="start"><Lock {...iconProps} /></InputAdornment>,
                         endAdornment: (
@@ -326,6 +365,129 @@ const Login = () => {
                       }}
                       sx={inputStyles}
                     />
+                    {isSignUp && password && (
+                      <Box sx={{ 
+                        mt: 0.5, 
+                        mb: 0.5, 
+                        p: 0.8, 
+                        backgroundColor: 'var(--background2)', 
+                        borderRadius: 1, 
+                        border: '1px solid var(--border)'
+                      }}>
+                        <Typography variant="caption" sx={{ 
+                          color: 'var(--text)', 
+                          fontWeight: 600, 
+                          mb: 0.3, 
+                          display: 'block',
+                          fontFamily: 'Outfit',
+                          fontSize: '0.65rem'
+                        }}>
+                          Requirements:
+                        </Typography>
+                        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0.5 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <Box sx={{ 
+                              width: 12, 
+                              height: 12, 
+                              borderRadius: '50%', 
+                              backgroundColor: passwordRequirements.minLength ? '#4caf50' : 'var(--border)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
+                              {passwordRequirements.minLength && <Typography sx={{ color: 'white', fontSize: 8 }}>✓</Typography>}
+                            </Box>
+                            <Typography variant="caption" sx={{ 
+                              color: passwordRequirements.minLength ? '#4caf50' : 'var(--placeholder-text)',
+                              fontFamily: 'Outfit',
+                              fontSize: '0.65rem'
+                            }}>
+                              At least 12 characters
+                            </Typography>
+                          </Box>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <Box sx={{ 
+                              width: 12, 
+                              height: 12, 
+                              borderRadius: '50%', 
+                              backgroundColor: passwordRequirements.hasLowercase ? '#4caf50' : 'var(--border)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
+                              {passwordRequirements.hasLowercase && <Typography sx={{ color: 'white', fontSize: 8 }}>✓</Typography>}
+                            </Box>
+                            <Typography variant="caption" sx={{ 
+                              color: passwordRequirements.hasLowercase ? '#4caf50' : 'var(--placeholder-text)',
+                              fontFamily: 'Outfit',
+                              fontSize: '0.65rem'
+                            }}>
+                              One lowercase letter
+                            </Typography>
+                          </Box>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <Box sx={{ 
+                              width: 12, 
+                              height: 12, 
+                              borderRadius: '50%', 
+                              backgroundColor: passwordRequirements.hasUppercase ? '#4caf50' : 'var(--border)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
+                              {passwordRequirements.hasUppercase && <Typography sx={{ color: 'white', fontSize: 8 }}>✓</Typography>}
+                            </Box>
+                            <Typography variant="caption" sx={{ 
+                              color: passwordRequirements.hasUppercase ? '#4caf50' : 'var(--placeholder-text)',
+                              fontFamily: 'Outfit',
+                              fontSize: '0.65rem'
+                            }}>
+                              One uppercase letter
+                            </Typography>
+                          </Box>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <Box sx={{ 
+                              width: 12, 
+                              height: 12, 
+                              borderRadius: '50%', 
+                              backgroundColor: passwordRequirements.hasNumber ? '#4caf50' : 'var(--border)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
+                              {passwordRequirements.hasNumber && <Typography sx={{ color: 'white', fontSize: 8 }}>✓</Typography>}
+                            </Box>
+                            <Typography variant="caption" sx={{ 
+                              color: passwordRequirements.hasNumber ? '#4caf50' : 'var(--placeholder-text)',
+                              fontFamily: 'Outfit',
+                              fontSize: '0.65rem'
+                            }}>
+                              One number
+                            </Typography>
+                          </Box>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, gridColumn: 'span 2' }}>
+                            <Box sx={{ 
+                              width: 12, 
+                              height: 12, 
+                              borderRadius: '50%', 
+                              backgroundColor: passwordRequirements.hasSpecialChar ? '#4caf50' : 'var(--border)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
+                              {passwordRequirements.hasSpecialChar && <Typography sx={{ color: 'white', fontSize: 8 }}>✓</Typography>}
+                            </Box>
+                            <Typography variant="caption" sx={{ 
+                              color: passwordRequirements.hasSpecialChar ? '#4caf50' : 'var(--placeholder-text)',
+                              fontFamily: 'Outfit',
+                              fontSize: '0.65rem'
+                            }}>
+                              One special character
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Box>
+                    )}
                     {isSignUp && (
                       <TextField
                         fullWidth
@@ -335,7 +497,10 @@ const Login = () => {
                         margin="normal"
                         autoComplete="new-password"
                         value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        onChange={(e) => {
+                          setConfirmPassword(e.target.value);
+                          if (password) checkPasswordRequirements(password, e.target.value);
+                        }}
                         InputProps={{
                           startAdornment: <InputAdornment position="start"><Lock {...iconProps} /></InputAdornment>,
                           endAdornment: (
@@ -360,6 +525,30 @@ const Login = () => {
                         }}
                         sx={inputStyles}
                       />
+                    )}
+                    {isSignUp && confirmPassword && (
+                      <Box sx={{ mt: 0.5, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <Box sx={{ 
+                          width: 16, 
+                          height: 16, 
+                          borderRadius: '50%', 
+                          backgroundColor: passwordRequirements.passwordsMatch ? '#4caf50' : '#f44336',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}>
+                          {passwordRequirements.passwordsMatch ? 
+                            <Typography sx={{ color: 'white', fontSize: 10 }}>✓</Typography> :
+                            <Typography sx={{ color: 'white', fontSize: 10 }}>✗</Typography>
+                          }
+                        </Box>
+                        <Typography variant="caption" sx={{ 
+                          color: passwordRequirements.passwordsMatch ? '#4caf50' : '#f44336',
+                          fontFamily: 'Outfit'
+                        }}>
+                          {passwordRequirements.passwordsMatch ? 'Passwords match' : 'Passwords do not match'}
+                        </Typography>
+                      </Box>
                     )}
                     {!isSignUp && (
                       <Box textAlign="right" mt={1}>

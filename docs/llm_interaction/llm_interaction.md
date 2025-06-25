@@ -17,11 +17,6 @@ All functions use AWS Bedrock models with the following shared configuration:
 | `max_tokens`      | Maximum number of tokens the model is allowed to generate in its response. Helps keep output concise and bounded.                                                                                                                   | Varies by function:<br>- Text Gen: 4096<br>- Case Gen: 150<br>- Summary Gen: 2048                                                 | Any non-negative integer (e.g., `1`, `50`, `4096`, etc.).                                                  |
 | `guardrails`      | Applies content filters to ensure safe and appropriate responses. This includes blocking personally identifiable information (PII), sensitive topics, and advice like legal or financial guidance.                                  | Implicitly enabled (model-level safety)               | Enabled by default in most Bedrock models. Not configurable directly in the helper function.               |
 
-**Model Types Used:**
-- **Text Generation**: `ChatBedrock` (with LangChain integration for RAG)
-- **Case Generation**: `ChatBedrockConverse` (for simple title generation)
-- **Summary Generation**: `ChatBedrockConverse` (for conversation summarization)
-
 
 ## 1. Text Generation
 
