@@ -8,37 +8,19 @@
 ---
 
 ## LLM Configuration
-In all 3 functions, the Bedrock LLM is configured with:
+All functions use AWS Bedrock models with the following shared configuration:
 
-```python
-def get_bedrock_llm(
-    bedrock_llm_id: str,
-    temperature: float,
-    max_tokens: int,
-) -> ChatBedrock:
-    """
-    Retrieve a Bedrock LLM instance based on the provided model ID.
+| Parameter        | Purpose                                                                                                                                                                                                                              | Configuration                                         | Acceptable Values                                                                                          |
+|------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------|------------------------------------------------------------------------------------------------------------|
+| `bedrock_llm_id` | Identifies which Bedrock model to use for text generation.                                                                                                                                      | Retrieved from `BEDROCK_LLM_PARAM` at runtime         | Must match a valid Bedrock model ID (e.g., `"meta.llama3-70b-instruct-v1"`, `"anthropic.claude-v2"`, etc.) |
+| `temperature`     | Controls randomness of the generated output. Lower values = more deterministic; higher values = more diverse/creative.                                                                                                              | Varies by function:<br>- Text Gen: 0<br>- Case Gen: 0.7<br>- Summary Gen: 0.3                                                 | A float between `0` and `1`. Typically ranges from `0.0` (precise) to `1.0` (creative).                     |
+| `max_tokens`      | Maximum number of tokens the model is allowed to generate in its response. Helps keep output concise and bounded.                                                                                                                   | Varies by function:<br>- Text Gen: 4096<br>- Case Gen: 150<br>- Summary Gen: 2048                                                 | Any non-negative integer (e.g., `1`, `50`, `4096`, etc.).                                                  |
+| `guardrails`      | Applies content filters to ensure safe and appropriate responses. This includes blocking personally identifiable information (PII), sensitive topics, and advice like legal or financial guidance.                                  | Implicitly enabled (model-level safety)               | Enabled by default in most Bedrock models. Not configurable directly in the helper function.               |
 
-    Args:
-        bedrock_llm_id (str): The unique identifier for the Bedrock LLM model.
-        temperature (float, optional): Controls randomness in responses. Defaults to 0.
-        max_tokens (int, optional): Max number of tokens in the output. Defaults to 4096.
-
-    Returns:
-        ChatBedrock: An instance of the configured Bedrock LLM.
-    """
-    return ChatBedrock(
-        model_id=bedrock_llm_id,
-        model_kwargs=dict(temperature=temperature, max_tokens=max_tokens),
-    )
-```
-
-| Parameter        | Purpose                                                                                                                                                                                                                              | Configuration                                         | Acceptable Values                                                                                          | Location                                                         |
-|------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------|------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------|
-| `bedrock_llm_id` | Identifies which Bedrock model (e.g., Llama 3, Claude, Titan, etc.) to use for text generation.                                                                                                                                      | Retrieved from `BEDROCK_LLM_PARAM` at runtime         | Must match a valid Bedrock model ID (e.g., `"meta.llama3-70b-instruct-v1"`, `"anthropic.claude-v2"`, etc.) | All three Lambda functions (`get_bedrock_llm()`) |
-| `temperature`     | Controls randomness of the generated output. Lower values = more deterministic; higher values = more diverse/creative.                                                                                                              | Varies by function:<br>- Text Gen: 0<br>- Case Gen: 0.7<br>- Summary Gen: 0.3                                                 | A float between `0` and `1`. Typically ranges from `0.0` (precise) to `1.0` (creative).                     | All three Lambda functions (`get_bedrock_llm()`) |
-| `max_tokens`      | Maximum number of tokens the model is allowed to generate in its response. Helps keep output concise and bounded.                                                                                                                   | Varies by function:<br>- Text Gen: 4096<br>- Case Gen: 150<br>- Summary Gen: 2048                                                 | Any non-negative integer (e.g., `1`, `50`, `4096`, etc.).                                                  | All three Lambda functions (`get_bedrock_llm()`) |
-| `guardrails`      | Applies content filters to ensure safe and appropriate responses. This includes blocking personally identifiable information (PII), sensitive topics, and advice like legal or financial guidance.                                  | Implicitly enabled (model-level safety)               | Enabled by default in most Bedrock models. Not configurable directly in the helper function.               | Enforced at the model level — not explicitly set in code         |
+**Model Types Used:**
+- **Text Generation**: `ChatBedrock` (with LangChain integration for RAG)
+- **Case Generation**: `ChatBedrockConverse` (for simple title generation)
+- **Summary Generation**: `ChatBedrockConverse` (for conversation summarization)
 
 
 ## 1. Text Generation
@@ -66,14 +48,14 @@ Text generation is used in the interview assistant and allows users to ask follo
 Automatically generates a case title based on inputs like case type, jurisdiction, and description.
 
 ### Key Functions
-- `get_bedrock_llm(bedrock_llm_id: str, temperature: float = 0.7, max_tokens: int = 150, top_p: float = None)`:
-    - Initializes the ChatBedrockConverse model with specified parameters
-    - Default temperature is 0.7 for creative title generation
-    - Default max_tokens is 150 to keep titles concise
 - `setup_guardrail(guardrail_name: str)`:
     - Creates or retrieves a Bedrock guardrail for content filtering
     - Blocks sensitive information like emails, phone numbers, and names
     - Returns guardrail ID and version for use with the LLM
+- `get_response(case_type: str, llm: ChatBedrockConverse, jurisdiction: str, case_description: str, province: str)`:
+    - Core function that generates case titles using the LLM
+    - Takes case details and returns a formatted title
+    - Includes specific prompting to avoid personal information
 - `handle_generate_title(case_id: str, case_type: str, jurisdiction: str, case_description: str, province: str)`:
     - Orchestrates the title generation process
     - Updates the database with the generated title
@@ -85,10 +67,6 @@ Automatically generates a case title based on inputs like case type, jurisdictio
 Summarizes the contents of a conversation history from DynamoDB, creating a professional legal summary for lawyers.
 
 ### Key Functions
-- `get_bedrock_llm(bedrock_llm_id: str, temperature: float = 0.3)`:
-    - Initializes the ChatBedrockConverse model with specified parameters
-    - Default temperature is 0.3 for more precise summaries
-    - Uses max_tokens of 2048 for comprehensive summaries
 - `retrieve_dynamodb_history(table_name: str, session_id: str)`:
     - Retrieves conversation history from DynamoDB for a specific case
     - Converts DynamoDB format to a structured message list

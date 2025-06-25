@@ -70,7 +70,7 @@ botocore==1.38.37
 ### Adding New Dependencies
 
 1. **Add to requirements.in:**
-   Add the new package to requirements.in. You may optionally specify a version (e.g., openai==1.3.5 or just openai).
+   Add the new package to requirements.in. You may optionally specify a version (e.g., langchain==1.3.5 or just langchain).
 
 2. **Build Docker image locally:**
    ```bash
