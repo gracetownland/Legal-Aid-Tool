@@ -34,7 +34,7 @@ export class ApiGatewayStack extends cdk.Stack {
   public readonly appClient: cognito.UserPoolClient;
   public readonly userPool: cognito.UserPool;
   public readonly identityPool: cognito.CfnIdentityPool;
-  private readonly layerList: { [key: string]: LayerVersion };
+  private readonly layerList: { [key: string]: lambda.ILayerVersion };
   public readonly stageARN_APIGW: string;
   public readonly apiGW_basedURL: string;
   private eventApi: appsync.GraphqlApi;
@@ -44,7 +44,7 @@ export class ApiGatewayStack extends cdk.Stack {
   public getEventApiUrl = () => this.eventApi.graphqlUrl;
   public getUserPoolClientId = () => this.appClient.userPoolClientId;
   public getIdentityPoolId = () => this.identityPool.ref;
-  public addLayer = (name: string, layer: LayerVersion) =>
+  public addLayer = (name: string, layer: lambda.ILayerVersion) =>
     (this.layerList[name] = layer);
   public getLayers = () => this.layerList;
 
@@ -105,14 +105,15 @@ export class ApiGatewayStack extends cdk.Stack {
     });
 
     /**
-     *
-     * Create Lambda layer for Psycopg2
-     */
-    const psycopgLayer = new LayerVersion(this, "psycopgLambdaLayer", {
-      code: Code.fromAsset("./layers/psycopg2.zip"),
-      compatibleRuntimes: [Runtime.PYTHON_3_9],
+   *
+   * Create Lambda layer for Psycopg2
+   */
+    const psycopgLayer = new lambda.LayerVersion(this, "psycopgLambdaLayer", {
+      code: lambda.Code.fromAsset("./layers/psycopg2.zip"),
+      compatibleRuntimes: [lambda.Runtime.PYTHON_3_11],
       description: "Lambda layer containing the psycopg2 Python library",
     });
+
 
     // powertoolsLayer does not follow the format of layerList
     const powertoolsLayer = lambda.LayerVersion.fromLayerVersionArn(
@@ -803,7 +804,7 @@ export class ApiGatewayStack extends cdk.Stack {
       this,
       `${id}-NotificationFunction`,
       {
-        runtime: lambda.Runtime.PYTHON_3_9,
+        runtime: lambda.Runtime.PYTHON_3_11,
         code: lambda.Code.fromAsset("lambda/eventNotification"),
         handler: "eventNotification.lambda_handler",
         environment: {
@@ -1479,7 +1480,7 @@ export class ApiGatewayStack extends cdk.Stack {
       this,
       `${id}-GeneratePreSignedURLFunction`,
       {
-        runtime: lambda.Runtime.PYTHON_3_9,
+        runtime: lambda.Runtime.PYTHON_3_11,
         code: lambda.Code.fromAsset("lambda/generatePreSignedURL"),
         handler: "generatePreSignedURL.lambda_handler",
         timeout: Duration.seconds(300),
