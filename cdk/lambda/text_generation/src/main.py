@@ -48,7 +48,7 @@ def get_secret(secret_name, expect_json=True):
             logger.error(f"Failed to decode JSON for secret {secret_name}: {e}")
             raise ValueError(f"Secret {secret_name} is not properly formatted as JSON.")
         except Exception as e:
-            logger.error(f"Error fetching secret {secret_name}: {e}")
+            logger.error("Error fetching secret. Please check the system logs for more details.")
             raise
     return db_secret
 
