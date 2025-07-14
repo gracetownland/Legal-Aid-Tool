@@ -62,14 +62,12 @@ const [selectedTranscription, setSelectedTranscription] = useState(null);
         }
       );
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch transcriptions");
-      }
-
+      if (!response.ok) throw new Error("Case not found");
       const data = await response.json();
       setTranscriptions(data);
     } catch (error) {
       console.error("Error fetching transcriptions:", error);
+      setCaseData(null);
     }
   };
 
@@ -91,15 +89,13 @@ const [selectedTranscription, setSelectedTranscription] = useState(null);
           }
         );
 
-        if (!response.ok) {
-          throw new Error("Case not found");
-        }
-
+        if (!response.ok) throw new Error("Case not found");
         const data = await response.json();
         setCaseData(data.caseData);
         
       } catch (error) {
         console.error("Error fetching case data:", error);
+        setCaseData(null);
       }
     };
 
@@ -425,6 +421,8 @@ const handleDelete = async () => {
 };
 
   return (
+    <>
+    {caseData ? (
     <Box display="flex" flexDirection="column" minHeight="100vh">
       <Box position="fixed" top={0} left={0} width="100%" zIndex={1000} bgcolor="white">
         {userRole === "instructor" ? <InstructorHeader /> : <StudentHeader />}
@@ -761,7 +759,11 @@ const handleDelete = async () => {
   </Alert>
 </Snackbar>
 
-    </Box>
+    </Box>)
+    :
+    (<NotFound/>)
+          }
+    </>
   );
 };
 

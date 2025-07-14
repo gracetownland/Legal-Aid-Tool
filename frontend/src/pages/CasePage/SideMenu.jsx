@@ -5,7 +5,6 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import CaseOverview from "./CaseOverview";
 import InterviewAssistant from "./InterviewAssistant";
 import CaseFeedback from "./CaseFeedback";
-import PrelimSummary from "./PrelimSummary";
 import DraggableNotes from "../../components/DraggableNotes";
 import SaveIcon from "@mui/icons-material/Save";
 import EditNoteIcon from '@mui/icons-material/EditNote';
@@ -319,11 +318,6 @@ const SideMenu = () => {
             <Route path="/case/overview" element={<CaseOverview />} />
             <Route path="/case/feedback" element={<CaseFeedback />} />
             <Route path="/case/interview-assistant" element={<InterviewAssistant />} />
-            
-            {/* Route still exists but only accessible when isPrelimSummaryGenerated is true */}
-            {isPrelimSummaryGenerated && (
-              <Route path="/case/preliminary-summary" element={<PrelimSummary />} />
-            )}
           </Routes>
         </Box>
       </Box>

@@ -17,6 +17,7 @@ import StudentHeader from "../../components/StudentHeader";
 import InstructorHeader from "../../components/InstructorHeader";
 import SideMenu from "./SideMenu";
 import TypingIndicator from "./TypingIndicator";
+import NotFound from "../NotFound";
 
 import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded';
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
@@ -99,10 +100,10 @@ const InterviewAssistant = () => {
 
   useEffect(() => {
     const fetchCaseData = async () => {
-      const session = await fetchAuthSession();
-      const token = session.tokens.idToken;
-      const cognito_id = session.tokens.idToken.payload.sub;
       try {
+        const session = await fetchAuthSession();
+        const token = session.tokens.idToken;
+        const cognito_id = session.tokens.idToken.payload.sub;
         const response = await fetch(
           `${import.meta.env.VITE_API_ENDPOINT}student/case_page?case_id=${caseId}&cognito_id=${cognito_id}`,
           {
@@ -390,6 +391,29 @@ const InterviewAssistant = () => {
   );
 
   return (
+    <>
+    {loading && (
+      <Box
+        sx={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          backgroundColor: "rgba(255, 255, 255, 0.85)",
+          zIndex: 2000,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          fontFamily: "Outfit",
+        }}
+      >
+        <CircularProgress sx={{ color: "var(--primary)" }} />
+      </Box>
+    )}
+    
+    {!loading && 
+      (caseData ? (
     <Box
       sx={{
         position: "relative",
@@ -403,35 +427,6 @@ const InterviewAssistant = () => {
         minHeight: "100vh",
       }}
     >
-      {loading && (
-        <Box
-          sx={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            backgroundColor: "rgba(255, 255, 255, 0.85)",
-            zIndex: 999,
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            fontFamily: "Outfit",
-          }}
-        >
-          <CircularProgress
-            sx={{
-              color: "var(--primary)",
-              width: "60px !important",
-              left: "55%",
-              top: "40%",
-              position: "absolute",
-              height: "60px !important",
-            }}
-          />
-        </Box>
-      )}
-  
       {/* Everything below this runs normally after loading */}
       <Box position="fixed" top={0} left={0} width="100%" zIndex={1000} bgcolor="white">
         {userRole === "instructor" ? <InstructorHeader /> : <StudentHeader />}
@@ -878,7 +873,11 @@ const InterviewAssistant = () => {
                 {snackbar.message}
               </Alert>
             </Snackbar>
-    </Box>
+    </Box>)
+    :
+    (<NotFound/>)
+          )};
+    </>
   );
 };
 
