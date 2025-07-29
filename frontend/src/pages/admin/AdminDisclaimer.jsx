@@ -70,7 +70,7 @@ export default function Disclaimer() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            system_prompt: previousDisclaimers[currentIndex].disclaimer_text,
+            disclaimer_text: previousDisclaimers[currentIndex].disclaimer_text,
           }),
         }
       );

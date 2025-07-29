@@ -215,40 +215,38 @@ exports.handler = async (event) => {
           });
         }
       break;
-      case "POST /admin/disclaimer": // Change to POST if inserting a new record
-          try {
-              console.log("Disclaimer update initiated");
+      case "POST /admin/disclaimer":
+    try {
+        console.log("Disclaimer update initiated");
 
-              // Ensure event.body exists and is valid JSON
-              if (!event.body) throw new Error("Request body is missing");
+        if (!event.body) throw new Error("Request body is missing");
 
-              const { disclaimer_text } = JSON.parse(event.body);
+        const { disclaimer_text } = JSON.parse(event.body);
 
-              if (!disclaimer_text) throw new Error("Missing 'disclaimer_text' in request body");
+        if (!disclaimer_text) throw new Error("Missing 'disclaimer_text' in request body");
 
-              // Insert new prompt into system_prompt table
-              const insertPrompt = await sqlConnectionTableCreator`
-                  INSERT INTO "disclaimers" (disclaimer_text)
-                  VALUES (${disclaimer_text})
-                  RETURNING *;
-              `;
+        // Insert new disclaimer into the disclaimers table
+        const insertResult = await sqlConnectionTableCreator`
+            INSERT INTO "disclaimers" (disclaimer_text)
+            VALUES (${disclaimer_text})
+            RETURNING disclaimer_id, disclaimer_text, last_updated;
+        `;
 
-              response.body = JSON.stringify(insertPrompt[0]); // Return inserted record
-          } catch (err) {
-              response.statusCode = 500;
-              console.error("Error inserting system prompt:", err);
-              response.body = JSON.stringify({ error: err.message || "Internal server error" });
-          }
-          break;
+        response.body = JSON.stringify(insertResult[0]); // Return inserted record
+    } catch (err) {
+        response.statusCode = 500;
+        console.error("Error inserting disclaimer:", err);
+        response.body = JSON.stringify({ error: err.message || "Internal server error" });
+    }
+    break;
       case "GET /admin/disclaimer":
   try {
     const result = await sqlConnectionTableCreator`
-    SELECT d.disclaimer_text, d.last_updated, u.first_name, u.last_name, u.user_email
-      FROM disclaimers d
-      LEFT JOIN users u ON d.user_id = u.user_id
-      ORDER BY d.last_updated DESC;
+    SELECT disclaimer_text, last_updated
+            FROM "disclaimers"
+            ORDER BY last_updated DESC;
   `;
-  response.body = JSON.stringify(result[0]);
+  response.body = JSON.stringify(result);
   
   } catch (err) {
     console.error("Error fetching disclaimers:", err);
