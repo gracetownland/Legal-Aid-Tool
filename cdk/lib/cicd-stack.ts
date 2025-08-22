@@ -55,7 +55,7 @@ export class CICDStack extends cdk.Stack {
     const username = cdk.aws_ssm.StringParameter.valueForStringParameter(
       this,
       "lat-owner-name"
-    );
+    ) || "default-owner";
 
     // Add source stage
     pipeline.addStage({
@@ -130,20 +130,20 @@ export class CICDStack extends cdk.Stack {
           privileged: true,
         },
         environmentVariables: {
-          AWS_ACCOUNT_ID: { value: this.account },
-          AWS_REGION: { value: this.region },
-          ENVIRONMENT: { value: envName },
-          MODULE_NAME: { value: lambda.name },
-          LAMBDA_FUNCTION_NAME: { value: lambda.functionName },
-          REPO_NAME: { value: repoName },
-          REPOSITORY_URI: { value: ecrRepo.repositoryUri },
-          GITHUB_USERNAME: { value: username },
-          GITHUB_REPO: { value: props.githubRepo },
+          AWS_ACCOUNT_ID: { value: this.account || 'unknown' },
+          AWS_REGION: { value: this.region || 'ca-central-1' },
+          ENVIRONMENT: { value: envName || 'dev' },
+          MODULE_NAME: { value: lambda.name || 'unknown' },
+          LAMBDA_FUNCTION_NAME: { value: lambda.functionName || 'unknown' },
+          REPO_NAME: { value: repoName || 'unknown' },
+          REPOSITORY_URI: { value: ecrRepo.repositoryUri || 'unknown' },
+          GITHUB_USERNAME: { value: username || 'unknown' },
+          GITHUB_REPO: { value: props.githubRepo || 'unknown' },
           GITHUB_TOKEN: {
             type: codebuild.BuildEnvironmentVariableType.SECRETS_MANAGER,
             value: 'github-personal-access-token:my-github-token'
           },
-          PATH_FILTER: { value: lambda.sourceDir },
+          PATH_FILTER: { value: lambda.sourceDir || 'unknown' },
         },
         buildSpec: codebuild.BuildSpec.fromObject({
           version: '0.2',
@@ -190,6 +190,22 @@ export class CICDStack extends cdk.Stack {
                 'docker tag $REPOSITORY_URI:$IMAGE_TAG $REPOSITORY_URI:latest',
                 'docker push $REPOSITORY_URI:$IMAGE_TAG',
                 'docker push $REPOSITORY_URI:latest',
+                'echo "Waiting for vulnerability scan to complete..."',
+                'sleep 30',
+                'echo "Checking vulnerability scan results..."',
+                'SCAN_RESULTS=$(aws ecr describe-image-scan-findings --repository-name $REPO_NAME --image-id imageTag=latest --query "imageScanFindingsSummary.findingCounts.CRITICAL" --output text 2>/dev/null || echo "0")',
+                'if [ "$SCAN_RESULTS" != "0" ] && [ "$SCAN_RESULTS" != "None" ]; then',
+                '  echo "CRITICAL vulnerabilities found: $SCAN_RESULTS. Blocking deployment."',
+                '  exit 1',
+                'fi',
+                'echo "No critical vulnerabilities found. Proceeding with deployment."',
+                'echo "Checking if Lambda function exists before updating..."',
+                'if aws lambda get-function --function-name $LAMBDA_FUNCTION_NAME &>/dev/null; then',
+                '  echo "Updating Lambda function to use the new image..."',
+                '  aws lambda update-function-code --function-name $LAMBDA_FUNCTION_NAME --image-uri $REPOSITORY_URI:latest',
+                'else',
+                '  echo "Lambda function $LAMBDA_FUNCTION_NAME does not exist yet. Skipping update."',
+                'fi'
               ]
             }
           }
@@ -213,6 +229,108 @@ export class CICDStack extends cdk.Stack {
     pipeline.addStage({
       stageName: 'Build',
       actions: buildActions,
+    });
+
+    // Security: Add vulnerability scanning and blocking
+    this.addVulnerabilityScanning(props.lambdaFunctions);
+  }
+
+  private addVulnerabilityScanning(lambdaFunctions: LambdaConfig[]) {
+    // SNS topic for security alerts
+    const securityTopic = new sns.Topic(this, 'SecurityAlerts', {
+      displayName: 'ECR Vulnerability Alerts'
+    });
+
+    // Lambda to handle vulnerability scan results
+    const vulnerabilityHandler = new lambda.Function(this, 'VulnerabilityHandler', {
+      runtime: lambda.Runtime.PYTHON_3_11,
+      handler: 'index.lambda_handler',
+      code: lambda.Code.fromInline(`
+import json
+import boto3
+import os
+
+def lambda_handler(event, context):
+    ecr = boto3.client('ecr')
+    sns = boto3.client('sns')
+    lambda_client = boto3.client('lambda')
+    
+    detail = event['detail']
+    repository_name = detail['repository-name']
+    image_tag = detail['image-tags'][0] if detail.get('image-tags') else 'latest'
+    scan_status = detail['scan-status']
+    
+    if scan_status == 'COMPLETE':
+        try:
+            response = ecr.describe_image_scan_findings(
+                repositoryName=repository_name,
+                imageId={'imageTag': image_tag}
+            )
+            
+            findings = response['imageScanFindingsSummary']['findingCounts']
+            critical = findings.get('CRITICAL', 0)
+            high = findings.get('HIGH', 0)
+            
+            if critical > 0:
+                message = f"CRITICAL: {repository_name}:{image_tag} has {critical} critical vulnerabilities. Deployment blocked!"
+                
+                sns.publish(
+                    TopicArn=os.environ['SNS_TOPIC_ARN'],
+                    Subject='Critical Vulnerabilities Detected',
+                    Message=message
+                )
+                
+                # Block CodeBuild from updating Lambda functions
+                codebuild = boto3.client('codebuild')
+                codebuild.stop_build_batch(
+                    id=context.aws_request_id
+                )
+                
+                return {'statusCode': 403, 'body': 'Deployment blocked'}
+            
+            elif high > 0:
+                message = f"WARNING: {repository_name}:{image_tag} has {high} high vulnerabilities."
+                sns.publish(
+                    TopicArn=os.environ['SNS_TOPIC_ARN'],
+                    Subject='High Vulnerabilities Detected',
+                    Message=message
+                )
+        
+        except Exception as e:
+            print(f"Error processing scan: {e}")
+    
+    return {'statusCode': 200, 'body': 'Processed'}
+      `),
+      environment: {
+        SNS_TOPIC_ARN: securityTopic.topicArn
+      }
+    });
+
+    // Grant permissions
+    vulnerabilityHandler.addToRolePolicy(new iam.PolicyStatement({
+      actions: [
+        'ecr:DescribeImageScanFindings',
+        'codebuild:StopBuildBatch',
+        'codebuild:BatchGetBuilds'
+      ],
+      resources: ['*']
+    }));
+
+    securityTopic.grantPublish(vulnerabilityHandler);
+
+    // EventBridge rule for ECR scan completion
+    new events.Rule(this, 'ECRScanRule', {
+      eventPattern: {
+        source: ['aws.ecr'],
+        detailType: ['ECR Image Scan'],
+        detail: {
+          'scan-status': ['COMPLETE'],
+          'repository-name': lambdaFunctions.map(f => 
+            `${this.stackName.toLowerCase()}-${f.name.toLowerCase()}`
+          )
+        }
+      },
+      targets: [new targets.LambdaFunction(vulnerabilityHandler)]
     });
   }
 }
