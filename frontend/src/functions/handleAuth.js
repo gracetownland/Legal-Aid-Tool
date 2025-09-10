@@ -1,7 +1,6 @@
 import { fetchAuthSession, getCurrentUser } from "aws-amplify/auth";
-import AWS from "aws-sdk";
-
-AWS.config.update({ logger: console });
+import { CognitoIdentityClient } from "@aws-sdk/client-cognito-identity";
+import { fromCognitoIdentityPool } from "@aws-sdk/credential-provider-cognito-identity";
 
 // Gets current authorized user
 export async function retrieveUser(setUser) {
@@ -17,24 +16,22 @@ export async function retrieveUser(setUser) {
 // Gets jwtToken for current session
 export async function retrieveJwtToken(setJwtToken) {
   try {
-    var session = await fetchAuthSession();
-    var idToken = await session.tokens.idToken
+    const session = await fetchAuthSession();
+    const idToken = session.tokens.idToken;
     console.log(idToken);
-    var token = await session.tokens.accessToken.toString();
+    
     setJwtToken(idToken);
-    // console.log("jwt token", token);
-    // console.log("session", session);
 
     // Check if the token is close to expiration
-    const expirationTime = session.credentials.expiration * 1000; // Milliseconds
-    const currentTime = new Date().getTime();
+    if (session.credentials && session.credentials.expiration) {
+      const expirationTime = session.credentials.expiration * 1000; // Milliseconds
+      const currentTime = new Date().getTime();
 
-    if (expirationTime - currentTime < 2700000) {
-      // 45 minutes
-      await fetchAuthSession();
-      idToken = await session.tokens.idToken
-      token = await session.tokens.accessToken.toString();
-      setJwtToken(token);
+      if (expirationTime - currentTime < 2700000) { // 45 minutes
+        await fetchAuthSession();
+        const newIdToken = (await fetchAuthSession()).tokens.idToken;
+        setJwtToken(newIdToken);
+      }
     }
   } catch (e) {
     console.log("error getting token: ", e);
@@ -42,25 +39,27 @@ export async function retrieveJwtToken(setJwtToken) {
 }
 
 // get temp AWS credentials
-export function getIdentityCredentials(jwtToken, setCredentials) {
+export async function getIdentityCredentials(jwtToken, setCredentials) {
   const USER_POOL_ID = import.meta.env.VITE_COGNITO_USER_POOL_ID;
   const IDENTITY_POOL_ID = import.meta.env.VITE_IDENTITY_POOL_ID;
   const REGION = import.meta.env.VITE_AWS_REGION;
 
-  const creds = new AWS.CognitoIdentityCredentials({
-    IdentityPoolId: IDENTITY_POOL_ID,
-    Logins: {
-      [`cognito-idp.${REGION}.amazonaws.com/${USER_POOL_ID}`]: jwtToken,
-    },
-  });
+  try {
+    const credentialsProvider = fromCognitoIdentityPool({
+      client: new CognitoIdentityClient({ region: REGION }),
+      identityPoolId: IDENTITY_POOL_ID,
+      logins: {
+        [`cognito-idp.${REGION}.amazonaws.com/${USER_POOL_ID}`]: jwtToken,
+      },
+    });
 
-  AWS.config.update({
-    region: REGION,
-    credentials: creds,
-  });
+    const credentials = await credentialsProvider();
+    
+    // The credentials object contains accessKeyId, secretAccessKey, and sessionToken
+    setCredentials(credentials);
+    console.log("Credentials retrieved successfully.");
 
-  AWS.config.credentials.get(function () {
-    setCredentials(creds);
-  });
-  // console.log(creds);
+  } catch (error) {
+    console.error('Error getting identity credentials:', error);
+  }
 }
