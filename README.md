@@ -72,7 +72,7 @@ Steps to implement optional modifications such as changing the colours of the ap
 [here](./docs/modificationGuide.md).
 
 ## Credits
-This application was architected and developed by <a href="https://www.linkedin.com/in/prajna-nayak-807b1a247/" target="_blank">Prajna Nayak</a>, <a href="https://www.linkedin.com/in/zayans/" target="_blank">Zayan Sheikh</a>, and <a href="https://www.linkedin.com/in/kanishkhanna/" target="_blank">Kanish Khanna</a>, with project assistance by <a href="https://www.linkedin.com/in/harleen-chahal-713569141/6" target="_blank">Harleen Chahal</a>. Thanks to the UBC Cloud Innovation Centre Technical and Project Management teams for their guidance and support.
+This application was architected and developed by <a href="https://www.linkedin.com/in/prajna-nayak-807b1a247/" target="_blank">Prajna Nayak</a>, <a href="https://www.linkedin.com/in/muralirohit/" target="_blank">Rohit Murali</a>, and <a href="https://www.linkedin.com/in/hamin06/" target="_blank">Harsh Amin</a>, with project assistance by <a href="https://www.linkedin.com/in/harleen-chahal-713569141/6" target="_blank">Harleen Chahal</a>. Thanks to the UBC Cloud Innovation Centre Technical and Project Management teams for their guidance and support.
 
 ## License
 
