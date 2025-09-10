@@ -322,3 +322,7 @@ To take down the deployed stack for a fresh redeployment in the future, navigate
 Please wait for the stacks in each step to be properly deleted before deleting the stack downstream.
 
 Also make sure to delete secrets in Secrets Manager.
+
+# Troubleshooting
+### Step 3 
+If you get an error with the title "SecretString could not be parsed" You 
