@@ -114,16 +114,10 @@ function App() {
             path="/"
             element={user ? <Navigate to="/home" /> : <Login />}
           />
-          <Route
-            path="/new-case"
-            element={user ? <Navigate to="/new-case" /> : <Login />}
-          />
-          <Route
-            path="/cases"
-            element={user ? <Navigate to="/cases" /> : <Login />}
-          />
-          <Route path="/new-case" element={<NewCaseForm />} />
-          <Route path="/cases" element={<ViewAllCases />} />
+          <Route path="/new-case" element={user ? <NewCaseForm /> : <Login />} />
+          <Route path="/cases" element={user ? <ViewAllCases /> : <Login />} />
+          {/* <Route path="/new-case" element={<NewCaseForm />} />
+          <Route path="/cases" element={<ViewAllCases />} /> */}
 
           <Route path="/all-cases" element={getAllCases()} />
           {/* <Route path="/transcriptions" element={<Transcriptions />} /> */}
