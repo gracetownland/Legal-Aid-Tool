@@ -44,22 +44,42 @@ export async function getIdentityCredentials(jwtToken, setCredentials) {
   const IDENTITY_POOL_ID = import.meta.env.VITE_IDENTITY_POOL_ID;
   const REGION = import.meta.env.VITE_AWS_REGION;
 
+
   try {
-    const credentialsProvider = fromCognitoIdentityPool({
+
+
+    const credentials = fromCognitoIdentityPool({
+
+
       client: new CognitoIdentityClient({ region: REGION }),
+
+
       identityPoolId: IDENTITY_POOL_ID,
+
+
       logins: {
+
+
         [`cognito-idp.${REGION}.amazonaws.com/${USER_POOL_ID}`]: jwtToken,
+
+
       },
+
+
     });
 
-    const credentials = await credentialsProvider();
+
     
-    // The credentials object contains accessKeyId, secretAccessKey, and sessionToken
+
+
     setCredentials(credentials);
-    console.log("Credentials retrieved successfully.");
+
 
   } catch (error) {
+
+
     console.error('Error getting identity credentials:', error);
+
+
   }
 }
