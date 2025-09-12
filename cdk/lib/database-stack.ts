@@ -1,7 +1,8 @@
-import { Stack, StackProps, RemovalPolicy, SecretValue } from 'aws-cdk-lib';
+import { Stack, StackProps, RemovalPolicy, SecretValue} from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { Duration } from 'aws-cdk-lib';
 
+import * as cr from 'aws-cdk-lib';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as rds from 'aws-cdk-lib/aws-rds';
 import * as ec2 from "aws-cdk-lib/aws-ec2";
@@ -26,9 +27,18 @@ export class DatabaseStack extends Stack {
         /**
          * Create the RDS service-linked role if it doesn't exist
          */
-        // new iam.CfnServiceLinkedRole(this, `${id}-RDSServiceLinkedRole`, {
-        //     awsServiceName: 'rds.amazonaws.com',
-        // });
+        new cr.custom_resources.AwsCustomResource(this, `${id}-RDSServiceLinkedRoleResource`, {
+            onCreate: {
+                service: 'IAM',
+                action: 'createServiceLinkedRole',
+                parameters: {
+                    AWSServiceName: 'rds.amazonaws.com',
+                },
+                ignoreErrorCodesMatching: 'InvalidInput', // Ignore if the role already exists
+                physicalResourceId: cr.custom_resources.PhysicalResourceId.of('RDSServiceLinkedRole'),
+            },
+            policy: cr.custom_resources.AwsCustomResourcePolicy.fromSdkCalls({resources: cr.custom_resources.AwsCustomResourcePolicy.ANY_RESOURCE}),
+        });
 
         /**
          * Retrieve a secret from Secret Manager
