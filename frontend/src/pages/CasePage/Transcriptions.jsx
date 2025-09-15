@@ -37,6 +37,7 @@ const Transcriptions = () => {
   const [caseData, setCaseData] = useState(null);
   const [audioFile, setAudioFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
@@ -98,6 +99,7 @@ const [selectedTranscription, setSelectedTranscription] = useState(null);
         console.error("Error fetching case data:", error);
         setCaseData(null);
       }
+      setIsLoading(false);
     };
 
     fetchCaseData();
@@ -423,7 +425,7 @@ const handleDelete = async () => {
 
   return (
     <>
-    {caseData ? (
+    {(caseData || isLoading)? (
     <Box display="flex" flexDirection="column" minHeight="100vh">
       <Box position="fixed" top={0} left={0} width="100%" zIndex={1000} bgcolor="white">
         {userRole === "instructor" ? <InstructorHeader /> : <StudentHeader />}
