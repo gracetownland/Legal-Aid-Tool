@@ -17,6 +17,7 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import { v4 as uuidv4 } from "uuid";
 import SideMenu from "./SideMenu";
+import NotFound from "../NotFound";
 
 const constructTranscriptionWebSocketUrl = (cognitoToken, audioFileId) => {
   const tempUrl = import.meta.env.VITE_GRAPHQL_WS_URL;
