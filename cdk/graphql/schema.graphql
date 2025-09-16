@@ -15,7 +15,7 @@ type Mutation {
 type Subscription {
   onNotify(audioFileId: String!): Notification
     @aws_subscribe(mutations: ["sendNotification"])
-    @aws_auth(cognito_groups: ["student"])
+    @aws_auth(cognito_groups: ["student", "instructor"])
 }
 
 type Notification {
