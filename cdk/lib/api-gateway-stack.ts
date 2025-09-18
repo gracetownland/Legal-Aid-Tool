@@ -235,6 +235,7 @@ export class ApiGatewayStack extends cdk.Stack {
         requireSymbols: true
       },
       accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
+      deletionProtection: true,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
