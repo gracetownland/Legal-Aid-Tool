@@ -281,6 +281,12 @@ export default function AIControlPanel() {
             multiline
             autoFocus
             variant="outlined"
+            inputProps={{ maxLength: 10000 }}
+             helperText={
+    <span style={{ color: currentPrompt.length >= 10000 ? 'red' : 'inherit' }}>
+      {currentPrompt.length}/10000 characters
+    </span>
+  }
             sx={{
               minHeight: "50px", 
               maxHeight: "none", 
