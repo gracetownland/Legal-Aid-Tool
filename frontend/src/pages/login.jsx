@@ -208,6 +208,9 @@ const Login = () => {
     '& .MuiInputLabel-root': {
       color: 'var(--text)',
     },
+    '& .MuiInputLabel-asterisk': {
+    color: '#f44336',
+  },
   };
 
   const iconProps = {
@@ -218,27 +221,7 @@ const Login = () => {
     <div container sx={{ height: "100vh", backgroundColor: "var(--background2)", transition: "background-color 0.3s ease" }}>
       <ToastContainer />
 
-      {/* <Grid
-        item
-        xs={false}
-        sm={6}
-        sx={{
-          background: "linear-gradient(to bottom right, 'var(--background)', 'var(--secondary)')",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          color: "white",
-          p: 4,
-          transition: "all 0.3s ease",
-        }}
-      >
-        <div style={{ opacity: 0, animation: 'fadeIn 0.6s forwards', display: 'flex', alignItems: 'center', gap: '16px'}}>
-          <img src="logo_dark.svg" alt="Logo" style={{ width: "100px", height: "100px" }} />
-          <Typography variant="h3" fontWeight={600} fontFamily="Outfit">
-            Legal Aid Tool
-          </Typography>
-        </div>
-      </Grid> */}
+
 
       <Grid item xs={12} sm={6} sx={{ display: "flex", justifyContent: "center", alignItems: "center", p: 2, transition: "all 0.3s ease", opacity: 0, animation: 'fadeIn 0.6s forwards', minHeight: '100vh',  backgroundColor: 'var(--background2)' }}>
         <Box sx={{ width: "100%", maxWidth: 420, animation: 'slideUp 0.6s ease-out', border: "1px solid var(--border)", borderRadius: 2, padding: 2, backgroundColor: "var(--background)" }}>
@@ -297,7 +280,8 @@ const Login = () => {
                         <TextField 
                           label="First Name" 
                           variant="outlined" 
-                          margin="normal" 
+                          margin="normal"
+                          required 
                           value={firstName} 
                           onChange={(e) => setFirstName(e.target.value)} 
                           sx={{ ...inputStyles, flex: 1 }} 
@@ -306,6 +290,7 @@ const Login = () => {
                           label="Last Name" 
                           variant="outlined" 
                           margin="normal" 
+                          required
                           value={lastName} 
                           onChange={(e) => setLastName(e.target.value)} 
                           sx={{ ...inputStyles, flex: 1 }} 
@@ -319,6 +304,7 @@ const Login = () => {
                       type="email"
                       variant="outlined"
                       margin="normal"
+                      required
                       autoComplete="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -331,6 +317,7 @@ const Login = () => {
                       type={showPassword ? "text" : "password"}
                       variant="outlined"
                       margin="normal"
+                      required
                       autoComplete="current-password"
                       value={password}
                       onChange={(e) => {
