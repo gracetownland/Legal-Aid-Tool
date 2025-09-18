@@ -322,3 +322,10 @@ To take down the deployed stack for a fresh redeployment in the future, navigate
 Please wait for the stacks in each step to be properly deleted before deleting the stack downstream.
 
 Also make sure to delete secrets in Secrets Manager.
+
+### Troubleshooting Stack Deletion
+Sometimes stack deletion can fail. If you encounter issues while taking down your stacks:
+
+1. **Aurora Database**: Disable delete protection in Aurora for the database before attempting stack deletion, specifically when deleting the Database stack
+2. **ECR Repository**: Ensure that nothing is present in ECR (Elastic Container Registry). Sometimes the stacks fail deletion due to remaining container images.
+3. **Manual Cleanup**: If stacks continue to fail deletion, you may need to manually delete resources from ECR and other services before retrying the stack deletion.
