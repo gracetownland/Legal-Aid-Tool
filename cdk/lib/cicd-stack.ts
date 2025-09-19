@@ -193,14 +193,26 @@ export class CICDStack extends cdk.Stack {
                 'echo "Waiting for vulnerability scan to complete..."',
                 'sleep 30',
                 'echo "Checking vulnerability scan results..."',
-                'SCAN_RESULTS=$(aws ecr describe-image-scan-findings --repository-name $REPO_NAME --image-id imageTag=latest --query "imageScanFindingsSummary.findingCounts.CRITICAL" --output text 2>/dev/null || echo "0")',
-                'echo $SCAN_RESULTS',
-                'if [ "$SCAN_RESULTS" != "0" ] && [ "$SCAN_RESULTS" != "None" ]; then',
-                '  echo "CRITICAL vulnerabilities found: $SCAN_RESULTS. Blocking deployment."',
-                '  exit 1',
-                'fi',
+                // Combine the vulnerability check into a single command using bash script
+                `bash -c '
+                  SCAN_RESULTS=$(aws ecr describe-image-scan-findings \
+                    --repository-name $REPO_NAME \
+                    --image-id imageTag=latest \
+                    --query "imageScanFindingsSummary.findingCounts.CRITICAL" \
+                    --output text 2>/dev/null || echo "0")
+                  
+                  if [[ "$SCAN_RESULTS" != "0" && "$SCAN_RESULTS" != "None" ]]; then
+                    echo "CRITICAL vulnerabilities found: $SCAN_RESULTS. Blocking deployment."
+                    exit 1
+                  else
+                    echo "No critical vulnerabilities found. Proceeding with deployment."
+                  fi
+                '`,
+
                 'echo "No critical vulnerabilities found. Proceeding with deployment."',
                 'echo "Checking if Lambda function exists before updating..."',
+
+                
                 'if aws lambda get-function --function-name $LAMBDA_FUNCTION_NAME &>/dev/null; then',
                 '  echo "Updating Lambda function to use the new image..."',
                 '  aws lambda update-function-code --function-name $LAMBDA_FUNCTION_NAME --image-uri $REPOSITORY_URI:latest',
