@@ -153,7 +153,7 @@ def setup_guardrail(guardrail_name: str) -> tuple[str, str]:
                     {'type': 'PHONE', 'action': 'BLOCK'},
                     {'type': 'NAME', 'action': 'BLOCK'},
                     {'type': 'ADDRESS', 'action': 'BLOCK'},
-                    {'type': 'SSN', 'action': 'BLOCK'}
+                    {'type': 'US_SOCIAL_SECURITY_NUMBER', 'action': 'BLOCK'}
                 ]
             },
             blockedInputMessaging='Sorry, I cannot process inputs that appear to contain prompt manipulation attempts or personal information.',
