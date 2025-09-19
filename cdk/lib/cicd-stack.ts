@@ -43,6 +43,19 @@ export class CICDStack extends cdk.Stack {
       iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonEC2ContainerRegistryPowerUser")
     );
 
+    codeBuildRole.addToPolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        "lambda:UpdateFunctionCode",
+        "lambda:GetFunction", 
+        "lambda:UpdateFunctionConfiguration",
+      ],
+      resources: [
+        ...props.lambdaFunctions.map(lambda => 
+          `arn:aws:lambda:${this.region}:${this.account}:function:${lambda.functionName}`
+        )
+      ]
+    }));
 
     // Create artifacts for pipeline
     const sourceOutput = new codepipeline.Artifact();
