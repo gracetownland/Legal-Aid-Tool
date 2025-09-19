@@ -208,17 +208,19 @@ export class CICDStack extends cdk.Stack {
                     echo "No critical vulnerabilities found. Proceeding with deployment."
                   fi
                 '`,
-
                 'echo "No critical vulnerabilities found. Proceeding with deployment."',
                 'echo "Checking if Lambda function exists before updating..."',
-
-                
-                'if aws lambda get-function --function-name $LAMBDA_FUNCTION_NAME &>/dev/null; then',
-                '  echo "Updating Lambda function to use the new image..."',
-                '  aws lambda update-function-code --function-name $LAMBDA_FUNCTION_NAME --image-uri $REPOSITORY_URI:latest',
-                'else',
-                '  echo "Lambda function $LAMBDA_FUNCTION_NAME does not exist yet. Skipping update."',
-                'fi'
+                // Combine the Lambda update into a single command
+                `bash -c '
+                  if aws lambda get-function --function-name $LAMBDA_FUNCTION_NAME &>/dev/null; then
+                    echo "Updating Lambda function to use the new image..."
+                    aws lambda update-function-code \
+                      --function-name $LAMBDA_FUNCTION_NAME \
+                      --image-uri $REPOSITORY_URI:latest
+                  else
+                    echo "Lambda function $LAMBDA_FUNCTION_NAME does not exist yet. Skipping update"
+                  fi
+                '`,
               ]
             }
           }
