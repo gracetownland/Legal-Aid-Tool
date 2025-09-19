@@ -47,7 +47,7 @@ def get_secret(secret_name, expect_json=True):
             response = secrets_manager_client.get_secret_value(SecretId=secret_name)["SecretString"]
             db_secret = json.loads(response) if expect_json else response
         except Exception as e:
-            logger.error(f"Failed to fetch secret {secret_name}: {e}")
+            logger.error(f"Failed to fetch DB secret: {e}")
             raise
     return db_secret
 

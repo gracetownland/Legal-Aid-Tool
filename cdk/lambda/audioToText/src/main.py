@@ -90,13 +90,13 @@ def get_secret(secret_name, expect_json=True):
             db_secret = json.loads(raw) if expect_json else raw
         except json.JSONDecodeError as e:
             # amazonq-ignore-next-line
-            msg = f"Secret {secret_name} is not valid JSON: {e}"
+            msg = f"DB Secret is not valid JSON: {e}"
             # amazonq-ignore-next-line
             logger.error(msg)
             raise ValueError(msg)
         except Exception as e:
             # amazonq-ignore-next-line
-            logger.error(f"Error fetching secret {secret_name}: {e}")
+            logger.error(f"Error fetching DBsecret: {e}")
             raise
     return db_secret
 
