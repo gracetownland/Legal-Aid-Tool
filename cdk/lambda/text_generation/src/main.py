@@ -347,7 +347,7 @@ def handler(event, context):
         logger.info(f"Processing student question: {question}")
         student_query = get_student_query(question)
 
-        guardrail_id, guardrail_version = setup_guardrail('comprehensive-guardrails')
+        guardrail_id, guardrail_version = setup_guardrail('text-generation-guardrails')
 
         guard_response = bedrock_runtime.apply_guardrail(
             guardrailIdentifier=guardrail_id,

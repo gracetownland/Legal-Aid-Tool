@@ -215,7 +215,7 @@ def handler(event, context):
         statute = body.get('statute')
 
         combined = f"{case_title} {case_type} {jurisdiction} {case_desc}"
-        guardrail_id, guardrail_version = setup_guardrail('comprehensive-guardrails')
+        guardrail_id, guardrail_version = setup_guardrail('case-generation-guardrails')
         guard_resp = bedrock_runtime.apply_guardrail(
             guardrailIdentifier=guardrail_id,
             guardrailVersion=guardrail_version,
