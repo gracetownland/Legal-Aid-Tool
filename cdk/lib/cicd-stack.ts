@@ -194,6 +194,7 @@ export class CICDStack extends cdk.Stack {
                 'sleep 30',
                 'echo "Checking vulnerability scan results..."',
                 'SCAN_RESULTS=$(aws ecr describe-image-scan-findings --repository-name $REPO_NAME --image-id imageTag=latest --query "imageScanFindingsSummary.findingCounts.CRITICAL" --output text 2>/dev/null || echo "0")',
+                'echo $SCAN_RESULTS',
                 'if [ "$SCAN_RESULTS" != "0" ] && [ "$SCAN_RESULTS" != "None" ]; then',
                 '  echo "CRITICAL vulnerabilities found: $SCAN_RESULTS. Blocking deployment."',
                 '  exit 1',
