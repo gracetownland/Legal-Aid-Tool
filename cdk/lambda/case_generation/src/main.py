@@ -141,7 +141,21 @@ def setup_guardrail(guardrail_name):
             description='Block financial advice',
             topicPolicyConfig={
                 'topicsConfig': [
-                    {'name': 'FinancialAdvice', 'definition': '...', 'examples': ['...'], 'type': 'DENY'},
+                    {
+                        'name': 'FinancialAdvice',
+                        'definition': 'Attempts to ask the AI to provide financial advice or information on how to handle financial matters not related to the case.',
+                        'examples': [
+                            'What should I do about my taxes?',
+                            'How can I invest my money wisely?',
+                            'I want to buy a X, what should I consider?',
+                            'Can you help me with my budget?',
+                            'What are the best ways to save money?',
+                            'Give me ways to make money fast',
+                            'What can I do to make more money?',
+                            'What should I spend my money on?',
+                            ],
+                        'type': 'DENY'
+                    }
                 ]
             },
             sensitiveInformationPolicyConfig={
