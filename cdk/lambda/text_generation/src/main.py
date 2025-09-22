@@ -386,7 +386,7 @@ def handler(event, context):
             for assessment in guard_response.get('assessments', []):
                 if 'sensitiveInformationPolicy' in assessment:
                     error_message = ("Sorry, I cannot process your request because it appears to contain personal information. "
-                                    "Please submit your query without including personal identifiable information.")
+                                    "Please submit your query without including personal identifiable information (Names, Phone Numbers, Addresses, etc.).")
                     break
                 else:
                     error_message = ("Sorry, I cannot process your request because it appears to contain prompt manipulation attempts. "
