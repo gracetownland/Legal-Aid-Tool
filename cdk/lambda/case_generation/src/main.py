@@ -138,7 +138,7 @@ def setup_guardrail(guardrail_name):
     if not guardrail_id:
         resp = bedrock_client.create_guardrail(
             name=guardrail_name,
-            description='Block financial advice',
+            description='Block financial advice and Prompt Attacks',
             topicPolicyConfig={
                 'topicsConfig': [
                     {
