@@ -147,12 +147,9 @@ def setup_guardrail(guardrail_name):
                         'examples': [
                             'What should I do about my taxes?',
                             'How can I invest my money wisely?',
-                            'I want to buy a X, what should I consider?',
                             'Can you help me with my budget?',
                             'What are the best ways to save money?',
-                            'Give me ways to make money fast',
-                            'What can I do to make more money?',
-                            'What should I spend my money on?',
+                            'Give me ways to make money fast'
                             ],
                         'type': 'DENY'
                     },
