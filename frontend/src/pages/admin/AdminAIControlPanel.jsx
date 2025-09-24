@@ -16,6 +16,8 @@ export default function AIControlPanel() {
   const [restoring, setRestoring] = useState(false);
   const [messageLimit, setMessageLimit] = useState('10');
   const [noLimit, setNoLimit] = useState(true);
+  const [fileSizeLimit, setFileSizeLimit] = useState('500');
+  const [savingFileSize, setSavingFileSize] = useState(false);
 
   const fetchCurrentPrompts = async () => {
     const session = await fetchAuthSession();
@@ -75,7 +77,51 @@ export default function AIControlPanel() {
     };
 
     fetchMessageLimit();
+    fetchFileSizeLimit();
   }, []);
+
+  const fetchFileSizeLimit = async () => {
+    const session = await fetchAuthSession();
+    var token = session.tokens.idToken
+    const response = await fetch(
+      `${import.meta.env.VITE_API_ENDPOINT}admin/file_size_limit`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: token,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    const data = await response.json();
+    setFileSizeLimit(data.value);
+  };
+
+  const saveFileSizeLimit = async () => {
+    setSavingFileSize(true);
+    try{
+     const session = await fetchAuthSession();
+    var token = session.tokens.idToken
+    const response = await fetch(
+      `${import.meta.env.VITE_API_ENDPOINT}admin/file_size_limit`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: token,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          value: fileSizeLimit,
+        }),
+      }
+    ); 
+    }
+    catch (error) {
+      console.error("Error saving file size limit:", error);
+    } finally {
+      setSavingFileSize(false);
+    }
+  };
 
   const saveMessageLimit = async () => {
     setSaving(true);
@@ -159,9 +205,89 @@ export default function AIControlPanel() {
     <div className="max-w-4xl mx-auto p-4">
       <AdminHeader />
 
-      {/* Message Limiter */}
+      {/* File Size Limiter */}
       <Card sx={{ 
         marginTop: '80px', 
+        background: "transparent", 
+        color: "var(--text)", 
+        border: "1px solid var(--border)", 
+        boxShadow: 'none',
+        display: 'flex', 
+        flexDirection: 'column', 
+        padding: '10px',
+      }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div style={{ textAlign: 'left', color: 'var(--header-text)', margin: '17px', marginBottom: '0px' }}>
+            <h1 style={{ fontSize: '30px' }}><strong>Audio File Size Limit (MB)</strong></h1>
+            <p style={{ marginTop: '5px' }}>
+              Maximum file size allowed for audio uploads.
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <input
+              type="range"
+              min="1"
+              max="1000"
+              step="1"
+              value={fileSizeLimit > 1000 ? 1000 : fileSizeLimit}
+              onChange={(e) => setFileSizeLimit(parseInt(e.target.value))}
+              style={{ flexGrow: 1 }}
+            />
+
+            <TextField
+              type="number"
+              value={fileSizeLimit}
+              onChange={(e) => {
+                const val = parseInt(e.target.value);
+                if (!isNaN(val) && val >= 1) {
+                  setFileSizeLimit(val);
+                }
+              }}
+              inputProps={{ min: 1 }}
+              size="small"
+              sx={{
+                width: '95px',
+                '& .MuiInputBase-input': {
+                  color: 'var(--text)',
+                  backgroundColor: 'var(--background)',
+                  padding: '6px 8px',
+                  borderRadius: 1,
+                },
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': {
+                    borderColor: 'var(--border)',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'var(--primary)',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: 'var(--primary)',
+                  },
+                }
+              }}
+            />
+          </div>
+          <Button
+            onClick={saveFileSizeLimit}
+            disabled={savingFileSize}
+            sx={{
+              backgroundColor: "var(--secondary)",
+              color: "white",
+              flexGrow: 1,
+              height: "40px",
+              "&:hover": { backgroundColor: "var(--primary)", opacity: 0.8 },
+              "&:disabled": { backgroundColor: "var(--border)" }
+            }}
+          >
+            {savingFileSize ? "Saving..." : "Save File Size Limit"}
+          </Button>
+        </div>
+      </Card>
+      <Divider sx={{borderColor: 'var(--border)', marginY: '15px'}} />
+
+      {/* Message Limiter */}
+      <Card sx={{ 
         background: "transparent", 
         color: "var(--text)", 
         border: "1px solid var(--border)", 

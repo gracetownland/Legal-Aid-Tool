@@ -1,6 +1,8 @@
 const { initializeConnection } = require("./libadmin.js");
 
-let { SM_DB_CREDENTIALS, RDS_PROXY_ENDPOINT, MESSAGE_LIMIT } = process.env;
+
+let { SM_DB_CREDENTIALS, RDS_PROXY_ENDPOINT, MESSAGE_LIMIT, FILE_SIZE_LIMIT } = process.env;
+
 
 // SQL conneciton from global variable at libadmin.js
 let sqlConnectionTableCreator = global.sqlConnectionTableCreator;
@@ -41,47 +43,50 @@ exports.handler = async (event) => {
             WHERE 'instructor' = ANY(roles)
             ORDER BY last_name ASC;
           `;
-        
+
           response.body = JSON.stringify(instructors);
         } catch (err) {
           console.error("Database error:", err);
           response.statusCode = 500;
-          response.body = JSON.stringify({ error: "Failed to fetch instructors" });
+          response.body = JSON.stringify({
+            error: "Failed to fetch instructors",
+          });
         }
         break;
-        case "POST /admin/assign_instructor_to_student":
-          // Check if the body contains the instructor and student IDs
-          if (event.body) {
-            try {
-              const { instructor_id, student_id } = JSON.parse(event.body);  // Parse the request body to access the JSON data
-              
-              if (!instructor_id || !student_id) {
-                response.statusCode = 400;
-                response.body = JSON.stringify({ error: "Both instructor_id and student_id are required" });
-                break;
-              }
-        
-              // Perform the database insertion
-              const assignment = await sqlConnectionTableCreator`
+      case "POST /admin/assign_instructor_to_student":
+        // Check if the body contains the instructor and student IDs
+        if (event.body) {
+          try {
+            const { instructor_id, student_id } = JSON.parse(event.body); // Parse the request body to access the JSON data
+
+            if (!instructor_id || !student_id) {
+              response.statusCode = 400;
+              response.body = JSON.stringify({
+                error: "Both instructor_id and student_id are required",
+              });
+              break;
+            }
+
+            // Perform the database insertion
+            const assignment = await sqlConnectionTableCreator`
                 INSERT INTO "instructor_students" (instructor_id, student_id)
                 VALUES ( ${instructor_id}, ${student_id});
               `;
-              
-              response.statusCode = 200;
-              response.body = JSON.stringify({
-                message: "Instructor and student linked successfully.",
-              });
-        
-            } catch (err) {
-              response.statusCode = 500;
-              console.error(err);
-              response.body = JSON.stringify({ error: "Internal server error" });
-            }
-          } else {
-            response.statusCode = 400;
-            response.body = JSON.stringify({ error: "Request body is missing" });
+
+            response.statusCode = 200;
+            response.body = JSON.stringify({
+              message: "Instructor and student linked successfully.",
+            });
+          } catch (err) {
+            response.statusCode = 500;
+            console.error(err);
+            response.body = JSON.stringify({ error: "Internal server error" });
           }
-          break;        
+        } else {
+          response.statusCode = 400;
+          response.body = JSON.stringify({ error: "Request body is missing" });
+        }
+        break;
       case "GET /admin/students":
         try {
           // SQL query to fetch all users who are instructors
@@ -91,7 +96,7 @@ exports.handler = async (event) => {
             WHERE 'student' = ANY(roles)
             ORDER BY last_name ASC;
           `;
-        
+
           response.body = JSON.stringify(students);
         } catch (err) {
           console.error("Database error:", err);
@@ -99,31 +104,34 @@ exports.handler = async (event) => {
           response.body = JSON.stringify({ error: "Failed to fetch students" });
         }
         break;
-        case "POST /admin/prompt": // Change to POST if inserting a new record
-          try {
-              console.log("System prompt update initiated");
+      case "POST /admin/prompt": // Change to POST if inserting a new record
+        try {
+          console.log("System prompt update initiated");
 
-              // Ensure event.body exists and is valid JSON
-              if (!event.body) throw new Error("Request body is missing");
+          // Ensure event.body exists and is valid JSON
+          if (!event.body) throw new Error("Request body is missing");
 
-              const { system_prompt } = JSON.parse(event.body);
+          const { system_prompt } = JSON.parse(event.body);
 
-              if (!system_prompt) throw new Error("Missing 'system_prompt' in request body");
+          if (!system_prompt)
+            throw new Error("Missing 'system_prompt' in request body");
 
-              // Insert new prompt into system_prompt table
-              const insertPrompt = await sqlConnectionTableCreator`
+          // Insert new prompt into system_prompt table
+          const insertPrompt = await sqlConnectionTableCreator`
                   INSERT INTO "system_prompt" (prompt)
                   VALUES (${system_prompt})
                   RETURNING *;
               `;
 
-              response.body = JSON.stringify(insertPrompt[0]); // Return inserted record
-          } catch (err) {
-              response.statusCode = 500;
-              console.error("Error inserting system prompt:", err);
-              response.body = JSON.stringify({ error: err.message || "Internal server error" });
-          }
-          break;
+          response.body = JSON.stringify(insertPrompt[0]); // Return inserted record
+        } catch (err) {
+          response.statusCode = 500;
+          console.error("Error inserting system prompt:", err);
+          response.body = JSON.stringify({
+            error: err.message || "Internal server error",
+          });
+        }
+        break;
       case "GET /admin/prompt":
         // SQL query to fetch ALL past prompts
         const system_prompts = await sqlConnectionTableCreator`
@@ -138,17 +146,22 @@ exports.handler = async (event) => {
       case "GET /admin/message_limit":
         try {
           console.log("Message limit name:", process.env.MESSAGE_LIMIT);
-          const { SSMClient, GetParameterCommand } = await import("@aws-sdk/client-ssm");
-      
+          const { SSMClient, GetParameterCommand } = await import(
+            "@aws-sdk/client-ssm"
+          );
+
           const ssm = new SSMClient();
-      
+
           console.log("Fetching admin message limit from SSM...");
           const result = await ssm.send(
             new GetParameterCommand({ Name: process.env.MESSAGE_LIMIT })
           );
-      
-          console.log("✅ Admin message limit fetched:", result.Parameter.Value);
-      
+
+          console.log(
+            "✅ Admin message limit fetched:",
+            result.Parameter.Value
+          );
+
           response.statusCode = 200;
           response.body = JSON.stringify({ value: result.Parameter.Value });
         } catch (err) {
@@ -160,33 +173,92 @@ exports.handler = async (event) => {
 
       case "POST /admin/message_limit":
         try {
-          const { SSMClient, PutParameterCommand } = await import("@aws-sdk/client-ssm");
+          const { SSMClient, PutParameterCommand } = await import(
+            "@aws-sdk/client-ssm"
+          );
           const ssm = new SSMClient();
-      
+
           const body = JSON.parse(event.body);
           const newValue = body?.value;
-      
+
           if (typeof newValue !== "string" && typeof newValue !== "number") {
             response.statusCode = 400;
-            response.body = JSON.stringify({ error: "Missing or invalid 'value' in request body" });
+            response.body = JSON.stringify({
+              error: "Missing or invalid 'value' in request body",
+            });
             break;
           }
-      
+
           await ssm.send(
             new PutParameterCommand({
               Name: process.env.MESSAGE_LIMIT,
               Value: String(newValue),
               Overwrite: true,
-              Type: "String"
+              Type: "String",
             })
           );
-      
+
           console.log("✅ Message limit updated successfully.");
-      
+
           response.statusCode = 200;
           response.body = JSON.stringify({ success: true, value: newValue });
         } catch (err) {
           console.error("❌ Failed to update message limit:", err);
+          response.statusCode = 500;
+          response.body = JSON.stringify({ error: "Internal server error" });
+        }
+        break;
+      case "GET /admin/file_size_limit":
+        try {
+          const { SSMClient, GetParameterCommand } = await import(
+            "@aws-sdk/client-ssm"
+          );
+          const ssm = new SSMClient();
+
+          const result = await ssm.send(
+            new GetParameterCommand({ Name: process.env.FILE_SIZE_LIMIT })
+          );
+
+          response.statusCode = 200;
+          response.body = JSON.stringify({ value: result.Parameter.Value });
+        } catch (err) {
+          console.error("Failed to fetch file size limit:", err);
+          response.statusCode = 500;
+          response.body = JSON.stringify({ error: "Internal server error" });
+        }
+        break;
+
+      case "POST /admin/file_size_limit":
+        try {
+          const { SSMClient, PutParameterCommand } = await import(
+            "@aws-sdk/client-ssm"
+          );
+          const ssm = new SSMClient();
+
+          const body = JSON.parse(event.body);
+          const newValue = body?.value;
+
+          if (!newValue) {
+            response.statusCode = 400;
+            response.body = JSON.stringify({
+              error: "Missing 'value' in request body",
+            });
+            break;
+          }
+
+          await ssm.send(
+            new PutParameterCommand({
+              Name: process.env.FILE_SIZE_LIMIT,
+              Value: String(newValue),
+              Overwrite: true,
+              Type: "String",
+            })
+          );
+
+          response.statusCode = 200;
+          response.body = JSON.stringify({ success: true, value: newValue });
+        } catch (err) {
+          console.error("Failed to update file size limit:", err);
           response.statusCode = 500;
           response.body = JSON.stringify({ error: "Internal server error" });
         }
@@ -214,46 +286,50 @@ exports.handler = async (event) => {
             error: "instructor_email is required",
           });
         }
-      break;
+        break;
       case "POST /admin/disclaimer":
-    try {
-        console.log("Disclaimer update initiated");
+        try {
+          console.log("Disclaimer update initiated");
 
-        if (!event.body) throw new Error("Request body is missing");
+          if (!event.body) throw new Error("Request body is missing");
 
-        const { disclaimer_text } = JSON.parse(event.body);
+          const { disclaimer_text } = JSON.parse(event.body);
 
-        if (!disclaimer_text) throw new Error("Missing 'disclaimer_text' in request body");
+          if (!disclaimer_text)
+            throw new Error("Missing 'disclaimer_text' in request body");
 
-        // Insert new disclaimer into the disclaimers table
-        const insertResult = await sqlConnectionTableCreator`
+          // Insert new disclaimer into the disclaimers table
+          const insertResult = await sqlConnectionTableCreator`
             INSERT INTO "disclaimers" (disclaimer_text)
             VALUES (${disclaimer_text})
             RETURNING disclaimer_id, disclaimer_text, last_updated;
         `;
 
-        response.body = JSON.stringify(insertResult[0]); // Return inserted record
-    } catch (err) {
-        response.statusCode = 500;
-        console.error("Error inserting disclaimer:", err);
-        response.body = JSON.stringify({ error: err.message || "Internal server error" });
-    }
-    break;
+          response.body = JSON.stringify(insertResult[0]); // Return inserted record
+        } catch (err) {
+          response.statusCode = 500;
+          console.error("Error inserting disclaimer:", err);
+          response.body = JSON.stringify({
+            error: err.message || "Internal server error",
+          });
+        }
+        break;
       case "GET /admin/disclaimer":
-  try {
-    const result = await sqlConnectionTableCreator`
+        try {
+          const result = await sqlConnectionTableCreator`
     SELECT disclaimer_text, last_updated
             FROM "disclaimers"
             ORDER BY last_updated DESC;
   `;
-  response.body = JSON.stringify(result);
-  
-  } catch (err) {
-    console.error("Error fetching disclaimers:", err);
-    response.statusCode = 500;
-    response.body = JSON.stringify({ error: "Failed to fetch disclaimers" });
-  }
-  break;
+          response.body = JSON.stringify(result);
+        } catch (err) {
+          console.error("Error fetching disclaimers:", err);
+          response.statusCode = 500;
+          response.body = JSON.stringify({
+            error: "Failed to fetch disclaimers",
+          });
+        }
+        break;
       case "POST /admin/elevate_instructor":
         if (
           event.queryStringParameters != null &&
@@ -363,7 +439,7 @@ exports.handler = async (event) => {
                   `;
 
             // Remove from instructor_students table
-      await sqlConnectionTableCreator`
+            await sqlConnectionTableCreator`
       DELETE FROM "instructor_students"
       WHERE instructor_id = ${user_id};
     `;
@@ -385,71 +461,70 @@ exports.handler = async (event) => {
         }
         break;
 
-        case "DELETE /admin/delete_instructor_student_assignment":
-          if (
-            event.queryStringParameters != null &&
-            event.queryStringParameters.instructor_id &&
-            event.queryStringParameters.student_id
-          ) {
-            try {
-              const instructor_id = event.queryStringParameters.instructor_id;
-              const student_id = event.queryStringParameters.student_id;
-        
-              // Fetch the roles for the instructor
-              const userRoleData = await sqlConnectionTableCreator`
+      case "DELETE /admin/delete_instructor_student_assignment":
+        if (
+          event.queryStringParameters != null &&
+          event.queryStringParameters.instructor_id &&
+          event.queryStringParameters.student_id
+        ) {
+          try {
+            const instructor_id = event.queryStringParameters.instructor_id;
+            const student_id = event.queryStringParameters.student_id;
+
+            // Fetch the roles for the instructor
+            const userRoleData = await sqlConnectionTableCreator`
                 SELECT roles, user_id
                 FROM "users"
                 WHERE user_id = ${instructor_id};
               `;
-          
-              const userRoles = userRoleData[0]?.roles;
-              const userId = userRoleData[0]?.user_id;
-          
-              if (!userRoles || !userRoles.includes("instructor")) {
-                response.statusCode = 400;
-                response.body = JSON.stringify({
-                  error: "User is not an instructor or doesn't exist",
-                });
-                break;
-              }
-          
-              // Step 1: Check if the relationship between the instructor and student exists
-              const assignmentCheck = await sqlConnectionTableCreator`
+
+            const userRoles = userRoleData[0]?.roles;
+            const userId = userRoleData[0]?.user_id;
+
+            if (!userRoles || !userRoles.includes("instructor")) {
+              response.statusCode = 400;
+              response.body = JSON.stringify({
+                error: "User is not an instructor or doesn't exist",
+              });
+              break;
+            }
+
+            // Step 1: Check if the relationship between the instructor and student exists
+            const assignmentCheck = await sqlConnectionTableCreator`
                 SELECT * FROM "instructor_students"
                 WHERE instructor_id = ${instructor_id} AND student_id = ${student_id};
               `;
-          
-              if (assignmentCheck.length === 0) {
-                response.statusCode = 404;
-                response.body = JSON.stringify({
-                  error: "Instructor-student assignment not found",
-                });
-                break;
-              }
-          
-              // Step 2: Unassign the instructor from the student
-              await sqlConnectionTableCreator`
+
+            if (assignmentCheck.length === 0) {
+              response.statusCode = 404;
+              response.body = JSON.stringify({
+                error: "Instructor-student assignment not found",
+              });
+              break;
+            }
+
+            // Step 2: Unassign the instructor from the student
+            await sqlConnectionTableCreator`
                 DELETE FROM "instructor_students"
                 WHERE instructor_id = ${instructor_id} AND student_id = ${student_id};
               `;
-          
-              response.statusCode = 200;
-              response.body = JSON.stringify({
-                message: `Instructor ${instructor_id} successfully unassigned from student ${student_id}.`,
-              });
-            } catch (err) {
-              console.log(err);
-              response.statusCode = 500;
-              response.body = JSON.stringify({ error: "Internal server error" });
-            }
-          } else {
-            response.statusCode = 400;
+
+            response.statusCode = 200;
             response.body = JSON.stringify({
-              error: "Instructor ID and Student ID query parameters are required",
+              message: `Instructor ${instructor_id} successfully unassigned from student ${student_id}.`,
             });
+          } catch (err) {
+            console.log(err);
+            response.statusCode = 500;
+            response.body = JSON.stringify({ error: "Internal server error" });
           }
-          break;
-        
+        } else {
+          response.statusCode = 400;
+          response.body = JSON.stringify({
+            error: "Instructor ID and Student ID query parameters are required",
+          });
+        }
+        break;
 
       default:
         throw new Error(`Unsupported route: "${pathData}"`);

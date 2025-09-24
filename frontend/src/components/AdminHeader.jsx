@@ -130,7 +130,7 @@ const AdminHeader = () => {
           className="flex flex-col items-center bg-transparent text-[var(--header-text)] hover:text-gray-600 focus:outline-none transition-all duration-200"
         >
           <SettingsIcon fontSize="large" />
-          <span className="mt-1">AI Settings</span>
+          <span className="mt-1">Settings</span>
         </button>
 
         <button
