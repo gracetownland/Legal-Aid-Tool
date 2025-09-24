@@ -348,7 +348,7 @@ const InterviewAssistant = () => {
           //   message: data.error,
           //   severity: "warning",
           // });
-          return "I'm sorry, but I cannot process that request due to content guidelines. Please rephrase your question without including personal information (names, addresses, phone numbers, etc.).";
+          return data.error
         }
 
         if (!response.ok) {
