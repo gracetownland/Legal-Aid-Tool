@@ -143,7 +143,7 @@ def setup_guardrail(guardrail_name):
                 'filtersConfig': [
                     {
                         'inputStrength': 'MEDIUM',
-                        'outputStrength': 'MEDIUM',
+                        'outputStrength': 'NONE',
                         'type' : 'PROMPT_ATTACK',
                         'inputAction': 'BLOCK',
                         'outputAction': 'BLOCK',
