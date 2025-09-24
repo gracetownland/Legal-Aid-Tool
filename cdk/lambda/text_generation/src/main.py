@@ -131,6 +131,17 @@ def setup_guardrail(guardrail_name: str) -> tuple[str, str]:
         response = bedrock_client.create_guardrail(
             name=guardrail_name,
             description='Block prompt attacks and PII',
+            contentPolicyConfig = {
+                'filtersConfig': [
+                    {
+                        'inputStrength': 'MEDIUM',
+                        'type' : 'PROMPT_ATTACK',
+                        'inputAction': 'BLOCK',
+                        'inputEnabled': True,
+                        'inputModalities': ['TEXT'],
+                    }
+                ]
+            }, 
             topicPolicyConfig={
                 'topicsConfig': [
                     {
