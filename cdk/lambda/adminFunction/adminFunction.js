@@ -1,8 +1,7 @@
 const { initializeConnection } = require("./libadmin.js");
 
-
-let { SM_DB_CREDENTIALS, RDS_PROXY_ENDPOINT, MESSAGE_LIMIT, FILE_SIZE_LIMIT } = process.env;
-
+let { SM_DB_CREDENTIALS, RDS_PROXY_ENDPOINT, MESSAGE_LIMIT, FILE_SIZE_LIMIT } =
+  process.env;
 
 // SQL conneciton from global variable at libadmin.js
 let sqlConnectionTableCreator = global.sqlConnectionTableCreator;
@@ -263,6 +262,26 @@ exports.handler = async (event) => {
           response.body = JSON.stringify({ error: "Internal server error" });
         }
         break;
+      case "GET /student/file_size_limit":
+        try {
+          const { SSMClient, GetParameterCommand } = await import(
+            "@aws-sdk/client-ssm"
+          );
+          const ssm = new SSMClient();
+
+          const result = await ssm.send(
+            new GetParameterCommand({ Name: process.env.FILE_SIZE_LIMIT })
+          );
+
+          response.statusCode = 200;
+          response.body = JSON.stringify({ value: result.Parameter.Value });
+        } catch (err) {
+          console.error("Failed to fetch file size limit:", err);
+          response.statusCode = 500;
+          response.body = JSON.stringify({ error: "Internal server error" });
+        }
+        break;
+
       case "GET /admin/instructorStudents":
         if (
           event.queryStringParameters != null &&
