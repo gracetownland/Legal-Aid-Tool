@@ -54,7 +54,7 @@ const [selectedTranscription, setSelectedTranscription] = useState(null);
       const { tokens } = await fetchAuthSession();
       const token = tokens.idToken;
       const response = await fetch(
-        `${import.meta.env.VITE_API_ENDPOINT}admin/file_size_limit`,
+        `${import.meta.env.VITE_API_ENDPOINT}student/file_size_limit`,
         {
           method: "GET",
           headers: {

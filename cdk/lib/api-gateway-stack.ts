@@ -619,6 +619,8 @@ export class ApiGatewayStack extends cdk.Stack {
         RDS_PROXY_ENDPOINT: db.rdsProxyEndpoint,
         USER_POOL: this.userPool.userPoolId,
         MESSAGE_LIMIT: messageLimitParameter.parameterName,
+        FILE_SIZE_LIMIT: fileSizeLimitParameter.parameterName,
+
       },
       functionName: `${id}-studentFunction`,
       memorySize: 512,
@@ -652,6 +654,7 @@ export class ApiGatewayStack extends cdk.Stack {
 
     // Add permission to the Lambda function to allow it to access the message limit parameter
     messageLimitParameter.grantRead(lambdaStudentFunction);
+    fileSizeLimitParameter.grantRead(lambdaStudentFunction);
 
     const cfnLambda_student = lambdaStudentFunction.node
       .defaultChild as lambda.CfnFunction;
