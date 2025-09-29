@@ -21,7 +21,6 @@ const StackPrefix = app.node.tryGetContext("StackPrefix");
 const environment = app.node.tryGetContext("environmentName");
 const version = app.node.tryGetContext("versionNumber");
 const githubRepo = app.node.tryGetContext("githubRepo");
-const githubBranch = app.node.tryGetContext("githubBranch");
 
 
 
@@ -30,7 +29,6 @@ const dbStack = new DatabaseStack(app, `${StackPrefix}-Database`, vpcStack, { en
 const cicdStack = new CICDStack(app, `${StackPrefix}-CICD`, {
   env,
   githubRepo: githubRepo,
-  githubBranch: githubBranch,
   environmentName: environment,
   lambdaFunctions: [
     {
