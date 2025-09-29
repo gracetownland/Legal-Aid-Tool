@@ -47,6 +47,30 @@ const [selectedTranscription, setSelectedTranscription] = useState(null);
   const [selectedTranscriptionId, setSelectedTranscriptionId] = useState(null);
   const wsRef = useRef(null);
   const [audioTitle, setAudioTitle] = useState("");
+  const [maxFileSizeMB, setMaxFileSizeMB] = useState(500);
+
+  const fetchFileSizeLimit = async () => {
+    try {
+      const { tokens } = await fetchAuthSession();
+      const token = tokens.idToken;
+      const response = await fetch(
+        `${import.meta.env.VITE_API_ENDPOINT}student/file_size_limit`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: token,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setMaxFileSizeMB(parseInt(data.value));
+      }
+    } catch (error) {
+      console.error("Error fetching file size limit:", error);
+    }
+  };
 
   const fetchTranscriptions = async () => {
     try {
@@ -106,6 +130,7 @@ const [selectedTranscription, setSelectedTranscription] = useState(null);
 
     fetchCaseData();
     fetchTranscriptions();
+    fetchFileSizeLimit();
   }, [])
 
   const generatePresignedUrl = async (audioFileId) => {
@@ -220,11 +245,10 @@ const [selectedTranscription, setSelectedTranscription] = useState(null);
     const file = e.target.files[0];
     if (!file) return;
     // Add file size check 
-   const maxSizeInMB = 500;
    const fileSizeInMB = file.size / 1024 / 1024;
 
-    if (fileSizeInMB > maxSizeInMB) {
-      setError(`File size (${fileSizeInMB.toFixed(2)}MB) exceeds the ${maxSizeInMB}MB limit`);
+    if (fileSizeInMB > maxFileSizeMB) {
+      setError(`File size (${fileSizeInMB.toFixed(2)}MB) exceeds the ${maxFileSizeMB}MB limit`);
     return;
    }
     const fileNameWithoutExtension = file.name.replace(/\.[^/.]+$/, "");

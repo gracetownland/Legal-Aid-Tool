@@ -961,6 +961,41 @@ paths:
         passthroughBehavior: "when_no_match"
         httpMethod: "POST"
         type: "aws_proxy"
+  /student/file_size_limit:
+    <<: *commonOptions
+    get:
+      tags:
+        - Student
+      summary: Get file size limit
+      operationId: student_file_size_limit_GET
+      responses:
+        "200":
+          description: Current file size limit
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  value:
+                    type: string
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "429":
+          description: Too Many Requests
+        "500":
+          description: Internal Server Error
+      security:
+        - studentAuthorizer: []
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${studentFunction.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
+
+
   
   /student/case:
     options:
@@ -3154,6 +3189,60 @@ paths:
           description: Assignment created successfully
         "400":
           description: Bad Request
+        "500":
+          description: Internal Server Error
+      security:
+        - adminAuthorizer: []
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${adminFunction.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
+  /admin/file_size_limit:
+    <<: *commonOptions
+    get:
+      tags:
+        - Admin
+      summary: Get file size limit
+      operationId: admin_file_size_limit_GET
+      responses:
+        "200":
+          description: Current file size limit
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  value:
+                    type: string
+        "500":
+          description: Internal Server Error
+      security:
+        - adminAuthorizer: []
+      x-amazon-apigateway-integration:
+        uri:
+          Fn::Sub: "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${adminFunction.Arn}/invocations"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        type: "aws_proxy"
+    post:
+      tags:
+        - Admin
+      summary: Set file size limit
+      operationId: admin_file_size_limit_POST
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                value:
+                  type: string
+      responses:
+        "200":
+          description: File size limit updated
         "500":
           description: Internal Server Error
       security:

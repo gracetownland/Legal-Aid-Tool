@@ -599,6 +599,13 @@ export class ApiGatewayStack extends cdk.Stack {
       stringValue: "Infinity",
     });
 
+    // Create SSM parameter for file size limit
+    const fileSizeLimitParameter = new ssm.StringParameter(this, "FileSizeLimitParameter", {
+      parameterName: `/${id}/LAT/FileSizeLimit`,
+      description: "Parameter containing the file size limit for audio uploads (in MB)",
+      stringValue: "500",
+    });
+
 
 
     const lambdaStudentFunction = new lambda.Function(this, `${id}-studentFunction`, {
@@ -612,6 +619,8 @@ export class ApiGatewayStack extends cdk.Stack {
         RDS_PROXY_ENDPOINT: db.rdsProxyEndpoint,
         USER_POOL: this.userPool.userPoolId,
         MESSAGE_LIMIT: messageLimitParameter.parameterName,
+        FILE_SIZE_LIMIT: fileSizeLimitParameter.parameterName,
+
       },
       functionName: `${id}-studentFunction`,
       memorySize: 512,
@@ -645,6 +654,7 @@ export class ApiGatewayStack extends cdk.Stack {
 
     // Add permission to the Lambda function to allow it to access the message limit parameter
     messageLimitParameter.grantRead(lambdaStudentFunction);
+    fileSizeLimitParameter.grantRead(lambdaStudentFunction);
 
     const cfnLambda_student = lambdaStudentFunction.node
       .defaultChild as lambda.CfnFunction;
@@ -703,6 +713,7 @@ export class ApiGatewayStack extends cdk.Stack {
         SM_DB_CREDENTIALS: db.secretPathTableCreator.secretName,
         RDS_PROXY_ENDPOINT: db.rdsProxyEndpointTableCreator,
         MESSAGE_LIMIT: messageLimitParameter.parameterName,
+        FILE_SIZE_LIMIT: fileSizeLimitParameter.parameterName,
       },
       functionName: `${id}-adminFunction`,
       memorySize: 512,
@@ -719,6 +730,10 @@ export class ApiGatewayStack extends cdk.Stack {
 
     // Allow access for lambda to read and write to message limit parameter
     messageLimitParameter.grantWrite(lambdaAdminFunction);
+    
+    // Allow access for lambda to read and write to file size limit parameter
+    fileSizeLimitParameter.grantWrite(lambdaAdminFunction);
+    fileSizeLimitParameter.grantRead(lambdaAdminFunction);
 
     const cfnLambda_Admin = lambdaAdminFunction.node
       .defaultChild as lambda.CfnFunction;
