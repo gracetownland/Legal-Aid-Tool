@@ -711,7 +711,7 @@ export class ApiGatewayStack extends cdk.Stack {
       vpc: vpcStack.vpc,
       environment: {
         SM_DB_CREDENTIALS: db.secretPathTableCreator.secretName,
-        RDS_PROXY_ENDPOINT: db.rdsProxyEndpointTableCreator,
+        RDS_PROXY_ENDPOINT: db.rdsProxyEndpoint,
         MESSAGE_LIMIT: messageLimitParameter.parameterName,
         FILE_SIZE_LIMIT: fileSizeLimitParameter.parameterName,
       },
@@ -917,7 +917,7 @@ export class ApiGatewayStack extends cdk.Stack {
       timeout: Duration.seconds(300),
       environment: {
         SM_DB_CREDENTIALS: db.secretPathTableCreator.secretName,
-        RDS_PROXY_ENDPOINT: db.rdsProxyEndpointTableCreator,
+        RDS_PROXY_ENDPOINT: db.rdsProxyEndpoint,
       },
       vpc: vpcStack.vpc,
       functionName: `${id}-addStudentOnSignUp`,
@@ -1025,7 +1025,7 @@ export class ApiGatewayStack extends cdk.Stack {
       timeout: Duration.seconds(300),
       environment: {
         SM_DB_CREDENTIALS: db.secretPathTableCreator.secretName,
-        RDS_PROXY_ENDPOINT: db.rdsProxyEndpointTableCreator,
+        RDS_PROXY_ENDPOINT: db.rdsProxyEndpoint,
       },
       vpc: db.dbInstance.vpc,
       functionName: `${id}-adjustUserRoles`,
@@ -1215,7 +1215,7 @@ export class ApiGatewayStack extends cdk.Stack {
         functionName: `${id}-TextGenLambdaDockerFunction`,
         environment: {
           SM_DB_CREDENTIALS: db.secretPathAdminName,
-          RDS_PROXY_ENDPOINT: db.rdsProxyEndpointAdmin,
+          RDS_PROXY_ENDPOINT: db.rdsProxyEndpoint,
           REGION: this.region,
           BEDROCK_LLM_PARAM: bedrockLLMParameter.parameterName,
           EMBEDDING_MODEL_PARAM: embeddingModelParameter.parameterName,
@@ -1345,7 +1345,7 @@ export class ApiGatewayStack extends cdk.Stack {
         functionName: `${id}-CaseLambdaDockerFunction`,
         environment: {
           SM_DB_CREDENTIALS: db.secretPathAdminName,
-          RDS_PROXY_ENDPOINT: db.rdsProxyEndpointAdmin,
+          RDS_PROXY_ENDPOINT: db.rdsProxyEndpoint,
           REGION: this.region,
           BEDROCK_LLM_PARAM: bedrockLLMParameter.parameterName,
           EMBEDDING_MODEL_PARAM: embeddingModelParameter.parameterName,
@@ -1430,7 +1430,7 @@ export class ApiGatewayStack extends cdk.Stack {
         functionName: `${id}-SummaryLambdaDockerFunction`,
         environment: {
           SM_DB_CREDENTIALS: db.secretPathAdminName,
-          RDS_PROXY_ENDPOINT: db.rdsProxyEndpointAdmin,
+          RDS_PROXY_ENDPOINT: db.rdsProxyEndpoint,
           REGION: this.region,
           BEDROCK_LLM_PARAM: bedrockLLMParameter.parameterName,
           EMBEDDING_MODEL_PARAM: embeddingModelParameter.parameterName,
